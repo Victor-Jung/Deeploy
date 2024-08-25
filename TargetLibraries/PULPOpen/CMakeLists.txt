@@ -2,7 +2,6 @@ file(GLOB_RECURSE SOURCES
   "src/**"
 )
 
-include(cmake/nntool-lib.cmake)
 
 if(platform STREQUAL "Siracusa" OR platform STREQUAL "Siracusa_w_neureka")
   include(cmake/pulp-sdk-siracusa.cmake)
@@ -40,6 +39,9 @@ target_link_libraries(deeploypulp INTERFACE pulp-nnx)
 target_link_libraries(deeploypulp INTERFACE pulp-sdk)
 target_sources(deeploypulp INTERFACE $<TARGET_OBJECTS:pulp-sdk>)
 
-target_link_libraries(nntool-lib pulp-sdk)
-target_link_libraries(deeploypulp INTERFACE nntool-lib)
-target_sources(deeploypulp INTERFACE $<TARGET_OBJECTS:nntool-lib>)
+if(${TOOLCHAIN} STREQUAL "GCC")
+  include(cmake/nntool-lib.cmake)
+  target_link_libraries(nntool-lib pulp-sdk)
+  target_link_libraries(deeploypulp INTERFACE nntool-lib)
+  target_sources(deeploypulp INTERFACE $<TARGET_OBJECTS:nntool-lib>)
+endif()
