@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Make directory
-        run: mkdir -p ~/image-cache
+        run: mkdir -p ~/docker-image-cache
       - name: Pull docker image
         id: docker-image-cache
         uses: actions/cache@v4
         with:
-            path: ~/image-cache
+            path: ~/docker-image-cache
             key: ${{ runner.os }}-docker-image-cache
 
       - if: steps.docker-image-cache.outputs.cache-hit != 'true'
