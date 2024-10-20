@@ -120,18 +120,6 @@ jobs:
           test2DRequantizedConv
 
   mempool-models:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-name:
-          - simpleRegression
-          - simpleCNN
-          - ICCT
-          - ICCT_ITA
-          - ICCT_8
-          - ICCT_ITA_8
-          - miniMobileNet
-          - miniMobileNetv2
     uses: ./.github/workflows/TestRunnerMempool.yml
     with:
       test-names: |
