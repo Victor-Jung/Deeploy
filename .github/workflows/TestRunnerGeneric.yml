@@ -8,7 +8,7 @@ on:
         type: string
 
 jobs:
-  test-runner-cortexm:
+  test-runner-generic:
     runs-on: ubuntu-22.04
     container:
       image: ghcr.io/victor-jung/deeploy:main
@@ -27,4 +27,5 @@ jobs:
           cd DeeployTest
           for testName in "${testName_array[@]}"; do
             python testRunner_generic.py -t Tests/$testName
+          done
           
