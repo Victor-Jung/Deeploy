@@ -21,11 +21,11 @@ jobs:
         run: pip install -e .
       - name: Run Test
         run: |
-          # Convert the inputs into arrays
           IFS=$'\n'
           testNames="${{ inputs.test-names }}"
           cd DeeployTest
           for testName in $testNames; do
+            echo "Running test: $testName"
             python testRunner_generic.py -t Tests/$testName
           done
           
