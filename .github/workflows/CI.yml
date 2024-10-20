@@ -500,11 +500,6 @@ jobs:
 
   ### Deeploy Extension and Internal Tests ###
   deeploy-state-serialization:
-    strategy:
-      fail-fast: false
-      matrix:
-        name: ["simpleRegression"]
-        platform: ['QEMU-ARM', 'Siracusa', 'MemPool', 'Generic']
     runs-on: ubuntu-22.04
     container:
       image: ghcr.io/victor-jung/deeploy:main
@@ -518,15 +513,13 @@ jobs:
       - name: Run Test
         run: |
           cd DeeployTest
-          python deeployStateEqualityTest.py -t ./Tests/${{ matrix.name }} -p ${{ matrix.platform }}
+          python deeployStateEqualityTest.py -t ./Tests/simpleRegression -p QEMU-ARM
+          python deeployStateEqualityTest.py -t ./Tests/simpleRegression -p Siracusa
+          python deeployStateEqualityTest.py -t ./Tests/simpleRegression -p MemPool
+          python deeployStateEqualityTest.py -t ./Tests/simpleRegression -p Generic
         shell: bash
 
   deeploy-memory-level-extension:
-    strategy:
-      fail-fast: false
-      matrix:
-        name: ["simpleRegression"]
-        platform: ['QEMU-ARM', 'Siracusa', 'MemPool', 'Generic']
     runs-on: ubuntu-22.04
     container:
       image: ghcr.io/victor-jung/deeploy:main
@@ -540,15 +533,13 @@ jobs:
       - name: Run Test
         run: |
           cd DeeployTest
-          python testMemoryLevelExtension.py -t ./Tests/${{ matrix.name }} -p ${{ matrix.platform }}
+          python testMemoryLevelExtension.py -t ./Tests/simpleRegression -p QEMU-ARM
+          python testMemoryLevelExtension.py -t ./Tests/simpleRegression -p Siracusa
+          python testMemoryLevelExtension.py -t ./Tests/simpleRegression -p MemPool
+          python testMemoryLevelExtension.py -t ./Tests/simpleRegression -p Generic
         shell: bash
 
   deeploy-tiler-extension:
-    strategy:
-      fail-fast: false
-      matrix:
-        name: ["simpleRegression", "simpleCNN", "testMatMul", "testMaxPool"]
-        platform: ['Siracusa']
     runs-on: ubuntu-22.04
     container:
       image: ghcr.io/victor-jung/deeploy:main
@@ -562,37 +553,17 @@ jobs:
       - name: Run Test
         run: |
           cd DeeployTest
-          python testTilerExtension.py -t ./Tests/${{ matrix.name }} -p ${{ matrix.platform }}
-        shell: bash
-
-  deeploy-tiler-extension-fail:
-    strategy:
-      fail-fast: false
-      matrix:
-        name: ["simpleRegression", "simpleCNN", "testMatMul", "testMaxPool"]
-        platform: ['Siracusa']
-    runs-on: ubuntu-22.04
-    container:
-      image: ghcr.io/victor-jung/deeploy:main
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Build Deeploy
-        run: pip install -e .
-      - name: Run Test
-        run: |
-          cd DeeployTest
-          python testTilerExtension.py -t ./Tests/${{ matrix.name }} -p ${{ matrix.platform }} --l1 2000 --shouldFail
+          python testTilerExtension.py -t -p Siracusa ./Tests/simpleRegression
+          python testTilerExtension.py -t -p Siracusa ./Tests/simpleCNN
+          python testTilerExtension.py -t -p Siracusa ./Tests/testMatMul
+          python testTilerExtension.py -t -p Siracusa ./Tests/testMaxPool
+          python testTilerExtension.py -t -p Siracusa ./Tests/simpleRegression --l1 2000 --shouldFail
+          python testTilerExtension.py -t -p Siracusa ./Tests/simpleCNN --l1 2000 --shouldFail
+          python testTilerExtension.py -t -p Siracusa ./Tests/testMatMul --l1 2000 --shouldFail
+          python testTilerExtension.py -t -p Siracusa ./Tests/testMaxPool --l1 2000 --shouldFail
         shell: bash
 
   deeploy-memory-allocation-extension:
-    strategy:
-      fail-fast: false
-      matrix:
-        name: ["simpleRegression", "simpleCNN", "miniMobileNet", "miniMobileNetv2", "testMatMul", "testMaxPool"]
-        platform: ["Siracusa"]
     runs-on: ubuntu-22.04
     container:
       image: ghcr.io/victor-jung/deeploy:main
@@ -606,7 +577,12 @@ jobs:
       - name: Run Test
         run: |
           cd DeeployTest
-          python testTilerExtension.py -t ./Tests/${{ matrix.name }} -p ${{ matrix.platform }}
+          python testTilerExtension.py -p Siracusa -t ./Tests/simpleRegression
+          python testTilerExtension.py -p Siracusa -t ./Tests/simpleCNN
+          python testTilerExtension.py -p Siracusa -t ./Tests/miniMobileNet
+          python testTilerExtension.py -p Siracusa -t ./Tests/miniMobileNetv2
+          python testTilerExtension.py -p Siracusa -t ./Tests/testMatMul
+          python testTilerExtension.py -p Siracusa -t ./Tests/testMaxPool
         shell: bash
 
   deeploy-typing:
