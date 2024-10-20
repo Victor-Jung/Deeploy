@@ -22,50 +22,42 @@ jobs:
   
   ### Generic Tests ###
   generic-kernels:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-name:
-          - Adder
-          - MultIO
-          - test1DConvolution
-          - test2DConvolution
-          - test1DDWConvolution
-          - test2DDWConvolution
-          - test1DPad
-          - test2DPad
-          - testGEMM
-          - testMatMul
-          - testMatMulAdd
-          - testMaxPool
-          - testRQConv
-          - testRQMatMul
-          - testReduceSum
-          - testReduceMean
-          - testSlice
-          - testRequantizedDWConv
-          - test2DRequantizedConv    
     uses: ./.github/workflows/TestRunnerGeneric.yml
     with:
-      test-name: ${{ matrix.test-name }}
+      test-names: |
+        Adder
+        MultIO
+        test1DConvolution
+        test2DConvolution
+        test1DDWConvolution
+        test2DDWConvolution
+        test1DPad
+        test2DPad
+        testGEMM
+        testMatMul
+        testMatMulAdd
+        testMaxPool
+        testRQConv
+        testRQMatMul
+        testReduceSum
+        testReduceMean
+        testSlice
+        testRequantizedDWConv
+        test2DRequantizedConv
 
   generic-models:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-name:
-          - simpleRegression
-          - WaveFormer
-          - simpleCNN
-          - ICCT
-          - ICCT_ITA
-          - ICCT_8
-          - ICCT_ITA_8
-          - miniMobileNet
-          - miniMobileNetv2
     uses: ./.github/workflows/TestRunnerGeneric.yml
     with:
-      test-name: ${{ matrix.test-name }}
+      test-names: |
+        simpleRegression
+        WaveFormer
+        simpleCNN
+        ICCT
+        ICCT_ITA
+        ICCT_8
+        ICCT_ITA_8
+        miniMobileNet
+        miniMobileNetv2
   
 
   ### CortexM Tests ###

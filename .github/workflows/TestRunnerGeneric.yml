@@ -3,7 +3,7 @@ name: TestRunnerGeneric
 on:
   workflow_call:
     inputs:
-      test-name:
+      test-names:
         required: true
         type: string
 
@@ -21,6 +21,10 @@ jobs:
         run: pip install -e .
       - name: Run Test
         run: |
+          # Convert the inputs into arrays
+          testNames="${{ inputs.test-names }}"
+          IFS=$'\n' read -r -d '' -a testName_array <<< "$testNames"
           cd DeeployTest
-          python testRunner_generic.py -t Tests/${{ inputs.test-name }}
+          for testName in "${testName_array[@]}"; do
+            python testRunner_generic.py -t Tests/$testName
           
