@@ -553,14 +553,14 @@ jobs:
       - name: Run Test
         run: |
           cd DeeployTest
-          python testTilerExtension.py -t -p Siracusa ./Tests/simpleRegression
-          python testTilerExtension.py -t -p Siracusa ./Tests/simpleCNN
-          python testTilerExtension.py -t -p Siracusa ./Tests/testMatMul
-          python testTilerExtension.py -t -p Siracusa ./Tests/testMaxPool
-          python testTilerExtension.py -t -p Siracusa ./Tests/simpleRegression --l1 2000 --shouldFail
-          python testTilerExtension.py -t -p Siracusa ./Tests/simpleCNN --l1 2000 --shouldFail
-          python testTilerExtension.py -t -p Siracusa ./Tests/testMatMul --l1 2000 --shouldFail
-          python testTilerExtension.py -t -p Siracusa ./Tests/testMaxPool --l1 2000 --shouldFail
+          python testTilerExtension.py -p Siracusa -t ./Tests/simpleRegression
+          python testTilerExtension.py -p Siracusa -t ./Tests/simpleCNN
+          python testTilerExtension.py -p Siracusa -t ./Tests/testMatMul
+          python testTilerExtension.py -p Siracusa -t ./Tests/testMaxPool
+          python testTilerExtension.py -p Siracusa -t ./Tests/simpleRegression --l1 2000 --shouldFail
+          python testTilerExtension.py -p Siracusa -t ./Tests/simpleCNN --l1 2000 --shouldFail
+          python testTilerExtension.py -p Siracusa -t ./Tests/testMatMul --l1 2000 --shouldFail
+          python testTilerExtension.py -p Siracusa -t ./Tests/testMaxPool --l1 2000 --shouldFail
         shell: bash
 
   deeploy-memory-allocation-extension:
