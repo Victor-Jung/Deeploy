@@ -24,7 +24,7 @@ jobs:
           IFS=$'\n'
           testNames="${{ inputs.test-names }}"
           cd DeeployTest
-          for testName in $testNames; do
+          echo "$testNames" | while IFS= read -r testName; do
             echo "Running test: $testName"
             python testRunner_generic.py -t Tests/$testName
           done
