@@ -61,36 +61,28 @@ jobs:
   
 
   ### CortexM Tests ###
-  cortexm-kernels:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-name:
-          - Adder
-          - MultIO
-          - test1DPad
-          - test2DPad
-          - testMatMul
-          - testMatMulAdd
-          - testMaxPool
-          - testRQConv
-          - testReduceSum
-          - testReduceMean
-          - testSlice  
+  cortexm-kernels: 
     uses: ./.github/workflows/TestRunnerCortexM.yml
     with:
-      test-name: ${{ matrix.test-name }}
+      test-names: |
+        Adder
+        MultIO
+        test1DPad
+        test2DPad
+        testMatMul
+        testMatMulAdd
+        testMaxPool
+        testRQConv
+        testReduceSum
+        testReduceMean
+        testSlice
 
-  cortexm-models:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-name:
-          - simpleRegression
-          - WaveFormer  
+  cortexm-models: 
     uses: ./.github/workflows/TestRunnerCortexM.yml
     with:
-      test-name: ${{ matrix.test-name }}
+      test-names: |
+        simpleRegression
+        WaveFormer 
 
 
   ### Mempool Tests ###
