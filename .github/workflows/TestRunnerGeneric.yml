@@ -22,10 +22,10 @@ jobs:
       - name: Run Test
         run: |
           # Convert the inputs into arrays
+          IFS=$'\n'
           testNames="${{ inputs.test-names }}"
-          IFS=$'\n' read -r -d '' -a testName_array <<< "$testNames"
           cd DeeployTest
-          for testName in "${testName_array[@]}"; do
+          for testName in "$testNames"; do
             python testRunner_generic.py -t Tests/$testName
           done
           
