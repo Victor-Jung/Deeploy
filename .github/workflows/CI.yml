@@ -127,45 +127,37 @@ jobs:
 
   ### Siracusa Tests ###
   siracusa-kernels:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-name:
-          - Adder
-          - MultIO
-          - test1DPad
-          - test2DPad
-          - testMatMul
-          - testMatMulAdd
-          - testRequantizedDWConv
-          - test2DRequantizedConv
-          - iSoftmax
-          - testConcat
-          - testRMSNorm
-          - trueIntegerDivSandwich
-          - Hardswish
-          - RQHardswish
-          - testBacktracking
     uses: ./.github/workflows/TestRunnerSiracusa.yml
     with:
-      test-name: ${{ matrix.test-name }}
+      test-names: |
+        Adder
+        MultIO
+        test1DPad
+        test2DPad
+        testMatMul
+        testMatMulAdd
+        testRequantizedDWConv
+        test2DRequantizedConv
+        iSoftmax
+        testConcat
+        testRMSNorm
+        trueIntegerDivSandwich
+        Hardswish
+        RQHardswish
+        testBacktracking
       num-cores: 8
 
   siracusa-models:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-name:
-          - simpleRegression
-          - miniMobileNet
-          - miniMobileNetv2
-          - Attention
-          - MLPerf/KeywordSpotting
-          - MLPerf/ImageClassification
-          - MLPerf/AnomalyDetection
     uses: ./.github/workflows/TestRunnerSiracusa.yml
     with:
-      test-name: ${{ matrix.test-name }}
+      test-names: |
+        simpleRegression
+        miniMobileNet
+        miniMobileNetv2
+        Attention
+        MLPerf/KeywordSpotting
+        MLPerf/ImageClassification
+        MLPerf/AnomalyDetection
       num-cores: 8
 
   siracusa-kernels-tiled-singlebuffer-L2:
