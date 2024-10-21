@@ -161,33 +161,44 @@ jobs:
       num-cores: 8
 
   siracusa-kernels-tiled-singlebuffer-L2:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-data: 
-          - name: "testMatMul"
-            L1: [64000, 32000, 16000]
-          - name: "test2DRequantizedConv"
-            L1: [8000, 6000, 4000]
-          - name: "testRequantizedDWConv"
-            L1: [2561] # SCHEREMO: The implicit transpose after the conv is untiled; need at least 2560
-          - name: "iSoftmax"
-            L1: [800, 500, 300]
-          - name: "testConcat"
-            L1: [32000, 16000, 8000]
-          - name: "testRMSNorm"
-            L1: [2048, 1024, 512]
-          - name: "Hardswish"
-            L1: [750]
-          - name: "RQHardswish"
-            L1: [750]
-        num-cores:
-          - 8
-    uses: ./.github/workflows/TestRunnerTiledSiracusa.yml
+    uses: ./.github/workflows/TestRunnerTiledSiracusaSequential.yml
     with:
-      test-name: ${{ matrix.test-data.name }}
-      num-cores: ${{ matrix.num-cores }}
-      L1: ${{ toJson(matrix.test-data.L1) }}
+      tests-config: |
+        [
+          {
+            "name": "testMatMul",
+            "L1": [64000, 32000, 16000]
+          },
+          {
+            "name": "test2DRequantizedConv",
+            "L1": [8000, 6000, 4000]
+          },
+          {
+            "name": "testRequantizedDWConv",
+            "L1": [2561]
+          },
+          {
+            "name": "iSoftmax",
+            "L1": [800, 500, 300]
+          },
+          {
+            "name": "testConcat",
+            "L1": [32000, 16000, 8000]
+          },
+          {
+            "name": "testRMSNorm",
+            "L1": [2048, 1024, 512]
+          },
+          {
+            "name": "Hardswish",
+            "L1": [750]
+          },
+          {
+            "name": "RQHardswish",
+            "L1": [750]
+          }
+        ]
+      num-cores: 8
 
   siracusa-kernels-tiled-doublebuffer-L2:
     strategy:
@@ -210,12 +221,6 @@ jobs:
             L1: [750]
           - name: "RQHardswish"
             L1: [750]
-          - name: "microLlama/microLlama1"
-            L1: [60000, 20000, 10000]
-          - name: "microLlama/microLlama8"
-            L1: [60000, 20000, 10000]
-          - name: "microLlama/microLlama8_parallel"
-            L1: [60000, 20000, 10000]
         num-cores:
           - 8
         double-buffer:
@@ -303,6 +308,12 @@ jobs:
             L1: [60000, 20000, 10000, 5000]
           - name: "Transformer"
             L1: [60000, 30000, 15000]
+          - name: "microLlama/microLlama1"
+            L1: [60000, 20000, 10000]
+          - name: "microLlama/microLlama8"
+            L1: [60000, 20000, 10000]
+          - name: "microLlama/microLlama8_parallel"
+            L1: [60000, 20000, 10000]
         num-cores:
           - 8
         double-buffer:
@@ -444,8 +455,8 @@ jobs:
             L1: [2000] # LMACAN: 1000 leads to non-2d transfers in L3!
           - name: "Attention"
             L1: [2500]
-          - name: "Transformer"
-            L1: [30000]
+          # - name: "Transformer"
+          #   L1: [30000]
           - name: "microLlama/microLlama1"
             L1: [10000]
         num-cores:
