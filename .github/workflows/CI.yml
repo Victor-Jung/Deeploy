@@ -201,36 +201,45 @@ jobs:
       num-cores: 8
 
   siracusa-kernels-tiled-doublebuffer-L2:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-data: 
-          - name: "testMatMul"
-            L1: [64000, 32000, 16000]
-          - name: "test2DRequantizedConv"
-            L1: [8000, 6000, 5000]
-          - name: "testRequantizedDWConv"
-            L1: [5121] # SCHEREMO: The implicit transpose after the conv is untiled; need at least 2560 * 2 for DB
-          - name: "iSoftmax"
-            L1: [1600, 1000, 600]
-          - name: "testConcat"
-            L1: [64000, 32000, 16000]
-          - name: "testRMSNorm"
-            L1: [4096, 2048, 1024]
-          - name: "Hardswish"
-            L1: [750]
-          - name: "RQHardswish"
-            L1: [750]
-        num-cores:
-          - 8
-        double-buffer:
-          - true
-    uses: ./.github/workflows/TestRunnerTiledSiracusa.yml
+    uses: ./.github/workflows/TestRunnerTiledSiracusaSequential.yml
     with:
-      test-name: ${{ matrix.test-data.name }}
-      num-cores: ${{ matrix.num-cores }}
-      L1: ${{ toJson(matrix.test-data.L1) }}
-      double-buffer: ${{ matrix.double-buffer }}
+      tests-config: |
+        [
+          {
+            "name": "testMatMul",
+            "L1": [64000, 32000, 16000]
+          },
+          {
+            "name": "test2DRequantizedConv",
+            "L1": [8000, 6000, 5000]
+          },
+          {
+            "name": "testRequantizedDWConv",
+            "L1": [5121]
+          },
+          {
+            "name": "iSoftmax",
+            "L1": [1600, 1000, 600]
+          },
+          {
+            "name": "testConcat",
+            "L1": [64000, 32000, 16000]
+          },
+          {
+            "name": "testRMSNorm",
+            "L1": [4096, 2048, 1024]
+          },
+          {
+            "name": "Hardswish",
+            "L1": [750]
+          },
+          {
+            "name": "RQHardswish",
+            "L1": [750]
+          }
+        ]
+      num-cores: 8
+      double-buffer: true
     
   siracusa-models-tiled-singlebuffer-L2:
     strategy:
@@ -329,49 +338,53 @@ jobs:
       default-memory-level: ${{ matrix.default-memory-level }}
 
   siracusa-neureka-kernels-tiled-singlebuffer-L2:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-data: 
-          - name: "testRequantizedLinear"
-            L1: [16000]
-          - name: "testPointwise"
-            L1: [32000]
-          - name: "testPointwiseConvBNReLU"
-            L1: [32000]
-          - name: "testPointwiseUnsignedWeights"
-            L1: [32000]
-        num-cores:
-          - 8
-    uses: ./.github/workflows/TestRunnerTiledSiracusaWithNeureka.yml
+    uses: ./.github/workflows/TestRunnerTiledSiracusaWithNeurekaSequential.yml
     with:
-      test-name: ${{ matrix.test-data.name }}
-      num-cores: ${{ matrix.num-cores }}
-      L1: ${{ toJson(matrix.test-data.L1) }}
+      tests-config: |
+        [
+          {
+            "name": "testRequantizedLinear",
+            "L1": [16000]
+          },
+          {
+            "name": "testPointwise",
+            "L1": [32000]
+          },
+          {
+            "name": "testPointwiseConvBNReLU",
+            "L1": [32000]
+          },
+          {
+            "name": "testPointwiseUnsignedWeights",
+            "L1": [32000]
+          }
+        ]
+      num-cores: 8
 
   siracusa-neureka-kernels-tiled-doublebuffer-L2:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-data: 
-          - name: "testRequantizedLinear"
-            L1: [16000]
-          - name: "testPointwise"
-            L1: [32000]
-          - name: "testPointwiseConvBNReLU"
-            L1: [32000]
-          - name: "testPointwiseUnsignedWeights"
-            L1: [32000]
-        num-cores:
-          - 8
-        double-buffer:
-          - true
-    uses: ./.github/workflows/TestRunnerTiledSiracusaWithNeureka.yml
+    uses: ./.github/workflows/TestRunnerTiledSiracusaWithNeurekaSequential.yml
     with:
-      test-name: ${{ matrix.test-data.name }}
-      num-cores: ${{ matrix.num-cores }}
-      L1: ${{ toJson(matrix.test-data.L1) }}
-      double-buffer: ${{ matrix.double-buffer }}
+      tests-config: |
+        [
+          {
+            "name": "testRequantizedLinear",
+            "L1": [16000]
+          },
+          {
+            "name": "testPointwise",
+            "L1": [32000]
+          },
+          {
+            "name": "testPointwiseConvBNReLU",
+            "L1": [32000]
+          },
+          {
+            "name": "testPointwiseUnsignedWeights",
+            "L1": [32000]
+          }
+        ]
+      num-cores: 8
+      double-buffer: true
 
   siracusa-neureka-models-tiled-singlebuffer-L3:
     strategy:
@@ -423,28 +436,29 @@ jobs:
       default-memory-level: ${{ matrix.default-memory-level }}
 
   siracusa-neureka-kernels-tiled-singlebuffer-L2-wmem:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-data: 
-          - name: "testRequantizedLinear"
-            L1: [16000]
-          - name: "testPointwise"
-            L1: [32000]
-          - name: "testPointwiseConvBNReLU"
-            L1: [32000]
-          - name: "testPointwiseUnsignedWeights"
-            L1: [32000]
-        num-cores:
-          - 8
-        neureka-wmem:
-          - true
-    uses: ./.github/workflows/TestRunnerTiledSiracusaWithNeureka.yml
+    uses: ./.github/workflows/TestRunnerTiledSiracusaWithNeurekaSequential.yml
     with:
-      test-name: ${{ matrix.test-data.name }}
-      num-cores: ${{ matrix.num-cores }}
-      L1: ${{ toJson(matrix.test-data.L1) }}
-      neureka-wmem: ${{ matrix.neureka-wmem }}
+      tests-config: |
+        [
+          {
+            "name": "testRequantizedLinear",
+            "L1": [16000]
+          },
+          {
+            "name": "testPointwise",
+            "L1": [32000]
+          },
+          {
+            "name": "testPointwiseConvBNReLU",
+            "L1": [32000]
+          },
+          {
+            "name": "testPointwiseUnsignedWeights",
+            "L1": [32000]
+          }
+        ]
+      num-cores: 8
+      neureka-wmem: true
 
   siracusa-neureka-models-tiled-doublebuffer-L3-wmem:
     strategy:
