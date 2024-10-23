@@ -158,7 +158,7 @@ operatorString = 'conv'
 pulp_nn_${operatorString}${signatureString}(${data_in}, ${ctxtBuffer}, NULL, ${data_out}, ${weight}, ${mul}, ${add}, 1, ${log2D}, ${dim_im_in_y}, ${dim_im_in_x}, ${ch_im_in}, ${dim_im_out_y}, ${dim_im_out_x}, ${ch_im_out}, ${dim_kernel_y}, ${dim_kernel_x}, ${padding_y_top}, ${padding_y_bottom}, ${padding_x_left}, ${padding_x_right}, ${stride_y}, ${stride_x}, 1, 1);
 """)
 
-PULPDWConv2D_8_Template = PULP2DDWConvTemplate("""
+PULPRQSDWConv2D_8_Template = PULP2DDWConvTemplate("""
 // PULP NN CONV
 <%
 signatureString = ''
@@ -226,4 +226,36 @@ else:
     signatureString += '_u8'
 %>
 pulp_nn_depthwise${signatureString}(${data_in}, ${ctxtBuffer}, NULL, ${data_out}, ${weight}, NULL, ${mul}, ${add}, 1, ${log2D}, 1, ${dim_im_in_y}, ${ch_im_in}, 1, ${dim_im_out_y}, ${ch_im_out}, 1, ${dim_kernel_y}, ${padding_y_top}, ${padding_y_bottom}, 0, 0, 1, ${stride_y}, 1, 1);
+""")
+
+PULPDWConv2D_8_Template = PULP2DDWConvTemplate("""
+// NNTool Lib DW Conv
+
+// v4s p = ((v4s){1, 1, 1, 1});
+                                               
+KerConv_SQ8_T convArgs;
+                                               
+convArgs.In = ${data_in};
+convArgs.Filter = ${weight};
+convArgs.Out = ${data_out};
+                                               
+convArgs.W = 5;
+convArgs.UsedW = 5;
+convArgs.H = 20;
+convArgs.UsedH = 20;
+convArgs.InFeatures = 64;
+convArgs.OutFeatures = 64;
+convArgs.TotalInFeatures = 64;
+
+convArgs.Pad = ((v4s){1, 1, 1, 1});
+convArgs.NormBias = 0;
+convArgs.Orientation = 0;
+convArgs.N = 3;
+convArgs.S = 1;
+convArgs.D = 1;
+convArgs.Ny = 3;
+convArgs.Sy = 1;
+convArgs.Dy = 1;
+                                               
+KerParConvDW3x3Stride1B32_SQ8(&convArgs);                         
 """)

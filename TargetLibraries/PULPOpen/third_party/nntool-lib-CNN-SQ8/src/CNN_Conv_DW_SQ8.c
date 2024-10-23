@@ -4289,9 +4289,10 @@ void KerParConvDW1x1Stride1B32_SQ8(KerConv_SQ8_T *Arg)
 	int Ho = (Arg->UsedH-FS+PadIn[2]+PadIn[3])/S + 1;
 	int Ho_F = Min(Ho, FirstDefinedOutput(FS, PadIn[2], S)), Ho_L = Max(Ho_F, LastDefinedOutput(Arg->UsedH, FS, PadIn[2], S));
 
-       	for (unsigned int of=First; of<Last; of++) {
+	for (unsigned int of=First; of<Last; of++) {
 		signed char *in = In+W*H*of, *filter = Filter+FS*FS*of; int *out = Out+Wo*Ho*of;
-		int B = AT_LSHIFT(Bias[of], NormBias);
+		// int B = AT_LSHIFT(Bias[of], NormBias);
+		int B = 0;
 		KerConv1x1Stride1_Body_SQ8(in, out, filter, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, PadIn, B);
 	}
 	// gap_waitbarrier(0);
@@ -4514,13 +4515,14 @@ void KerParConvDW3x3Stride1B32_SQ8(KerConv_SQ8_T *Arg)
 	int Ho = (Arg->UsedH-FS+PadIn[2]+PadIn[3])/S + 1;
 	int Ho_F = Min(Ho, FirstDefinedOutput(FS, PadIn[2], S)), Ho_L = Max(Ho_F, LastDefinedOutput(Arg->UsedH, FS, PadIn[2], S));
 
-       	for (unsigned int of=First; of<Last; of++) {
+	for (unsigned int of=First; of<Last; of++) {
 		signed char *in = In+W*H*of, *filter = Filter+FS*FS*of; int *out = Out+Wo*Ho*of;
-		int B = AT_LSHIFT(Bias[of], NormBias);
+		// int B = AT_LSHIFT(Bias[of], NormBias);
+		int B = 0;
 		KerConv3x3Stride1_Body_SQ8(in, out, filter, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, PadIn, B);
 		if ((int)PadIn) KerConv3x3BorderStride1_SQ8(in, out, filter, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, PadIn, PadIn, B);
 	}
-	gap_waitbarrier(0);
+	// gap_waitbarrier(0);
 }
 
 void KerParConvDW3x3Stride2B32_SQ8(KerConv_SQ8_T *Arg)
@@ -5035,7 +5037,8 @@ void KerParConvDWNxMStrideSxSyB32_SQ8(KerConv_SQ8_T *Arg)
 
        	for (unsigned int of=First; of<Last; of++) {
 		signed char *in = In+W*H*of, *filter = Filter+FSx*FSy*of; int *out = Out+Wo*Ho*of;
-		int B = AT_LSHIFT(Bias[of], NormBias);
+		// int B = AT_LSHIFT(Bias[of], NormBias);
+		int B = 0;
 		KerConvNxMStrideSxSy_Body_SQ8(in, out, filter, FSx, FSy, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, Sx, Sy, PadIn, B);
 		if ((int)PadIn) KerConvNxMStrideSxSy_Border_SQ8(in, out, filter, FSx, FSy, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, Sx, Sy, PadIn, PadIn, B);
 	}

@@ -37,7 +37,7 @@ from Deeploy.DeeployTypes import CodeTransformation, NodeBinding, NodeTemplate
 from Deeploy.FutureExtension.Bindings.AutoFutureBinding import AutoFutureBinding
 from Deeploy.FutureExtension.CodeTransformationPasses.FutureCodeTransformation import FutureGeneration
 from Deeploy.Targets.Generic.Templates import ConcatTemplate, RQSiGELUTemplate, iHardswishTemplate
-from Deeploy.Targets.Generic.TypeCheckers import ConcatChecker, GELUChecker, HardswishChecker, MatMulChecker, \
+from Deeploy.Targets.Generic.TypeCheckers import ConcatChecker, ConvChecker, GELUChecker, HardswishChecker, MatMulChecker, \
     MulChecker, ReduceMeanChecker, RQHardswishChecker, SliceChecker, SoftmaxChecker, TransposeChecker, \
     iLayerNormChecker
 from Deeploy.Targets.PULPOpen.CodeTransformationPasses.PULPClusterSynch import PULPSynchCoresPass
@@ -183,8 +183,16 @@ PULPRQSDWConv2DBindings = [
             PointerClass(int32_t),
             PointerClass(int32_t),
             PointerClass(int32_t)
-        ], [PointerClass(type2)]), ConvTemplate.PULPDWConv2D_8_Template, ForkTransformer)
+        ], [PointerClass(type2)]), ConvTemplate.PULPRQSDWConv2D_8_Template, ForkTransformer)
     for type1, type2 in zip([int8_t, int8_t, uint8_t, uint8_t], [int8_t, uint8_t, int8_t, uint8_t])
+]
+
+PULPDWConv2DBindings = [
+    NodeBinding(
+        ConvChecker([
+            PointerClass(int8_t),
+            PointerClass(int8_t),
+        ], [PointerClass(int32_t)]), ConvTemplate.PULPDWConv2D_8_Template, ForkTransformer)
 ]
 
 PULPRQSGEMM_8_Binding = [

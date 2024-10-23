@@ -35,7 +35,7 @@ from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import Me
 from Deeploy.Targets.CortexM.Parsers import CMSISMaxPool2DParser
 from Deeploy.Targets.Generic.Bindings import BasicGatherBindings, BasicPad1DBindings, BasicPad2DBindings, \
     BasicReshapeBindings, BasicRQIntegerDivBinding
-from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, GatherLayer, MatMulLayer, MaxPoolLayer, MulLayer, \
+from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, ConvLayer, GatherLayer, MatMulLayer, MaxPoolLayer, MulLayer, \
     PadLayer, ReduceMeanLayer, RequantShiftLayer, ReshapeLayer, RQIntegerDivLayer, RQSiGELULayer, RQSiHardswishLayer, \
     SliceLayer, TransposeLayer, iHardswishLayer, iRMSNormLayer, iSoftmaxLayer
 from Deeploy.Targets.Generic.Parsers import AddParser, ConcatParser, FlattenParser, GatherParser, MatMulParser, \
@@ -46,11 +46,11 @@ from Deeploy.Targets.Generic.Templates import AllocateTemplate as BasicAllocateT
 from Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes import IntegerDivRequantMergePass, \
     MergeConstAddAndRequantPass, MergeTrueIntegerDivRequantShiftPass, RQSSplitPass, SkipEmptyConcatPass, \
     SkipUnityRequantPass, iGELURequantMergePass, iHardswishRequantMergePass
-from Deeploy.Targets.PULPOpen.Bindings import PULPConv1DBinding, PULPDMASliceBindings, PULPDWConv1DBinding, \
+from Deeploy.Targets.PULPOpen.Bindings import PULPConv1DBinding, PULPDMASliceBindings, PULPDWConv1DBinding, PULPDWConv2DBindings, \
     PULPReduceMeanBindings
 from Deeploy.Targets.PULPOpen.Layers import PULPRQSConvLayer, PULPRQSGEMMLayer
-from Deeploy.Targets.PULPOpen.Parsers import PULPConv1DParser, PULPConv2DParser, PULPDWConv1DParser, \
-    PULPDWConv2DParser, PULPGEMMParser, PULPMatrixVecParser, PULPRQAddParser, PULPTallGEMMParser
+from Deeploy.Targets.PULPOpen.Parsers import PULPConv1DParser, PULPConv2DParser, PULPDWConv1DParser, PULPDWConv2DParser, \
+    PULPRQSDWConv2DParser, PULPGEMMParser, PULPMatrixVecParser, PULPRQAddParser, PULPTallGEMMParser
 from Deeploy.Targets.PULPOpen.Templates import AllocateTemplate, FreeTemplate
 from Deeploy.Targets.PULPOpen.Tiler import PULPAddTilingReadyBindings, PULPConcatTilingReadyBindings, \
     PULPFlattenTilingReadyBindings, PULPiHardswishTilingReadyBindings, PULPiRMSNormTilingReadyBindings, \
@@ -85,7 +85,10 @@ Conv1DMapper = NodeMapper(PULPConv1DParser(), [PULPConv1DBinding])
 DWConv1DMapper = NodeMapper(PULPDWConv1DParser(), [PULPDWConv1DBinding])
 
 Conv2DMapper = NodeMapper(PULPConv2DParser(), PULPRQSConv2DTilingReadyBindings)
-DWConv2DMapper = NodeMapper(PULPDWConv2DParser(), PULPRQSDWConv2DTilingReadyBindings)
+RQSDWConv2DMapper = NodeMapper(PULPRQSDWConv2DParser(), PULPRQSDWConv2DTilingReadyBindings)
+
+DWConv2DMapper = NodeMapper(PULPDWConv2DParser(), PULPDWConv2DBindings)
+
 GEMMMapper = NodeMapper(PULPGEMMParser(), PULPRQSGEMMTilingReadyBindings)
 MatrixVecMapper = NodeMapper(PULPMatrixVecParser(), PULPRQSMatrixVecTilingReadyBindings)
 TallGEMMMapper = NodeMapper(PULPTallGEMMParser(), PULPRQSTallGEMMTilingReadyBindings)
@@ -102,7 +105,8 @@ iHardswishMapper = NodeMapper(iHardswishParser(), PULPiHardswishTilingReadyBindi
 RQSiHardswishMapper = NodeMapper(RQSiHardswishParser(), PULPRQSiHardswishTilingReadyBindings)
 
 PULPMapping = {
-    'RequantizedConv': PULPRQSConvLayer([Conv2DMapper, DWConv2DMapper, Conv1DMapper, DWConv1DMapper]),
+    'Conv': ConvLayer([DWConv2DMapper]),
+    'RequantizedConv': PULPRQSConvLayer([Conv2DMapper, RQSDWConv2DMapper, Conv1DMapper, DWConv1DMapper]),
     'RequantizedGemm': PULPRQSGEMMLayer([MatrixVecMapper, TallGEMMMapper, GEMMMapper]),
     'MaxPool': MaxPoolLayer([MaxPool2DMapper]),
     'RequantizediGELU': RQSiGELULayer([RQGELU_int8_Mapper]),
@@ -217,7 +221,7 @@ PULPOptimizer = TopologyOptimizer([
 
 # SCHEREMO: stdint is included before pulp_nn_kernels.h because it is supposed to be included in there, but isn't...
 _includeList = [
-    "pmsis.h", "stdint.h", "pulp_nn_kernels.h", "DeeployBasicMath.h", "dory_dma.h", "dory_mem.h", "bsp/ram.h"
+    "pmsis.h", "stdint.h", "pulp_nn_kernels.h", "DeeployBasicMath.h", "dory_dma.h", "dory_mem.h", "bsp/ram.h", "CNN_BasicKernels_SQ8.h"
 ]
 
 
