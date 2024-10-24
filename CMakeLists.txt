@@ -11,9 +11,10 @@ set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-if(TOOLCHAIN STREQUAL GCC)
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
+# JUNGVI: Not sure why this was turned off for LLVM
+# if(TOOLCHAIN STREQUAL GCC)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+# endif()
 
 set(platform MemPool CACHE STRING "Platform (MemPool, QEMU, Siracusa, Siracusa_w_neureka, PULP-Open, Generic)")
 set_property(CACHE platform PROPERTY STRINGS MemPool QEMU Siracusa Siracusa_w_neureka PULP-Open Generic)
@@ -153,6 +154,10 @@ if(platform STREQUAL Siracusa OR platform STREQUAL Siracusa_w_neureka OR platfor
   else()
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/cmake/pulp/toolchain_gcc.cmake)
   endif()
+
+  message(STATUS "JUNGVI: TOOLCHAIN=" ${TOOLCHAIN})
+  message(STATUS "JUNGVI: TOOLCHAIN_PREFIX=" ${TOOLCHAIN_PREFIX})
+  message(STATUS "JUNGVI: CMAKE_C_COMPILER=" ${CMAKE_C_COMPILER})
 
   include(${CMAKE_CURRENT_LIST_DIR}/cmake/pulp/pulp.cmake)
 
