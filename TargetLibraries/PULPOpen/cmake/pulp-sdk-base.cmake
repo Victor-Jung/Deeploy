@@ -68,5 +68,14 @@ set(PULP_SDK_BASE_COMPILE_FLAGS
   -DPI_LOG_LOCAL_LEVEL=2
 )
 
+if(NOT DEFINED $ENV{VERBOSE})
+    add_compile_options(
+      -Wno-conversion
+      -Wno-unused-parameter
+      -Wno-unused-function
+      -Wno-unused-variable
+    )
+endif()
+
 set_source_files_properties(${PULP_SDK_BASE_ASM_SOURCE} PROPERTIES COMPILE_FLAGS -DLANGUAGE_ASSEMBLY)
 add_library(pulp-sdk-base OBJECT ${PULP_SDK_BASE_C_SOURCE} ${PULP_SDK_BASE_ASM_SOURCE})

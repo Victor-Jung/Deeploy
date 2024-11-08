@@ -11,10 +11,9 @@ set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-# JUNGVI: Not sure why this was turned off for LLVM
-# if(TOOLCHAIN STREQUAL GCC)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-# endif()
+if(TOOLCHAIN STREQUAL GCC)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 set(platform MemPool CACHE STRING "Platform (MemPool, QEMU, Siracusa, Siracusa_w_neureka, PULP-Open, Generic)")
 set_property(CACHE platform PROPERTY STRINGS MemPool QEMU Siracusa Siracusa_w_neureka PULP-Open Generic)
