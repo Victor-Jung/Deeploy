@@ -26,7 +26,7 @@
 
 #define gap_coreid() __builtin_pulp_CoreId()
 #define gap_ncore() NUM_CORES
-#define gap_waitbarrier(n) pi_cl_team_barrier(n)
+#define gap_waitbarrier(n) do {} while(0) // JUNGVI: This barrier is called inside NNTool kernels, hence the execution stall if we don't execute the kernel with all the cores. To not alter the kernel library we redefine this macro to do nothing.
 
 
 #ifdef GENASM
