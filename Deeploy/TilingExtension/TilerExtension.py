@@ -794,6 +794,10 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
         if tilingSolution is None:
             schedule = self.scheduler(self.graph)
 
+            # JUNGVI: Mock scheduler for tiling together the first conv and maxpool
+            schedule[1] += schedule[2]
+            schedule.pop(2)
+
             self.tiler.setupModel(ctxt = self.ctxt,
                                   schedule = schedule,
                                   layerBinding = self.layerBinding,
