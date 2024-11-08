@@ -192,6 +192,7 @@ PULPDWConv2DBindings = [
         ConvChecker([
             PointerClass(int8_t),
             PointerClass(int8_t),
+            PointerClass(int8_t),
         ], [PointerClass(int32_t)]), ConvTemplate.PULPDWConv2D_8_Template, ForkTransformer)
 ]
 

@@ -438,7 +438,7 @@ class PULPDWConv2DParser(Conv2DParser):
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][2],
                 self.operatorRepresentation['pads'][1] == self.operatorRepresentation['pads'][3],
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][1],
-                len(node.inputs) == 2,
+                len(node.inputs) in [2,3],
             ])
 
             if ret:
@@ -464,8 +464,12 @@ class PULPDWConv2DParser(Conv2DParser):
         newCtxt, ret = super().parseNodeCtxt(ctxt, node)
 
         if ret:
-
-            inputs = ['data_in', 'weight']
+            
+            if len(node.inputs) == 3:
+                inputs = ['data_in', 'weight', 'bias']
+            else:                
+                inputs = ['data_in', 'weight']
+            
             for idx, inputNode in enumerate(node.inputs):
                 self.operatorRepresentation[inputs[idx]] = newCtxt.lookup(inputNode.name).name
 
@@ -476,6 +480,9 @@ class PULPDWConv2DParser(Conv2DParser):
             data_in = newCtxt.lookup(self.operatorRepresentation['data_in'])
             data_out = newCtxt.lookup(self.operatorRepresentation['data_out'])
             _ = newCtxt.lookup(self.operatorRepresentation['weight'])
+
+            if len(node.inputs) == 3:
+                _ = newCtxt.lookup(self.operatorRepresentation['bias'])
 
             if channels_first:
                 self.operatorRepresentation['ch_im_in'] = data_in.shape[1]

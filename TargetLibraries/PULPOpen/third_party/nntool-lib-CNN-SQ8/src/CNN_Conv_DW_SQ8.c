@@ -4291,8 +4291,7 @@ void KerParConvDW1x1Stride1B32_SQ8(KerConv_SQ8_T *Arg)
 
 	for (unsigned int of=First; of<Last; of++) {
 		signed char *in = In+W*H*of, *filter = Filter+FS*FS*of; int *out = Out+Wo*Ho*of;
-		// int B = AT_LSHIFT(Bias[of], NormBias);
-		int B = 0;
+		int B = AT_LSHIFT(Bias[of], NormBias);
 		KerConv1x1Stride1_Body_SQ8(in, out, filter, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, PadIn, B);
 	}
 	gap_waitbarrier(0);
@@ -4517,8 +4516,7 @@ void KerParConvDW3x3Stride1B32_SQ8(KerConv_SQ8_T *Arg)
 
 	for (unsigned int of=First; of<Last; of++) {
 		signed char *in = In+W*H*of, *filter = Filter+FS*FS*of; int *out = Out+Wo*Ho*of;
-		// int B = AT_LSHIFT(Bias[of], NormBias);
-		int B = 0;
+		int B = AT_LSHIFT(Bias[of], NormBias);
 		KerConv3x3Stride1_Body_SQ8(in, out, filter, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, PadIn, B);
 		if ((int)PadIn) KerConv3x3BorderStride1_SQ8(in, out, filter, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, PadIn, PadIn, B);
 	}
@@ -5037,8 +5035,7 @@ void KerParConvDWNxMStrideSxSyB32_SQ8(KerConv_SQ8_T *Arg)
 
        	for (unsigned int of=First; of<Last; of++) {
 		signed char *in = In+W*H*of, *filter = Filter+FSx*FSy*of; int *out = Out+Wo*Ho*of;
-		// int B = AT_LSHIFT(Bias[of], NormBias);
-		int B = 0;
+		int B = AT_LSHIFT(Bias[of], NormBias);
 		KerConvNxMStrideSxSy_Body_SQ8(in, out, filter, FSx, FSy, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, Sx, Sy, PadIn, B);
 		if ((int)PadIn) KerConvNxMStrideSxSy_Border_SQ8(in, out, filter, FSx, FSy, W, H, Wo, Wo_F, Wo_L, Ho, Ho_F, Ho_L, Sx, Sy, PadIn, PadIn, B);
 	}

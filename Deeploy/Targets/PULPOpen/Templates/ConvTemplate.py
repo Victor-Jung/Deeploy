@@ -229,15 +229,14 @@ pulp_nn_depthwise${signatureString}(${data_in}, ${ctxtBuffer}, NULL, ${data_out}
 """)
 
 PULPDWConv2D_8_Template = PULP2DDWConvTemplate("""
-// NNTool Lib DW Conv
-
-// v4s p = ((v4s){1, 1, 1, 1});
+// NNTool-Lib DW Conv
                                                
 KerConv_SQ8_T convArgs;
                                                
 convArgs.In = ${data_in};
 convArgs.Filter = ${weight};
-convArgs.Out = ${data_out};
+convArgs.Bias = ${bias};
+convArgs.Out = ${data_out};                                        
                                                
 convArgs.W = 5;
 convArgs.UsedW = 5;
@@ -257,5 +256,5 @@ convArgs.Ny = 3;
 convArgs.Sy = 1;
 convArgs.Dy = 1;
                                                
-KerParConvDW3x3Stride1B32_SQ8(&convArgs);                         
+KerParConvDW3x3Stride1B8_SQ8(&convArgs);                         
 """)
