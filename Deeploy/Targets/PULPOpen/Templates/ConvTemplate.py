@@ -66,7 +66,7 @@ class PULP2DConvTemplate(NodeTemplate):
         return ctxt, operatorRepresentation, [im2col_name]
 
 
-class PULP2DDWConvTemplate(PULP2DConvTemplate):
+class PULP2DDWConvTemplate(NodeTemplate):
 
     def __init__(self, templateStr):
         super().__init__(templateStr)
@@ -126,6 +126,27 @@ class PULP1DDWConvTemplate(PULP1DConvTemplate):
 
     def __init__(self, templateStr):
         super().__init__(templateStr)
+
+
+class NNTool2DDWConvTemplate(PULP1DConvTemplate):
+
+    def __init__(self, templateStr):
+        super().__init__(templateStr)
+
+    def alignToContext(self, ctxt: NetworkContext, operatorRepresentation: OperatorRepresentation) -> Tuple[OperatorRepresentation, Dict, List[str]]:
+        
+        # JUNGVI: We have optimized kernels for kernel size 3 and 5 and strides 1 and 2
+        if operatorRepresentation['dim_kernel_x'] in [3, 5] and operatorRepresentation["strides"][0] in [1, 2]: 
+            operatorRepresentation['strideSignature'] = str(operatorRepresentation['strides'][0])
+        else:
+            operatorRepresentation['strideSignature'] = "S"
+
+        if operatorRepresentation['dim_kernel_x'] in [3, 5, 7]:
+            operatorRepresentation['kernelSizeSignature'] = str(operatorRepresentation['dim_kernel_x']) + "x" + str(operatorRepresentation['dim_kernel_y'])
+        else:
+            operatorRepresentation['kernelSizeSignature'] = "NxN"
+
+        return ctxt, operatorRepresentation, []
 
 
 PULPConv2D_8_Template = PULP2DConvTemplate("""
@@ -228,8 +249,8 @@ else:
 pulp_nn_depthwise${signatureString}(${data_in}, ${ctxtBuffer}, NULL, ${data_out}, ${weight}, NULL, ${mul}, ${add}, 1, ${log2D}, 1, ${dim_im_in_y}, ${ch_im_in}, 1, ${dim_im_out_y}, ${ch_im_out}, 1, ${dim_kernel_y}, ${padding_y_top}, ${padding_y_bottom}, 0, 0, 1, ${stride_y}, 1, 1);
 """)
 
-PULPDWConv2D_8_Template = PULP2DDWConvTemplate("""
-// NNTool-Lib DW Conv
+NNToolDWConv2D_8_Template = NNTool2DDWConvTemplate("""
+// NNTool-Lib DW Conv ${ch_im_in}
                                                
 KerConv_SQ8_T convArgs;
                                                
@@ -238,23 +259,23 @@ convArgs.Filter = ${weight};
 convArgs.Bias = ${bias};
 convArgs.Out = ${data_out};                                        
                                                
-convArgs.W = 5;
-convArgs.UsedW = 5;
-convArgs.H = 20;
-convArgs.UsedH = 20;
-convArgs.InFeatures = 64;
-convArgs.OutFeatures = 64;
-convArgs.TotalInFeatures = 64;
+convArgs.W = ${dim_im_in_y};
+convArgs.UsedW = ${dim_im_in_y};
+convArgs.H = ${dim_im_in_x};
+convArgs.UsedH = ${dim_im_in_x};
+convArgs.InFeatures = ${ch_im_in};
+convArgs.OutFeatures = ${ch_im_out};
+convArgs.TotalInFeatures = ${ch_im_in};
 
-convArgs.Pad = ((v4s){1, 1, 1, 1});
+convArgs.Pad = ((v4s){${pads[0]}, ${pads[1]}, ${pads[2]}, ${pads[3]}});
 convArgs.NormBias = 0;
 convArgs.Orientation = 0;
-convArgs.N = 3;
-convArgs.S = 1;
-convArgs.D = 1;
-convArgs.Ny = 3;
-convArgs.Sy = 1;
-convArgs.Dy = 1;
+convArgs.N = ${dim_kernel_x};
+convArgs.S = ${strides[0]};
+convArgs.D = ${dilations[0]};
+convArgs.Ny = ${dim_kernel_y};
+convArgs.Sy = ${strides[1]};
+convArgs.Dy = ${dilations[1]};
                                                
-KerParConvDW3x3Stride1B8_SQ8(&convArgs);                         
+KerParConvDW${kernelSizeSignature}Stride${strideSignature}B8_SQ8(&convArgs);                         
 """)

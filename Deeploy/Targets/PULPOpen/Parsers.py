@@ -88,7 +88,7 @@ class PULPRQAddParser(AddParser):
         return ret
 
 
-class PULPConv2DParser(RQSConv2DParser):
+class PULPRQSConv2DParser(RQSConv2DParser):
 
     def __init__(self, noBiasHoisting = True):
         super().__init__(noBiasHoisting)
@@ -141,7 +141,7 @@ class PULPConv2DParser(RQSConv2DParser):
         return ctxt, False
 
 
-class PULPDWConv1DParser(RQSConv1DParser):
+class PULPRQSDWConv1DParser(RQSConv1DParser):
 
     def __init__(self, noBiasHoisting = True):
         super().__init__(noBiasHoisting)
@@ -297,7 +297,7 @@ class PULPRQSDWConv2DParser(RQSConv2DParser):
         return ctxt, False
 
 
-class PULPConv1DParser(RQSConv1DParser):
+class PULPRQSConv1DParser(RQSConv1DParser):
 
     def __init__(self, noBiasHoisting = True):
         super().__init__(noBiasHoisting)
@@ -423,7 +423,7 @@ class PULPTallGEMMParser(PULPGEMMParser):
         return newCtxt, True
 
 
-class PULPDWConv2DParser(Conv2DParser):
+class NNToolDWConv2DParser(Conv2DParser):
 
     def __init__(self, noBiasHoisting = True):
             super().__init__(noBiasHoisting)
@@ -438,20 +438,14 @@ class PULPDWConv2DParser(Conv2DParser):
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][2],
                 self.operatorRepresentation['pads'][1] == self.operatorRepresentation['pads'][3],
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][1],
-                len(node.inputs) in [2,3],
+                len(node.inputs) == 3, # JUNVI: NNTools Conv kernels require a bias
+                self.operatorRepresentation['pads'][0] in [0, 1],
+                self.operatorRepresentation['strides'][0] == self.operatorRepresentation['strides'][1], # JUNGVI: Not supported yet
+                self.operatorRepresentation['dim_kernel_x'] == self.operatorRepresentation['dim_kernel_y'], # JUNGVI: Not supported yet
             ])
 
-            if ret:
-                self.operatorRepresentation['dim_kernel_x'] = int(self.operatorRepresentation['kernel_shape'][0])
-                self.operatorRepresentation['dim_kernel_y'] = int(self.operatorRepresentation['kernel_shape'][1])
-                self.operatorRepresentation['dilation_x'] = int(self.operatorRepresentation['dilations'][0])
-                self.operatorRepresentation['dilation_y'] = int(self.operatorRepresentation['dilations'][1])
-                self.operatorRepresentation['padding_y_top'] = int(self.operatorRepresentation['pads'][0])
-                self.operatorRepresentation['padding_x_left'] = int(self.operatorRepresentation['pads'][1])
-                self.operatorRepresentation['padding_y_bottom'] = int(self.operatorRepresentation['pads'][2])
-                self.operatorRepresentation['padding_x_right'] = int(self.operatorRepresentation['pads'][3])
-                self.operatorRepresentation['stride_x'] = int(self.operatorRepresentation['strides'][0])
-                self.operatorRepresentation['stride_y'] = int(self.operatorRepresentation['strides'][1])
+            if self.operatorRepresentation['pads'][0] == 1 and self.operatorRepresentation['kernel_shape'][0] not in [3, 5]:
+                return False
 
             return ret
         return False
@@ -465,10 +459,7 @@ class PULPDWConv2DParser(Conv2DParser):
 
         if ret:
             
-            if len(node.inputs) == 3:
-                inputs = ['data_in', 'weight', 'bias']
-            else:                
-                inputs = ['data_in', 'weight']
+            inputs = ['data_in', 'weight', 'bias']
             
             for idx, inputNode in enumerate(node.inputs):
                 self.operatorRepresentation[inputs[idx]] = newCtxt.lookup(inputNode.name).name
@@ -477,27 +468,10 @@ class PULPDWConv2DParser(Conv2DParser):
                     self.operatorRepresentation['weight']).shape[0]:
                 return ctxt, False
 
-            data_in = newCtxt.lookup(self.operatorRepresentation['data_in'])
-            data_out = newCtxt.lookup(self.operatorRepresentation['data_out'])
+            _ = newCtxt.lookup(self.operatorRepresentation['data_in'])
+            _ = newCtxt.lookup(self.operatorRepresentation['data_out'])
             _ = newCtxt.lookup(self.operatorRepresentation['weight'])
-
-            if len(node.inputs) == 3:
-                _ = newCtxt.lookup(self.operatorRepresentation['bias'])
-
-            if channels_first:
-                self.operatorRepresentation['ch_im_in'] = data_in.shape[1]
-                self.operatorRepresentation['dim_im_in_x'] = data_in.shape[2]
-                self.operatorRepresentation['dim_im_in_y'] = data_in.shape[3]
-                self.operatorRepresentation['ch_im_out'] = data_out.shape[1]
-                self.operatorRepresentation['dim_im_out_x'] = data_out.shape[2]
-                self.operatorRepresentation['dim_im_out_y'] = data_out.shape[3]
-            else:
-                self.operatorRepresentation['ch_im_in'] = data_in.shape[1]
-                self.operatorRepresentation['dim_im_in_x'] = data_in.shape[2]
-                self.operatorRepresentation['dim_im_in_y'] = data_in.shape[3]
-                self.operatorRepresentation['ch_im_out'] = data_out.shape[3]
-                self.operatorRepresentation['dim_im_out_x'] = data_out.shape[1]
-                self.operatorRepresentation['dim_im_out_y'] = data_out.shape[2]
+            _ = newCtxt.lookup(self.operatorRepresentation['bias'])
 
             return newCtxt, True
 

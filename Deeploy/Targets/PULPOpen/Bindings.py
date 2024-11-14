@@ -187,13 +187,13 @@ PULPRQSDWConv2DBindings = [
     for type1, type2 in zip([int8_t, int8_t, uint8_t, uint8_t], [int8_t, uint8_t, int8_t, uint8_t])
 ]
 
-PULPDWConv2DBindings = [
+NNToolDWConv2DBindings = [
     NodeBinding(
         ConvChecker([
             PointerClass(int8_t),
             PointerClass(int8_t),
             PointerClass(int8_t),
-        ], [PointerClass(int32_t)]), ConvTemplate.PULPDWConv2D_8_Template, ForkTransformer)
+        ], [PointerClass(int32_t)]), ConvTemplate.NNToolDWConv2D_8_Template, ForkTransformer)
 ]
 
 PULPRQSGEMM_8_Binding = [
@@ -230,13 +230,13 @@ PULPMaxPool2DBindings = [
                 MaxPool2DTemplate.PULPMaxPool2D_8_Template, ForkTransformer) for type in [int8_t, uint8_t]
 ]
 
-PULPConv1DBinding = NodeBinding(
+PULPRQSConv1DBinding = NodeBinding(
     PULPConvChecker(
         [PointerClass(int8_t), PointerClass(int8_t),
          PointerClass(int32_t),
          PointerClass(int32_t)], [PointerClass(int8_t)]), ConvTemplate.PULPConv1D_8_Template, ForkTransformer)
 
-PULPDWConv1DBinding = NodeBinding(
+PULPRQSDWConv1DBinding = NodeBinding(
     PULPConvChecker(
         [PointerClass(int8_t), PointerClass(int8_t),
          PointerClass(int32_t),

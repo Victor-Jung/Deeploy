@@ -46,10 +46,10 @@ from Deeploy.Targets.Generic.Templates import AllocateTemplate as BasicAllocateT
 from Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes import IntegerDivRequantMergePass, \
     MergeConstAddAndRequantPass, MergeTrueIntegerDivRequantShiftPass, RQSSplitPass, SkipEmptyConcatPass, \
     SkipUnityRequantPass, iGELURequantMergePass, iHardswishRequantMergePass
-from Deeploy.Targets.PULPOpen.Bindings import PULPConv1DBinding, PULPDMASliceBindings, PULPDWConv1DBinding, PULPDWConv2DBindings, \
+from Deeploy.Targets.PULPOpen.Bindings import PULPRQSConv1DBinding, PULPDMASliceBindings, PULPRQSDWConv1DBinding, NNToolDWConv2DBindings, \
     PULPReduceMeanBindings
 from Deeploy.Targets.PULPOpen.Layers import PULPRQSConvLayer, PULPRQSGEMMLayer
-from Deeploy.Targets.PULPOpen.Parsers import PULPConv1DParser, PULPConv2DParser, PULPDWConv1DParser, PULPDWConv2DParser, \
+from Deeploy.Targets.PULPOpen.Parsers import PULPRQSConv1DParser, PULPRQSConv2DParser, PULPRQSDWConv1DParser, NNToolDWConv2DParser, \
     PULPRQSDWConv2DParser, PULPGEMMParser, PULPMatrixVecParser, PULPRQAddParser, PULPTallGEMMParser
 from Deeploy.Targets.PULPOpen.Templates import AllocateTemplate, FreeTemplate
 from Deeploy.Targets.PULPOpen.Tiler import PULPAddTilingReadyBindings, PULPConcatTilingReadyBindings, \
@@ -81,13 +81,13 @@ MatMulMapper = NodeMapper(MatMulParser(), PULPMatMulTilingReadyBindings)
 RQIntegerDivMapper = NodeMapper(RQIntegerDivParser(), [BasicRQIntegerDivBinding])
 RQGELU_int8_Mapper = NodeMapper(RQSiGELUParser(), PULPiRQSGELUTilingReadyBindings)
 
-Conv1DMapper = NodeMapper(PULPConv1DParser(), [PULPConv1DBinding])
-DWConv1DMapper = NodeMapper(PULPDWConv1DParser(), [PULPDWConv1DBinding])
+RQSConv1DMapper = NodeMapper(PULPRQSConv1DParser(), [PULPRQSConv1DBinding])
+RQSDWConv1DMapper = NodeMapper(PULPRQSDWConv1DParser(), [PULPRQSDWConv1DBinding])
 
-Conv2DMapper = NodeMapper(PULPConv2DParser(), PULPRQSConv2DTilingReadyBindings)
+RQSConv2DMapper = NodeMapper(PULPRQSConv2DParser(), PULPRQSConv2DTilingReadyBindings)
 RQSDWConv2DMapper = NodeMapper(PULPRQSDWConv2DParser(), PULPRQSDWConv2DTilingReadyBindings)
 
-DWConv2DMapper = NodeMapper(PULPDWConv2DParser(), PULPDWConv2DBindings)
+NNToolDWConv2DMapper = NodeMapper(NNToolDWConv2DParser(), NNToolDWConv2DBindings)
 
 GEMMMapper = NodeMapper(PULPGEMMParser(), PULPRQSGEMMTilingReadyBindings)
 MatrixVecMapper = NodeMapper(PULPMatrixVecParser(), PULPRQSMatrixVecTilingReadyBindings)
@@ -105,8 +105,8 @@ iHardswishMapper = NodeMapper(iHardswishParser(), PULPiHardswishTilingReadyBindi
 RQSiHardswishMapper = NodeMapper(RQSiHardswishParser(), PULPRQSiHardswishTilingReadyBindings)
 
 PULPMapping = {
-    'Conv': ConvLayer([DWConv2DMapper]),
-    'RequantizedConv': PULPRQSConvLayer([Conv2DMapper, RQSDWConv2DMapper, Conv1DMapper, DWConv1DMapper]),
+    'Conv': ConvLayer([NNToolDWConv2DMapper]),
+    'RequantizedConv': PULPRQSConvLayer([RQSConv2DMapper, RQSDWConv2DMapper, RQSConv1DMapper, RQSDWConv1DMapper]),
     'RequantizedGemm': PULPRQSGEMMLayer([MatrixVecMapper, TallGEMMMapper, GEMMMapper]),
     'MaxPool': MaxPoolLayer([MaxPool2DMapper]),
     'RequantizediGELU': RQSiGELULayer([RQGELU_int8_Mapper]),
