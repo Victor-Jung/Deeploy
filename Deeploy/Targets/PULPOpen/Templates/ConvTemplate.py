@@ -66,7 +66,7 @@ class PULP2DConvTemplate(NodeTemplate):
         return ctxt, operatorRepresentation, [im2col_name]
 
 
-class PULP2DDWConvTemplate(NodeTemplate):
+class PULP2DDWConvTemplate(PULP2DConvTemplate):
 
     def __init__(self, templateStr):
         super().__init__(templateStr)
