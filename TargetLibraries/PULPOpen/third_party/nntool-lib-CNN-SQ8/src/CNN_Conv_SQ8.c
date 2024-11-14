@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-// #include "at_api.h"
+// #include "Gap.h"
 #include "CNN_BasicKernels_SQ8.h"
 
-// static int CoreCountDynamic = 1;
-// static int ActiveCore = gap_ncore();
+static int CoreCountDynamic = 1;
+static int ActiveCore = gap_ncore();
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wextra"
@@ -32,9 +32,6 @@ static inline unsigned int __attribute__((always_inline)) ChunkSize(unsigned int
 	unsigned int NCore;
 	unsigned int Log2Core;
 	unsigned int Chunk;
-
-	int CoreCountDynamic = 1;
-	int ActiveCore = gap_ncore();
 
 	if (CoreCountDynamic) NCore = ActiveCore; else NCore = gap_ncore();
 	Log2Core = gap_fl1(NCore);
@@ -4406,7 +4403,7 @@ void KerParConv1x1Stride1_SQ8(KerConv_SQ8_T *Arg)
 			}
 		}
 	}
-	// gap_waitbarrier(0); //JUNGVI: Cannot run the kernel on single core if compiled for multiple cores
+	gap_waitbarrier(0);
 }
 
 void KerParConv1x1Stride2_SQ8(KerConv_SQ8_T *Arg)
@@ -4636,7 +4633,7 @@ void KerParConv3x3Stride1_SQ8(KerConv_SQ8_T *Arg)
 	int * __restrict__ Out = Arg->Out;
 	unsigned int CoreId = gap_coreid();
 	unsigned int Chunk = ChunkSize(OutFeatures);
-	unsigned int First = Min(Chunk*CoreId, OutFeatures);
+	unsigned int First = Chunk*CoreId;
 	unsigned int Last = Min(First+Chunk, OutFeatures);
 	v4s PadIn = Arg->Pad;
 
@@ -4646,7 +4643,7 @@ void KerParConv3x3Stride1_SQ8(KerConv_SQ8_T *Arg)
 	int Ho_F = Min(Ho, FirstDefinedOutput(FS, PadIn[2], S)), Ho_L = Max(Ho_F, LastDefinedOutput(Arg->UsedH, FS, PadIn[2], S));
 
 	unsigned int InFeatures = Arg->InFeatures;
-	unsigned int Iter = Last-First;
+	unsigned int Iter = Max(0, Last-First);
 	for (unsigned int i=0; i<Iter/2; i++) {
 		unsigned int of = First + 2*i;
 		for (unsigned int If=0; If<InFeatures; If++) {
@@ -5164,7 +5161,7 @@ void KerParConv1D_NStrideS_SQ8(KerConv_SQ8_T *Arg)
 
 	unsigned int CoreId = gap_coreid();
 	unsigned int Chunk = ChunkSize(OutFeatures);
-	unsigned int First = Min(Chunk*CoreId, OutFeatures);
+	unsigned int First = Chunk*CoreId;
 	unsigned int Last = Min(First+Chunk, OutFeatures);
 	v4s PadIn = Arg->Pad;
 
@@ -5173,7 +5170,7 @@ void KerParConv1D_NStrideS_SQ8(KerConv_SQ8_T *Arg)
 
 	unsigned int InFeatures = Arg->InFeatures;
 
-	unsigned int Iter = Last-First;
+	unsigned int Iter = Max(0, Last-First);
 	for (unsigned int i=0; i<Iter/4; i++) {
 		unsigned int of = 4*i+First;
 		for (unsigned int If=0; If<InFeatures; If++) {
@@ -5210,7 +5207,7 @@ void KerParConvNx1StrideSxS1_SQ8(KerConv_SQ8_T *Arg)
 
 	unsigned int CoreId = gap_coreid();
 	unsigned int Chunk = ChunkSize(OutFeatures);
-	unsigned int First = Min(Chunk*CoreId, OutFeatures);
+	unsigned int First = Chunk*CoreId;
 	unsigned int Last = Min(First+Chunk, OutFeatures);
 	v4s PadIn = Arg->Pad;
 
@@ -5220,7 +5217,7 @@ void KerParConvNx1StrideSxS1_SQ8(KerConv_SQ8_T *Arg)
 	int Ho_F = Min(Ho, FirstDefinedOutput(FSy, PadIn[2], Sy)), Ho_L = Max(Ho_F, LastDefinedOutput(Arg->UsedH, FSy, PadIn[2], Sy));
 
 	unsigned int InFeatures = Arg->InFeatures;
-	unsigned int Iter = Last-First;
+	unsigned int Iter = Max(0, Last-First);
 	for (unsigned int i=0; i<Iter/4; i++) {
 		unsigned int of = 4*i+First;
 		for (unsigned int If=0; If<InFeatures; If++) {
