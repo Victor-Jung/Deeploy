@@ -133,16 +133,19 @@ class NNTool2DDWConvTemplate(PULP1DConvTemplate):
     def __init__(self, templateStr):
         super().__init__(templateStr)
 
-    def alignToContext(self, ctxt: NetworkContext, operatorRepresentation: OperatorRepresentation) -> Tuple[OperatorRepresentation, Dict, List[str]]:
-        
+    def alignToContext(
+            self, ctxt: NetworkContext,
+            operatorRepresentation: OperatorRepresentation) -> Tuple[OperatorRepresentation, Dict, List[str]]:
+
         # JUNGVI: We have optimized kernels for kernel size 3 and 5 and strides 1 and 2
-        if operatorRepresentation['dim_kernel_x'] in [3, 5] and operatorRepresentation["strides"][0] in [1, 2]: 
+        if operatorRepresentation['dim_kernel_x'] in [3, 5] and operatorRepresentation["strides"][0] in [1, 2]:
             operatorRepresentation['strideSignature'] = str(operatorRepresentation['strides'][0])
         else:
             operatorRepresentation['strideSignature'] = "S"
 
         if operatorRepresentation['dim_kernel_x'] in [3, 5, 7]:
-            operatorRepresentation['kernelSizeSignature'] = str(operatorRepresentation['dim_kernel_x']) + "x" + str(operatorRepresentation['dim_kernel_y'])
+            operatorRepresentation['kernelSizeSignature'] = str(operatorRepresentation['dim_kernel_x']) + "x" + str(
+                operatorRepresentation['dim_kernel_y'])
         else:
             operatorRepresentation['kernelSizeSignature'] = "NxN"
 

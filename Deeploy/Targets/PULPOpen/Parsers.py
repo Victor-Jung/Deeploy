@@ -29,7 +29,8 @@ from typing import Tuple
 import onnx_graphsurgeon as gs
 
 from Deeploy.DeeployTypes import NetworkContext
-from Deeploy.Targets.Generic.Parsers import AddParser, GEMMParser, RQSConv1DParser, RQSConv2DParser, RQSParserInterface, Conv2DParser
+from Deeploy.Targets.Generic.Parsers import AddParser, Conv2DParser, GEMMParser, RQSConv1DParser, RQSConv2DParser, \
+    RQSParserInterface
 
 
 class PULPRQAddParser(AddParser):
@@ -426,7 +427,7 @@ class PULPTallGEMMParser(PULPGEMMParser):
 class NNToolDWConv2DParser(Conv2DParser):
 
     def __init__(self, noBiasHoisting = True):
-            super().__init__(noBiasHoisting)
+        super().__init__(noBiasHoisting)
 
     def parseNode(self, node: gs.Node) -> (bool):
 
@@ -438,29 +439,33 @@ class NNToolDWConv2DParser(Conv2DParser):
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][2],
                 self.operatorRepresentation['pads'][1] == self.operatorRepresentation['pads'][3],
                 self.operatorRepresentation['pads'][0] == self.operatorRepresentation['pads'][1],
-                len(node.inputs) == 3, # JUNVI: NNTools Conv kernels require a bias
+                len(node.inputs) == 3,  # JUNVI: NNTools Conv kernels require a bias
                 self.operatorRepresentation['pads'][0] in [0, 1],
-                self.operatorRepresentation['strides'][0] == self.operatorRepresentation['strides'][1], # JUNGVI: Not supported yet
-                self.operatorRepresentation['dim_kernel_x'] == self.operatorRepresentation['dim_kernel_y'], # JUNGVI: Not supported yet
+                self.operatorRepresentation['strides'][0] == self.operatorRepresentation['strides']
+                [1],  # JUNGVI: Not supported yet
+                self.operatorRepresentation['dim_kernel_x'] ==
+                self.operatorRepresentation['dim_kernel_y'],  # JUNGVI: Not supported yet
             ])
 
-            if self.operatorRepresentation['pads'][0] == 1 and self.operatorRepresentation['kernel_shape'][0] not in [3, 5]:
+            if self.operatorRepresentation['pads'][0] == 1 and self.operatorRepresentation['kernel_shape'][0] not in [
+                    3, 5
+            ]:
                 return False
 
             return ret
         return False
 
     def parseNodeCtxt(self,
-                    ctxt: NetworkContext,
-                    node: gs.Node,
-                    channels_first: bool = True) -> Tuple[NetworkContext, bool]:
+                      ctxt: NetworkContext,
+                      node: gs.Node,
+                      channels_first: bool = True) -> Tuple[NetworkContext, bool]:
 
         newCtxt, ret = super().parseNodeCtxt(ctxt, node)
 
         if ret:
-            
+
             inputs = ['data_in', 'weight', 'bias']
-            
+
             for idx, inputNode in enumerate(node.inputs):
                 self.operatorRepresentation[inputs[idx]] = newCtxt.lookup(inputNode.name).name
 

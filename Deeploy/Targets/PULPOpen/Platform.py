@@ -35,9 +35,9 @@ from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import Me
 from Deeploy.Targets.CortexM.Parsers import CMSISMaxPool2DParser
 from Deeploy.Targets.Generic.Bindings import BasicGatherBindings, BasicPad1DBindings, BasicPad2DBindings, \
     BasicReshapeBindings, BasicRQIntegerDivBinding
-from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, ConvLayer, GatherLayer, MatMulLayer, MaxPoolLayer, MulLayer, \
-    PadLayer, ReduceMeanLayer, RequantShiftLayer, ReshapeLayer, RQIntegerDivLayer, RQSiGELULayer, RQSiHardswishLayer, \
-    SliceLayer, TransposeLayer, iHardswishLayer, iRMSNormLayer, iSoftmaxLayer
+from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, ConvLayer, GatherLayer, MatMulLayer, MaxPoolLayer, \
+    MulLayer, PadLayer, ReduceMeanLayer, RequantShiftLayer, ReshapeLayer, RQIntegerDivLayer, RQSiGELULayer, \
+    RQSiHardswishLayer, SliceLayer, TransposeLayer, iHardswishLayer, iRMSNormLayer, iSoftmaxLayer
 from Deeploy.Targets.Generic.Parsers import AddParser, ConcatParser, FlattenParser, GatherParser, MatMulParser, \
     MulParser, Pad1DParser, Pad2DParser, ReduceMeanParser, RequantShiftParser, ReshapeParser, RQIntegerDivParser, \
     RQSiGELUParser, RQSiHardswishParser, SliceParser, TransposeParser, UniformRequantShiftParser, UnsqueezeParser, \
@@ -46,11 +46,12 @@ from Deeploy.Targets.Generic.Templates import AllocateTemplate as BasicAllocateT
 from Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes import IntegerDivRequantMergePass, \
     MergeConstAddAndRequantPass, MergeTrueIntegerDivRequantShiftPass, RQSSplitPass, SkipEmptyConcatPass, \
     SkipUnityRequantPass, iGELURequantMergePass, iHardswishRequantMergePass
-from Deeploy.Targets.PULPOpen.Bindings import PULPRQSConv1DBinding, PULPDMASliceBindings, PULPRQSDWConv1DBinding, NNToolDWConv2DBindings, \
-    PULPReduceMeanBindings
+from Deeploy.Targets.PULPOpen.Bindings import NNToolDWConv2DBindings, PULPDMASliceBindings, PULPReduceMeanBindings, \
+    PULPRQSConv1DBinding, PULPRQSDWConv1DBinding
 from Deeploy.Targets.PULPOpen.Layers import PULPRQSConvLayer, PULPRQSGEMMLayer
-from Deeploy.Targets.PULPOpen.Parsers import PULPRQSConv1DParser, PULPRQSConv2DParser, PULPRQSDWConv1DParser, NNToolDWConv2DParser, \
-    PULPRQSDWConv2DParser, PULPGEMMParser, PULPMatrixVecParser, PULPRQAddParser, PULPTallGEMMParser
+from Deeploy.Targets.PULPOpen.Parsers import NNToolDWConv2DParser, PULPGEMMParser, PULPMatrixVecParser, \
+    PULPRQAddParser, PULPRQSConv1DParser, PULPRQSConv2DParser, PULPRQSDWConv1DParser, PULPRQSDWConv2DParser, \
+    PULPTallGEMMParser
 from Deeploy.Targets.PULPOpen.Templates import AllocateTemplate, FreeTemplate
 from Deeploy.Targets.PULPOpen.Tiler import PULPAddTilingReadyBindings, PULPConcatTilingReadyBindings, \
     PULPFlattenTilingReadyBindings, PULPiHardswishTilingReadyBindings, PULPiRMSNormTilingReadyBindings, \
@@ -221,7 +222,8 @@ PULPOptimizer = TopologyOptimizer([
 
 # SCHEREMO: stdint is included before pulp_nn_kernels.h because it is supposed to be included in there, but isn't...
 _includeList = [
-    "pmsis.h", "stdint.h", "pulp_nn_kernels.h", "DeeployBasicMath.h", "dory_dma.h", "dory_mem.h", "bsp/ram.h", "CNN_BasicKernels_SQ8.h"
+    "pmsis.h", "stdint.h", "pulp_nn_kernels.h", "DeeployBasicMath.h", "dory_dma.h", "dory_mem.h", "bsp/ram.h",
+    "CNN_BasicKernels_SQ8.h"
 ]
 
 
