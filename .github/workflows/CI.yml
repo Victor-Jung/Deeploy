@@ -30,7 +30,7 @@ jobs:
         test1DConvolution
         test2DConvolution
         test1DDWConvolution
-        test2DDWConvolution
+        2DDWConvolution/test2DDWConvolution3x3S1P0NoBias
         test1DPad
         test2DPad
         testGEMM
@@ -96,7 +96,7 @@ jobs:
           test1DConvolution
           test2DConvolution
           test1DDWConvolution
-          test2DDWConvolution
+          2DDWConvolution/test2DDWConvolution3x3S1P0NoBias
           test1DPad
           test2DPad
           testGEMM
