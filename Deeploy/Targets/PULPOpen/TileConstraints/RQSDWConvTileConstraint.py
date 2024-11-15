@@ -1,10 +1,10 @@
 # ----------------------------------------------------------------------
 #
-# File: DWConvTileConstraint.py
+# File: ConvTileConstraint.py
 #
-# Last edited: 15.11.2024
+# Last edited: 09.05.2023
 #
-# Copyright (C) 2024, ETH Zurich and University of Bologna.
+# Copyright (C) 2023, ETH Zurich and University of Bologna.
 #
 # Author:
 # - Victor Jung, jungvi@iis.ee.ethz.ch, ETH Zurich
@@ -24,7 +24,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from typing import Dict, List, Tuple, Union
 
 from ortools.constraint_solver.pywrapcp import IntVar
@@ -40,7 +39,7 @@ from Deeploy.TilingExtension.TilingCodegen import AbsoluteHyperRectangle, HyperR
     VariableReplacementScheme
 
 
-class DWConv2DTileConstraint(TileConstraint):
+class RQSDWConv2DTileConstraint(TileConstraint):
 
     @staticmethod
     def addGeometricalConstraint(tilerModel: TilerModel, parseDict: Dict, ctxt: NetworkContext) -> TilerModel:
@@ -51,45 +50,48 @@ class DWConv2DTileConstraint(TileConstraint):
         # Get to-be-tiled tensor's buffers
         inputBufferName = parseDict['data_in']
         weightBufferName = parseDict['weight']
-        biasBufferName = parseDict['bias']
+        mulBufferName = parseDict['mul']
+        addBufferName = parseDict['add']
         outputBufferName = parseDict['data_out']
 
         strides = parseDict["strides"]
         padding = parseDict["pads"]
         dilation = parseDict["dilations"]
 
-        # JUNGVI: FIXME
-        ctxt.lookup(biasBufferName).shape = [ctxt.lookup(biasBufferName).shape]
-
         # Add I/O dimensions to the model as variables
-        for bufferName in [inputBufferName, weightBufferName, biasBufferName, outputBufferName]:
+        for bufferName in [inputBufferName, weightBufferName, mulBufferName, addBufferName, outputBufferName]:
             tilerModel.addTensorDimToModel(ctxt, bufferName)
 
-        biasVar = tilerModel.getTensorDimVar(tensorName = biasBufferName, dimIdx = 0)
-
         # SCHEREMO: NCHW layout
+
         inputBatchVar = tilerModel.getTensorDimVar(tensorName = inputBufferName, dimIdx = 0)
         inputHeightVar = tilerModel.getTensorDimVar(tensorName = inputBufferName, dimIdx = 2)
         inputWidthVar = tilerModel.getTensorDimVar(tensorName = inputBufferName, dimIdx = 3)
         inputChannelVar = tilerModel.getTensorDimVar(tensorName = inputBufferName, dimIdx = 1)
 
-        # SCHEREMO: GCHW layout
-        weightOutChannelVar = tilerModel.getTensorDimVar(tensorName = weightBufferName, dimIdx = 0)
-        weightHeightVar = tilerModel.getTensorDimVar(tensorName = weightBufferName, dimIdx = 2)
-        weightWidthVar = tilerModel.getTensorDimVar(tensorName = weightBufferName, dimIdx = 3)
+        # SCHEREMO: CHW layout
 
-        # SCHEREMO: NCHW layout
+        weightOutChannelVar = tilerModel.getTensorDimVar(tensorName = weightBufferName, dimIdx = 0)
+        weightHeightVar = tilerModel.getTensorDimVar(tensorName = weightBufferName, dimIdx = 1)
+        weightWidthVar = tilerModel.getTensorDimVar(tensorName = weightBufferName, dimIdx = 2)
+
+        # SCHEREMO: NHWC layout
+
         outputBatchVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 0)
-        outputHeightVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 2)
-        outputWidthVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 3)
-        outputChannelVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 1)
+        outputHeightVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 1)
+        outputWidthVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 2)
+        outputChannelVar = tilerModel.getTensorDimVar(tensorName = outputBufferName, dimIdx = 3)
+
+        addChannelVar = tilerModel.getTensorDimVar(tensorName = addBufferName, dimIdx = 0)
+        mulChannelVar = tilerModel.getTensorDimVar(tensorName = mulBufferName, dimIdx = 0)
 
         # map output dims to inputs dims
         tilerModel.addConstraint(outputBatchVar == inputBatchVar)  # Batch
         tilerModel.addConstraint(outputChannelVar == weightOutChannelVar)  # Output Channel
         tilerModel.addConstraint(outputChannelVar == inputChannelVar)  # Input Channel
 
-        tilerModel.addConstraint(outputChannelVar == biasVar)
+        tilerModel.addConstraint(outputChannelVar == addChannelVar)
+        tilerModel.addConstraint(outputChannelVar == mulChannelVar)
 
         inputBuffer = ctxt.lookup(inputBufferName)
 
@@ -109,24 +111,16 @@ class DWConv2DTileConstraint(TileConstraint):
         outputBuffer = ctxt.lookup(name = parseDict['data_out'])
         weightBuffer = ctxt.lookup(name = parseDict['weight'])
 
-        # JUNGVI: NCHW layout
-        outputHeightVar = tilerModel.getTensorDimVar(tensorName = outputBuffer.name, dimIdx = 2)
-        outputWidthVar = tilerModel.getTensorDimVar(tensorName = outputBuffer.name, dimIdx = 3)
+        outputHeightVar = tilerModel.getTensorDimVar(tensorName = outputBuffer.name, dimIdx = 1)
+        outputWidthVar = tilerModel.getTensorDimVar(tensorName = outputBuffer.name, dimIdx = 2)
 
-        # JUNGVI: NCHW layout
         inputHeightVar = tilerModel.getTensorDimVar(tensorName = inputBuffer.name, dimIdx = 2)
         inputWidthVar = tilerModel.getTensorDimVar(tensorName = inputBuffer.name, dimIdx = 3)
         inputChannelVar = tilerModel.getTensorDimVar(tensorName = inputBuffer.name, dimIdx = 1)
 
-        # JUNGVI: GCHW layout
-        weightHeightVar = tilerModel.getTensorDimVar(tensorName = weightBuffer.name, dimIdx = 2)
-        weightWidthVar = tilerModel.getTensorDimVar(tensorName = weightBuffer.name, dimIdx = 3)
-
-        # JUNVI: Tile over the channels only
-        tilerModel.addConstraint(inputHeightVar == parseDict['dim_im_in_x'])
-        tilerModel.addConstraint(inputWidthVar == parseDict['dim_im_in_y'])
-        tilerModel.addConstraint(outputHeightVar == parseDict['dim_im_out_x'])
-        tilerModel.addConstraint(outputWidthVar == parseDict['dim_im_out_y'])
+        weightHeightVar = tilerModel.getTensorDimVar(tensorName = weightBuffer.name, dimIdx = 1)
+        weightWidthVar = tilerModel.getTensorDimVar(tensorName = weightBuffer.name, dimIdx = 2)
+        weightInChannelVar = tilerModel.getTensorDimVar(tensorName = weightBuffer.name, dimIdx = 0)
 
         # SCHEREMO: Work around tiling issue with non-wordaligned accesses
         if "L3" in ctxt.lookup(parseDict['data_in'])._memoryLevel:
@@ -172,17 +166,17 @@ class DWConv2DTileConstraint(TileConstraint):
             operatorRepresentation: OperatorRepresentation) -> Tuple[VariableReplacementScheme, TilingSchedule]:
         outputCubes = [cube.rectangle for cube in absoluteOutputCubes]
 
-        addrNames = ['data_in', 'weight', 'bias', 'data_out']
+        addrNames = ['data_in', 'weight', 'mul', 'add', 'data_out']
         inputBaseOffsets, outputBaseOffsets = cls.extractBaseAddr(tilingSolution, targetMemLevel,
                                                                   operatorRepresentation, addrNames)
 
         varWeight = operatorRepresentation['weight']
-        varBias = operatorRepresentation['bias']
         varOut = operatorRepresentation['data_out']
 
         inputInCubes = []
+        inputAddCubes = []
+        inputMulCubes = []
         inputWeightCubes = []
-        inputBiasCubes = []
         replacements: Dict[str, List[int]] = {
             "dim_im_in_x": [],
             "dim_im_in_y": [],
@@ -209,28 +203,30 @@ class DWConv2DTileConstraint(TileConstraint):
             "padding_x_right": PointerClass(uint8_t)
         }
 
-        # JUNGVI: GCHW Layout
-        weightH = ctxt.lookup(varWeight).shape[2]
-        weightW = ctxt.lookup(varWeight).shape[3]
+        weightH = ctxt.lookup(varWeight).shape[1]
+        weightW = ctxt.lookup(varWeight).shape[2]
 
-        padding_top, padding_bottom, padding_left, padding_right = operatorRepresentation['pads']
+        pads = operatorRepresentation['pads']
         strides = operatorRepresentation['strides']
 
         for cube in outputCubes:
 
-            # JUNGVI: GCHW Layout
-            (BatchOffset, COffset, HOffset, WOffset) = cube.offset
-            (BatchSize, CSize, HSize, WSize) = cube.dims
-            
-            # JUNGVI: To double-check
-            InCube = HyperRectangle((BatchOffset, COffset, HOffset, WOffset),
-                                (BatchSize, CSize, operatorRepresentation['dim_im_in_x'], operatorRepresentation['dim_im_in_y']))
-            
-            WeightCube = HyperRectangle((COffset, 0, 0, 0), (CSize, 1, weightH, weightW))
-            BiasCube = HyperRectangle((COffset,), (CSize,))
+            (BatchOffset, HOffset, WOffset, COffset) = cube.offset
+            (BatchSize, HSize, WSize, CSize) = cube.dims
 
-            replacements['dim_im_in_x'].append(InCube.dims[2])
-            replacements['dim_im_in_y'].append(InCube.dims[3])
+            NHWCInCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((weightH, weightW), pads, strides, CSize,
+                                                                              cube,
+                                                                              ctxt.lookup(varOut).shape)
+            padding_left, padding_right, padding_top, padding_bottom = padding_tuple
+
+            NCHWInCube = HyperRectangle((NHWCInCube.offset[0], COffset, NHWCInCube.offset[1], NHWCInCube.offset[2]),
+                                        (NHWCInCube.dims[0], CSize, NHWCInCube.dims[1], NHWCInCube.dims[2]))
+
+            RequantCube = HyperRectangle((COffset,), (CSize,))
+            WeightCube = HyperRectangle((COffset, 0, 0, 0), (CSize, weightH, weightW, 1))
+
+            replacements['dim_im_in_x'].append(NCHWInCube.dims[2])
+            replacements['dim_im_in_y'].append(NCHWInCube.dims[3])
             replacements['dim_im_out_x'].append(HSize)
             replacements['dim_im_out_y'].append(WSize)
             replacements['ch_im_out'].append(CSize)
@@ -241,15 +237,16 @@ class DWConv2DTileConstraint(TileConstraint):
             replacements['padding_x_left'].append(padding_left)
             replacements['padding_x_right'].append(padding_right)
 
-            inputInCubes.append(InCube)
-            inputBiasCubes.append(BiasCube)
+            inputInCubes.append(NCHWInCube)
+            inputAddCubes.append(RequantCube)
+            inputMulCubes.append(RequantCube)
             inputWeightCubes.append(WeightCube)
 
         inputLoadSchedule = []
         outputLoadSchedule = []
 
-        for a, b, bias in zip(inputInCubes, inputWeightCubes, inputBiasCubes):
-            inputLoadSchedule.append({"data_in": a, "weight": b, "bias": bias})
+        for a, b, add, mul in zip(inputInCubes, inputWeightCubes, inputAddCubes, inputMulCubes):
+            inputLoadSchedule.append({"data_in": a, "weight": b, "add": add, "mul": mul})
 
         for out in outputCubes:
             outputLoadSchedule.append({"data_out": out})

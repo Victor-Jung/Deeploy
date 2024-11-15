@@ -38,7 +38,7 @@ from Deeploy.TilingExtension.TilingCodegen import AbsoluteHyperRectangle, HyperR
     VariableReplacementScheme
 
 
-class Conv2DTileConstraint(TileConstraint):
+class RQSConv2DTileConstraint(TileConstraint):
 
     @staticmethod
     def addGeometricalConstraint(tilerModel: TilerModel, parseDict: Dict, ctxt: NetworkContext) -> TilerModel:
@@ -115,7 +115,7 @@ class Conv2DTileConstraint(TileConstraint):
         strides = parseDict["strides"]
         padding = parseDict["pads"]
 
-        # VIC: Force at least one row of A and one col of B in the GEMM (since it's a im2col Conv) to avoid partial results
+        # JUNGVI: Force at least one row of A and one col of B in the GEMM (since it's a im2col Conv) to avoid partial results
         tilerModel.addConstraint(inputChannelVar == parseDict['ch_im_in'])
 
         if (parseDict["ch_im_out"] >= 8):
@@ -125,7 +125,7 @@ class Conv2DTileConstraint(TileConstraint):
         tilerModel.addConstraint(inputWidthVar >= parseDict['dim_kernel_y'])
         tilerModel.addConstraint(weightInChannelVar == parseDict['ch_im_in'])
 
-        # VIC: Constraint the minimum tile size such that we can apply at least one kernel on it
+        # JUNGVI: Constraint the minimum tile size such that we can apply at least one kernel on it
         tilerModel.addConstraint(inputHeightVar >= parseDict['dim_kernel_x'])
         tilerModel.addConstraint(inputWidthVar >= parseDict['dim_kernel_y'])
 
@@ -177,7 +177,7 @@ class Conv2DTileConstraint(TileConstraint):
         (BatchOffset, HOffset, WOffset, COffset) = outputCube.offset
         (BatchSize, HSize, WSize, CSize) = outputCube.dims
 
-        leftMargin, rightMargin, topMargin, bottomMargin = Conv2DTileConstraint.computeMargins(kernelShape)
+        leftMargin, rightMargin, topMargin, bottomMargin = RQSConv2DTileConstraint.computeMargins(kernelShape)
 
         padding_top = (HOffset == 0) * pads[0]
         padding_bottom = (HOffset + HSize == outputDims[1]) * pads[2]
@@ -249,7 +249,7 @@ class Conv2DTileConstraint(TileConstraint):
             (BatchOffset, HOffset, WOffset, COffset) = cube.offset
             (BatchSize, HSize, WSize, CSize) = cube.dims
 
-            InCube, padding_tuple = Conv2DTileConstraint.computeInputCube((weightH, weightW), pads, strides, weightC,
+            InCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((weightH, weightW), pads, strides, weightC,
                                                                           cube,
                                                                           ctxt.lookup(varOut).shape)
             padding_left, padding_right, padding_top, padding_bottom = padding_tuple

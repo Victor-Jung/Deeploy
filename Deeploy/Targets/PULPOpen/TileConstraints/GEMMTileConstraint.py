@@ -97,7 +97,7 @@ class GEMMTileConstraint(TileConstraint):
         BSecondDimVar = tilerModel.getTensorDimVar(tensorName = bufferB.name,
                                                    dimIdx = dimOffsetB + 1 - parseDict['transB'])
 
-        # VIC: We don't want to deal with intermediate results between kernel calls
+        # JUNGVI: We don't want to deal with intermediate results between kernel calls
         tilerModel.addConstraint(ASecondDimVar == parseDict['N'])
         tilerModel.addConstraint(BFirstDimVar == parseDict['N'])
 

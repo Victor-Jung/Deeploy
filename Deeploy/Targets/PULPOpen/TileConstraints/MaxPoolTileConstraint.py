@@ -29,7 +29,7 @@ from typing import Dict, List, Tuple
 from Deeploy.AbstractDataTypes import PointerClass
 from Deeploy.CommonExtensions.DataTypes import uint8_t, uint16_t
 from Deeploy.DeeployTypes import NetworkContext, OperatorRepresentation
-from Deeploy.Targets.PULPOpen.TileConstraints.ConvTileConstraint import Conv2DTileConstraint
+from Deeploy.Targets.PULPOpen.TileConstraints.RQSConvTileConstraint import RQSConv2DTileConstraint
 from Deeploy.TilingExtension.MemoryConstraints import NodeMemoryConstraint
 from Deeploy.TilingExtension.TileConstraint import TileConstraint
 from Deeploy.TilingExtension.TilerModel import TilerModel
@@ -87,7 +87,7 @@ class MaxPoolTileConstraint(TileConstraint):
 
         strides = parseDict["strides"]
 
-        # VIC: Constraint the minimum tile size such that we can apply at least one kernel on it
+        # JUNGVI: Constraint the minimum tile size such that we can apply at least one kernel on it
         tilerModel.addConstraint(inputChannelVar == parseDict['ch_im_in'])
         tilerModel.addConstraint(inputHeightVar >= parseDict['dim_kernel_x'])
         tilerModel.addConstraint(inputWidthVar >= parseDict['dim_kernel_y'])
@@ -142,7 +142,7 @@ class MaxPoolTileConstraint(TileConstraint):
             (BatchOffset, HOffset, WOffset, COffset) = cube.offset
             (BatchSize, HSize, WSize, CSize) = cube.dims
 
-            InCube, padding_tuple = Conv2DTileConstraint.computeInputCube((kernelShape[0], kernelShape[1]), pads,
+            InCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((kernelShape[0], kernelShape[1]), pads,
                                                                           strides, CSize, cube,
                                                                           ctxt.lookup(varOut).shape)
             padding_left, padding_right, padding_top, padding_bottom = padding_tuple

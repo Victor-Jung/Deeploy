@@ -95,11 +95,11 @@ class MatMulTileConstraint(TileConstraint):
         BSecondDimVar = tilerModel.getTensorDimVar(tensorName = bufferB.name,
                                                    dimIdx = (tensorsShapeLen - 1) - parseDict['transB'])
 
-        # VIC: We don't want to deal with intermediate results between kernel calls
+        # JUNGVI: We don't want to deal with intermediate results between kernel calls
         tilerModel.addConstraint(ASecondDimVar == parseDict['N'])
         tilerModel.addConstraint(BFirstDimVar == parseDict['N'])
 
-        # VIC: For now we tile only one of the inputs
+        # JUNGVI: For now we tile only one of the inputs
         tilerModel.addConstraint(BSecondDimVar == parseDict['O'])
 
         return tilerModel
