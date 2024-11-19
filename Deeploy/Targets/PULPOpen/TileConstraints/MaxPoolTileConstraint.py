@@ -143,8 +143,8 @@ class MaxPoolTileConstraint(TileConstraint):
             (BatchSize, HSize, WSize, CSize) = cube.dims
 
             InCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((kernelShape[0], kernelShape[1]), pads,
-                                                                          strides, CSize, cube,
-                                                                          ctxt.lookup(varOut).shape)
+                                                                             strides, CSize, cube,
+                                                                             ctxt.lookup(varOut).shape)
             padding_left, padding_right, padding_top, padding_bottom = padding_tuple
 
             replacements['dim_im_in_x'].append(InCube.dims[1])

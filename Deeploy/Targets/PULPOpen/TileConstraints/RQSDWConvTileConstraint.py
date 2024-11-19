@@ -214,9 +214,9 @@ class RQSDWConv2DTileConstraint(TileConstraint):
             (BatchOffset, HOffset, WOffset, COffset) = cube.offset
             (BatchSize, HSize, WSize, CSize) = cube.dims
 
-            NHWCInCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((weightH, weightW), pads, strides, CSize,
-                                                                              cube,
-                                                                              ctxt.lookup(varOut).shape)
+            NHWCInCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((weightH, weightW), pads, strides,
+                                                                                 CSize, cube,
+                                                                                 ctxt.lookup(varOut).shape)
             padding_left, padding_right, padding_top, padding_bottom = padding_tuple
 
             NCHWInCube = HyperRectangle((NHWCInCube.offset[0], COffset, NHWCInCube.offset[1], NHWCInCube.offset[2]),

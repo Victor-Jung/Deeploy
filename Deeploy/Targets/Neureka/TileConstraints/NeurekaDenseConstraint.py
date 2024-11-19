@@ -187,8 +187,8 @@ class NeurekaDenseConv2DTileConstraint(TileConstraint):
             (BatchSize, HSize, WSize, CSize) = cube.dims
 
             InCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((weightH, weightW), pads, strides, weightC,
-                                                                          cube,
-                                                                          ctxt.lookup(varOut).shape)
+                                                                             cube,
+                                                                             ctxt.lookup(varOut).shape)
             padding_left, padding_right, padding_top, padding_bottom = padding_tuple
 
             replacements['padding_y_top'].append(padding_top)
@@ -446,8 +446,8 @@ class NeurekaWmemDenseConv2DTileConstraint(TileConstraint):
             (BatchSize, HSize, WSize, CSize) = cube.dims
 
             InCube, padding_tuple = RQSConv2DTileConstraint.computeInputCube((weightH, weightW), pads, strides, weightC,
-                                                                          cube,
-                                                                          ctxt.lookup(varOut).shape)
+                                                                             cube,
+                                                                             ctxt.lookup(varOut).shape)
             padding_left, padding_right, padding_top, padding_bottom = padding_tuple
 
             replacements['padding_y_top'].append(padding_top)

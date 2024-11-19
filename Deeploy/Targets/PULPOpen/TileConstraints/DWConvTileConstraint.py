@@ -24,7 +24,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from typing import Dict, List, Tuple, Union
 
 from ortools.constraint_solver.pywrapcp import IntVar
@@ -32,7 +31,6 @@ from ortools.constraint_solver.pywrapcp import IntVar
 from Deeploy.AbstractDataTypes import PointerClass
 from Deeploy.CommonExtensions.DataTypes import uint8_t, uint16_t
 from Deeploy.DeeployTypes import NetworkContext, OperatorRepresentation
-from Deeploy.Targets.PULPOpen.TileConstraints.RQSConvTileConstraint import RQSConv2DTileConstraint
 from Deeploy.TilingExtension.MemoryConstraints import NodeMemoryConstraint
 from Deeploy.TilingExtension.TileConstraint import TileConstraint
 from Deeploy.TilingExtension.TilerModel import PerformanceHint, TilerModel
@@ -221,11 +219,12 @@ class DWConv2DTileConstraint(TileConstraint):
             # JUNGVI: GCHW Layout
             (BatchOffset, COffset, HOffset, WOffset) = cube.offset
             (BatchSize, CSize, HSize, WSize) = cube.dims
-            
+
             # JUNGVI: To double-check
-            InCube = HyperRectangle((BatchOffset, COffset, HOffset, WOffset),
-                                (BatchSize, CSize, operatorRepresentation['dim_im_in_x'], operatorRepresentation['dim_im_in_y']))
-            
+            InCube = HyperRectangle(
+                (BatchOffset, COffset, HOffset, WOffset),
+                (BatchSize, CSize, operatorRepresentation['dim_im_in_x'], operatorRepresentation['dim_im_in_y']))
+
             WeightCube = HyperRectangle((COffset, 0, 0, 0), (CSize, 1, weightH, weightW))
             BiasCube = HyperRectangle((COffset,), (CSize,))
 

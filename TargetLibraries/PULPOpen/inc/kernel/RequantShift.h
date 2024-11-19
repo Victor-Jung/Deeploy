@@ -31,52 +31,53 @@
 #include "DeeployPULPMath.h"
 
 void PULPRequantShift_u8_s8_NHWC(uint8_t *data_in, int32_t size, int32_t *mul,
-                             int32_t *add, int8_t *data_out, int32_t log2D,
-                             int32_t channels, int32_t input_offset,
-                             int32_t output_offset, int8_t output_min,
-                             int8_t output_max, bool rounding);
+                                 int32_t *add, int8_t *data_out, int32_t log2D,
+                                 int32_t channels, int32_t input_offset,
+                                 int32_t output_offset, int8_t output_min,
+                                 int8_t output_max, bool rounding);
 
 void PULPRequantShift_u16_s8_NHWC(uint16_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, int8_t *data_out, int32_t log2D,
-                              int32_t channels, int32_t input_offset,
-                              int32_t output_offset, int8_t output_min,
-                              int8_t output_max, bool rounding);
+                                  int32_t *add, int8_t *data_out, int32_t log2D,
+                                  int32_t channels, int32_t input_offset,
+                                  int32_t output_offset, int8_t output_min,
+                                  int8_t output_max, bool rounding);
 
 void PULPRequantShift_u32_s8_NHWC(uint32_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, int8_t *data_out, int32_t log2D,
-                              int32_t channels, int32_t input_offset,
-                              int32_t output_offset, int8_t output_min,
-                              int8_t output_max, bool rounding);
+                                  int32_t *add, int8_t *data_out, int32_t log2D,
+                                  int32_t channels, int32_t input_offset,
+                                  int32_t output_offset, int8_t output_min,
+                                  int8_t output_max, bool rounding);
 
 void PULPRequantShift_u8_s8_NCHW(uint8_t *data_in, int32_t size, int32_t *mul,
-                             int32_t *add, int8_t *data_out, int32_t log2D,
-                             int32_t HW, int32_t input_offset,
-                             int32_t output_offset, int8_t output_min,
-                             int8_t output_max, bool rounding);
+                                 int32_t *add, int8_t *data_out, int32_t log2D,
+                                 int32_t HW, int32_t input_offset,
+                                 int32_t output_offset, int8_t output_min,
+                                 int8_t output_max, bool rounding);
 
 void PULPRequantShift_u16_s8_NCHW(uint16_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, int8_t *data_out, int32_t log2D,
-                              int32_t HW, int32_t input_offset,
-                              int32_t output_offset, int8_t output_min,
-                              int8_t output_max, bool rounding);
+                                  int32_t *add, int8_t *data_out, int32_t log2D,
+                                  int32_t HW, int32_t input_offset,
+                                  int32_t output_offset, int8_t output_min,
+                                  int8_t output_max, bool rounding);
 
 void PULPRequantShift_u32_s8_NCHW(uint32_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, int8_t *data_out, int32_t log2D,
-                              int32_t HW, int32_t input_offset,
-                              int32_t output_offset, int8_t output_min,
-                              int8_t output_max, bool rounding);
+                                  int32_t *add, int8_t *data_out, int32_t log2D,
+                                  int32_t HW, int32_t input_offset,
+                                  int32_t output_offset, int8_t output_min,
+                                  int8_t output_max, bool rounding);
 
 void PULPRequantShift_u8_u8_NHWC(uint8_t *data_in, int32_t size, int32_t *mul,
-                             int32_t *add, uint8_t *data_out, int32_t log2D,
-                             int32_t channels, int32_t input_offset,
-                             int32_t output_offset, uint8_t output_min,
-                             uint8_t output_max, bool rounding);
+                                 int32_t *add, uint8_t *data_out, int32_t log2D,
+                                 int32_t channels, int32_t input_offset,
+                                 int32_t output_offset, uint8_t output_min,
+                                 uint8_t output_max, bool rounding);
 
 void PULPRequantShift_u16_u8_NHWC(uint16_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, uint8_t *data_out, int32_t log2D,
-                              int32_t channels, int32_t input_offset,
-                              int32_t output_offset, uint8_t output_min,
-                              uint8_t output_max, bool rounding);
+                                  int32_t *add, uint8_t *data_out,
+                                  int32_t log2D, int32_t channels,
+                                  int32_t input_offset, int32_t output_offset,
+                                  uint8_t output_min, uint8_t output_max,
+                                  bool rounding);
 
 void RequantShift_u32_u8_NHWC(uint32_t *data_in, int32_t size, int32_t *mul,
                               int32_t *add, uint8_t *data_out, int32_t log2D,
@@ -85,16 +86,17 @@ void RequantShift_u32_u8_NHWC(uint32_t *data_in, int32_t size, int32_t *mul,
                               uint8_t output_max, bool rounding);
 
 void PULPRequantShift_u8_u8_NCHW(uint8_t *data_in, int32_t size, int32_t *mul,
-                             int32_t *add, uint8_t *data_out, int32_t log2D,
-                             int32_t HW, int32_t input_offset,
-                             int32_t output_offset, uint8_t output_min,
-                             uint8_t output_max, bool rounding);
+                                 int32_t *add, uint8_t *data_out, int32_t log2D,
+                                 int32_t HW, int32_t input_offset,
+                                 int32_t output_offset, uint8_t output_min,
+                                 uint8_t output_max, bool rounding);
 
 void PULPRequantShift_u16_u8_NCHW(uint16_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, uint8_t *data_out, int32_t log2D,
-                              int32_t HW, int32_t input_offset,
-                              int32_t output_offset, uint8_t output_min,
-                              uint8_t output_max, bool rounding);
+                                  int32_t *add, uint8_t *data_out,
+                                  int32_t log2D, int32_t HW,
+                                  int32_t input_offset, int32_t output_offset,
+                                  uint8_t output_min, uint8_t output_max,
+                                  bool rounding);
 
 void RequantShift_u32_u8_NCHW(uint32_t *data_in, int32_t size, int32_t *mul,
                               int32_t *add, uint8_t *data_out, int32_t log2D,
@@ -103,43 +105,47 @@ void RequantShift_u32_u8_NCHW(uint32_t *data_in, int32_t size, int32_t *mul,
                               uint8_t output_max, bool rounding);
 
 void PULPRequantShift_s8_u8_NHWC(int8_t *data_in, int32_t size, int32_t *mul,
-                             int32_t *add, uint8_t *data_out, int32_t log2D,
-                             int32_t channels, int32_t input_offset,
-                             int32_t output_offset, uint8_t output_min,
-                             uint8_t output_max, bool rounding);
+                                 int32_t *add, uint8_t *data_out, int32_t log2D,
+                                 int32_t channels, int32_t input_offset,
+                                 int32_t output_offset, uint8_t output_min,
+                                 uint8_t output_max, bool rounding);
 
 void PULPRequantShift_s16_u8_NHWC(int16_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, uint8_t *data_out, int32_t log2D,
-                              int32_t channels, int32_t input_offset,
-                              int32_t output_offset, uint8_t output_min,
-                              uint8_t output_max, bool rounding);
+                                  int32_t *add, uint8_t *data_out,
+                                  int32_t log2D, int32_t channels,
+                                  int32_t input_offset, int32_t output_offset,
+                                  uint8_t output_min, uint8_t output_max,
+                                  bool rounding);
 
 void PULPRequantShift_s32_u8_NHWC(int32_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, uint8_t *data_out, int32_t log2D,
-                              int32_t channels, int32_t input_offset,
-                              int32_t output_offset, uint8_t output_min,
-                              uint8_t output_max, bool rounding);
+                                  int32_t *add, uint8_t *data_out,
+                                  int32_t log2D, int32_t channels,
+                                  int32_t input_offset, int32_t output_offset,
+                                  uint8_t output_min, uint8_t output_max,
+                                  bool rounding);
 
 void PULPRequantShift_s8_u8_NCHW(int8_t *data_in, int32_t size, int32_t *mul,
-                             int32_t *add, uint8_t *data_out, int32_t log2D,
-                             int32_t HW, int32_t input_offset,
-                             int32_t output_offset, uint8_t output_min,
-                             uint8_t output_max, bool rounding);
+                                 int32_t *add, uint8_t *data_out, int32_t log2D,
+                                 int32_t HW, int32_t input_offset,
+                                 int32_t output_offset, uint8_t output_min,
+                                 uint8_t output_max, bool rounding);
 
 void PULPRequantShift_s16_u8_NCHW(int16_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, uint8_t *data_out, int32_t log2D,
-                              int32_t HW, int32_t input_offset,
-                              int32_t output_offset, uint8_t output_min,
-                              uint8_t output_max, bool rounding);
+                                  int32_t *add, uint8_t *data_out,
+                                  int32_t log2D, int32_t HW,
+                                  int32_t input_offset, int32_t output_offset,
+                                  uint8_t output_min, uint8_t output_max,
+                                  bool rounding);
 
 void PULPRequantShift_s32_u8_NCHW(int32_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, uint8_t *data_out, int32_t log2D,
-                              int32_t HW, int32_t input_offset,
-                              int32_t output_offset, uint8_t output_min,
-                              uint8_t output_max, bool rounding);
+                                  int32_t *add, uint8_t *data_out,
+                                  int32_t log2D, int32_t HW,
+                                  int32_t input_offset, int32_t output_offset,
+                                  uint8_t output_min, uint8_t output_max,
+                                  bool rounding);
 
 void PULPRequantShift_s32_s8_NCHW(int32_t *data_in, int32_t size, int32_t *mul,
-                              int32_t *add, int8_t *data_out, int32_t log2D,
-                              int32_t HW, int32_t input_offset,
-                              int32_t output_offset, int8_t output_min,
-                              int8_t output_max, bool rounding);
+                                  int32_t *add, int8_t *data_out, int32_t log2D,
+                                  int32_t HW, int32_t input_offset,
+                                  int32_t output_offset, int8_t output_min,
+                                  int8_t output_max, bool rounding);
