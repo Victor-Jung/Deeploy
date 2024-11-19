@@ -191,6 +191,10 @@ def _merge_conv_rq_fun(graph: gs.Graph, match: Match, name: str):
     conv = matched_nodes[0]
     rqs = matched_nodes[1]
 
+    # JUNGVI: We currently don't support RQConv with bias
+    if len(conv.inputs) == 3:
+        return graph
+
     totalShift = int(np.log2(rqs.attrs['div'].values))
 
     # Artifically add half the shift division value to implement rounding
@@ -279,3 +283,29 @@ class PULPMatMulRequantMergePass(ReplaceSequentialPatternPass):
 
         name = "_MERGE_GEMM_MATMUL_RQ_PASS"
         super().__init__(graph, _merge_gemm_rq_fun, name)
+
+
+def _add_bias_dw_conv_fun(graph: gs.Graph, match: Match, name: str):
+    matched_nodes = [m for k, m in match.nodes_map.items()]
+    conv = matched_nodes[0]
+
+    # JUNGVI: Apply the transformation only on the DW Convolutions
+    if conv.attrs['group'] == conv.inputs[1].shape[0] and conv.attrs['group'] > 1:
+        bias = gs.Constant(f'{conv.name}_bias', np.zeros((conv.attrs['group'],)))
+        conv.inputs.append(bias)
+
+    return graph
+
+
+@contextagnostic
+class DWConvAddBiasPass(ReplaceSequentialPatternPass):
+
+    def __init__(self):
+        graph = gs.Graph()
+        _input = gs.Variable(name = 'input_1')
+        output = graph.layer(inputs = [_input], outputs = ['conv_out'], op = 'Conv', name = 'conv1')
+        graph.outputs.append(output)
+        graph.inputs.append(_input)
+
+        name = f"_ADD_BIAS_PASS"
+        super().__init__(graph, _add_bias_dw_conv_fun, name)
