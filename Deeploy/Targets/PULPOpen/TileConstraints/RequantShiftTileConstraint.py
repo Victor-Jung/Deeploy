@@ -52,21 +52,20 @@ class RequantShiftTileConstraint(TileConstraint):
             tilerModel.addTensorDimToModel(ctxt, bufferName)
 
         inputShape = ctxt.lookup(inputBufferName).shape
-
-        mulBufferShapeLen = len(ctxt.lookup(mulBufferName).shape)
-        addBufferShapeLen = len(ctxt.lookup(addBufferName).shape)
-
-        mulChannelVar = tilerModel.getTensorDimVar(tensorName = mulBufferName, dimIdx = mulBufferShapeLen - 1)
-        addChannelVar = tilerModel.getTensorDimVar(tensorName = addBufferName, dimIdx = addBufferShapeLen - 1)
-
-        tilerModel.addConstraint(mulChannelVar == addChannelVar)
+        mulBufferShape = ctxt.lookup(mulBufferName).shape
+        addBufferShape = ctxt.lookup(addBufferName).shape
 
         channels_first = parseDict['channels_first']
         if not channels_first:
             inChannelVar = tilerModel.getTensorDimVar(tensorName = inputBufferName, dimIdx = len(inputShape) - 1)
+            mulChannelVar = tilerModel.getTensorDimVar(tensorName = mulBufferName, dimIdx = len(mulBufferShape) - 1)
+            addChannelVar = tilerModel.getTensorDimVar(tensorName = addBufferName, dimIdx = len(addBufferShape) - 1)
         else:
             inChannelVar = tilerModel.getTensorDimVar(tensorName = inputBufferName, dimIdx = 1)
+            mulChannelVar = tilerModel.getTensorDimVar(tensorName = mulBufferName, dimIdx = 1)
+            addChannelVar = tilerModel.getTensorDimVar(tensorName = addBufferName, dimIdx = 1)
 
+        tilerModel.addConstraint(mulChannelVar == addChannelVar)
         tilerModel.addConstraint(mulChannelVar == inChannelVar)
 
         for dim in range(len(inputShape)):

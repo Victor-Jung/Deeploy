@@ -56,6 +56,9 @@ class _RequantShiftTemplate(NodeTemplate):
             operatorRepresentation['output_min'] = 0
             operatorRepresentation['output_max'] = operatorRepresentation['n_levels'] - 1
 
+        # JUNGVI: Hack
+        operatorRepresentation['channels_first'] = True
+
         return ctxt, operatorRepresentation, []
 
 
@@ -70,10 +73,10 @@ inSignage = "s" if signedI else "u"
 outSignage = "s" if signedO else "u"
 %>
 
-// RequantShift (Name: ${nodeName}, Op: ${nodeOp})
+// PULP RequantShift (Name: ${nodeName}, Op: ${nodeOp})
     % if channels_first:
-    RequantShift_${inSignage}${data_in_type.referencedType.typeWidth}_${outSignage}${data_out_type.referencedType.typeWidth}_NCHW(${data_in}, ${size}, ${mul}, ${add}, ${data_out}, ${log2Dstring}, ${channel_width}, 0, 0 , ${output_min}, ${output_max}, 1);
+    PULPRequantShift_${inSignage}${data_in_type.referencedType.typeWidth}_${outSignage}${data_out_type.referencedType.typeWidth}_NCHW(${data_in}, ${size}, ${mul}, ${add}, ${data_out}, ${log2Dstring}, ${channel_width}, 0, 0 , ${output_min}, ${output_max}, 1);
     % else:
-    RequantShift_${inSignage}${data_in_type.referencedType.typeWidth}_${outSignage}${data_out_type.referencedType.typeWidth}_NHWC(${data_in}, ${size}, ${mul}, ${add}, ${data_out}, ${log2Dstring}, ${channels}, 0, 0, ${output_min}, ${output_max}, 1);
+    PULPRequantShift_${inSignage}${data_in_type.referencedType.typeWidth}_${outSignage}${data_out_type.referencedType.typeWidth}_NHWC(${data_in}, ${size}, ${mul}, ${add}, ${data_out}, ${log2Dstring}, ${channels}, 0, 0, ${output_min}, ${output_max}, 1);
     %endif
 """)
