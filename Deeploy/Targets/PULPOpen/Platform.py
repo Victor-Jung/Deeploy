@@ -53,13 +53,14 @@ from Deeploy.Targets.PULPOpen.Parsers import NNToolDWConv2DParser, PULPGEMMParse
     PULPRQAddParser, PULPRQSConv1DParser, PULPRQSConv2DParser, PULPRQSDWConv1DParser, PULPRQSDWConv2DParser, \
     PULPTallGEMMParser
 from Deeploy.Targets.PULPOpen.Templates import AllocateTemplate, FreeTemplate
-from Deeploy.Targets.PULPOpen.Tiler import PULPAddTilingReadyBindings, PULPConcatTilingReadyBindings, \
-    PULPFlattenTilingReadyBindings, PULPiHardswishTilingReadyBindings, PULPiRMSNormTilingReadyBindings, \
-    PULPiRQSGELUTilingReadyBindings, PULPiSoftmaxTilingReadyBindings, PULPMatMulTilingReadyBindings, \
-    PULPMaxPool2DTilingReadyBindings, PULPMulTilingReadyBindings, PULPRQAddTilingReadyBindings, \
-    PULPRQSConv2DTilingReadyBindings, PULPRQSDWConv2DTilingReadyBindings, PULPRQSGEMMTilingReadyBindings, \
-    PULPRQSiHardswishTilingReadyBindings, PULPRQSMatrixVecTilingReadyBindings, PULPRQSTallGEMMTilingReadyBindings, \
-    PULPRQSTilingReadyBindings, PULPTransposeTilingReadyBindings, PULPUniformRQSTilingReadyBindings, NNToolDWConv2DTilingReadyBindings
+from Deeploy.Targets.PULPOpen.Tiler import NNToolDWConv2DTilingReadyBindings, PULPAddTilingReadyBindings, \
+    PULPConcatTilingReadyBindings, PULPFlattenTilingReadyBindings, PULPiHardswishTilingReadyBindings, \
+    PULPiRMSNormTilingReadyBindings, PULPiRQSGELUTilingReadyBindings, PULPiSoftmaxTilingReadyBindings, \
+    PULPMatMulTilingReadyBindings, PULPMaxPool2DTilingReadyBindings, PULPMulTilingReadyBindings, \
+    PULPRQAddTilingReadyBindings, PULPRQSConv2DTilingReadyBindings, PULPRQSDWConv2DTilingReadyBindings, \
+    PULPRQSGEMMTilingReadyBindings, PULPRQSiHardswishTilingReadyBindings, PULPRQSMatrixVecTilingReadyBindings, \
+    PULPRQSTallGEMMTilingReadyBindings, PULPRQSTilingReadyBindings, PULPTransposeTilingReadyBindings, \
+    PULPUniformRQSTilingReadyBindings
 from Deeploy.Targets.PULPOpen.TopologyOptimizationPasses.Passes import PULPAddRequantMergePass, \
     PULPConvRequantMergePass, PULPGEMMRequantMergePass, PULPMatMulRequantMergePass
 
