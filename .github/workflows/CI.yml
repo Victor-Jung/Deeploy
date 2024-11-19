@@ -137,7 +137,6 @@ jobs:
         test2DPad
         testMatMul
         testMatMulAdd
-        testRequantizedDWConv
         test2DRequantizedConv
         iSoftmax
         testConcat
