@@ -459,6 +459,8 @@ class Tiler():
 
         outerVariableConstraints, innerVariableConstraints = self._generateVariableBufferConstraints(
             tilerModel, ctxt, schedule, layerBinding, targetMemoryLevelMapping)
+        
+        # JUNGVI: We need the output of the pattern in the innerVarCst
 
         # SCHEREMO: Construct global buffer constraints
 
@@ -641,7 +643,8 @@ class Tiler():
             if (isinstance(value, ctxt.VariableBuffer) and value._users != [])
         }
 
-        producedBuffers = {layer.node.outputs[0].name for layer in layerBinding.values()}
+        # JUNGVI: make sure we take into account pattern, only the outputs of the last node in the pattern is produced (FIXME it's not complete)
+        producedBuffers = {pattern[-1].outputs[0].name for pattern in schedule}
         inputBufferNames = initialLiveBuffers - producedBuffers
         inputBuffers = [ctxt.lookup(name) for name in inputBufferNames]
 
@@ -671,7 +674,8 @@ class Tiler():
             outerPatternMemoryConstraints.addConstraint(dynamicOuterBufferConstraints)
             outerMemConstraints.append(outerPatternMemoryConstraints)
 
-            mergedFlow = [deltaFlow(patternFlow)]
+            # JUNGVI: Temporary! To check!
+            mergedFlow = [deltaFlow(patternFlow)]*len(pattern)
 
             for step, innerFlowState in zip(pattern, mergedFlow):
                 transientBufferConstraints = self._generatePatternStepTransientBufferConstraints(
