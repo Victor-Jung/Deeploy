@@ -42,7 +42,7 @@ jobs:
         testReduceSum
         testReduceMean
         testSlice
-        testRequantizedDWConv
+        testRequantizedDWConvUnsigned
         test2DRequantizedConv
         iSoftmax
 
@@ -109,7 +109,7 @@ jobs:
           testReduceSum
           testReduceMean
           testSlice
-          testRequantizedDWConv
+          testRequantizedDWConvUnsigned
           test2DRequantizedConv
 
   mempool-models:
@@ -137,6 +137,7 @@ jobs:
         test2DPad
         testMatMul
         testMatMulAdd
+        testRequantizedDWConvUnsigned
         test2DRequantizedConv
         iSoftmax
         testConcat
@@ -174,7 +175,7 @@ jobs:
             "L1": [8000, 6000, 4000]
           },
           {
-            "name": "testRequantizedDWConv",
+            "name": "testRequantizedDWConvUnsigned",
             "L1": [2561]
           },
           {
@@ -214,7 +215,7 @@ jobs:
             "L1": [8000, 6000, 5000]
           },
           {
-            "name": "testRequantizedDWConv",
+            "name": "testRequantizedDWConvUnsigned",
             "L1": [5121]
           },
           {
