@@ -351,22 +351,35 @@ void PULPRequantShift_s32_s8_NCHW(int32_t *data_in, int32_t size, int32_t *mul,
                                   int32_t HW, int32_t input_offset,
                                   int32_t output_offset, int8_t output_min,
                                   int8_t output_max, bool rounding) {
+  
+  uint16_t channels = size / HW;
 
   int8_t core_id = pi_core_id();
   int8_t log2Core = log2(NUM_CORES);
-  int16_t chunk = (HW >> log2Core) + ((HW & (NUM_CORES - 1)) != 0);
-  int16_t chunk_start = MIN(chunk * core_id, HW);
-  int16_t chunk_stop = MIN(chunk_start + chunk, HW + 1);
+  int16_t chunk = (channels >> log2Core) + ((channels & (NUM_CORES - 1)) != 0);
+  int16_t chunk_start = MIN(chunk * core_id, channels);
+  int16_t chunk_stop = MIN(chunk_start + chunk, channels + 1);
 
-  uint16_t channels = size / HW;
   int32_t intermediate;
   int8_t out;
+  int32_t mul_reg, add_reg; 
 
-  for (int j = 0; j < channels; j++) {
-    for (int i = chunk_start; i < chunk_stop; i++) {
-      intermediate = (int32_t)data_in[i + j * HW];
+  // printf("start: %d stop %d \n", chunk_start, chunk_stop);
+  // printf("size: %d HW: %d Ch: %d \n", size,HW, channels);
 
-      intermediate = (intermediate + input_offset) * mul[j] + add[j];
+  // if(pi_core_id()==0){
+  //   for(int i = 0; i < channels; i++){
+  //     printf("Mul: %d Add: %d \n", *(mul + i), *(add + i));
+  //   }
+  // printf("\n");
+  // }
+  
+  for (int j = chunk_start; j < chunk_stop; j++) {
+    mul_reg = mul[j];
+    add_reg = add[j];
+    for (int i = 0; i < HW; i++) {
+      intermediate = data_in[i + j * HW];
+      intermediate = (intermediate + input_offset) * mul_reg + add_reg;
       intermediate =
           ((intermediate + ((1 << (log2D - 1))) * rounding) >> log2D) +
           output_offset;
