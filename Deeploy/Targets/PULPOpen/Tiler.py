@@ -44,7 +44,7 @@ from Deeploy.Targets.PULPOpen.Bindings import NNToolDWConv2DBindings, PULPConcat
     PULPiRMSNormBindings, PULPiRQSGELUBindings, PULPMatMulBinding, PULPMaxPool2DBindings, PULPMulBindings, \
     PULPRQAddBindings, PULPRQSBindings, PULPRQSConv2DBindings, PULPRQSDWConv2DBindings, PULPRQSGEMMBindings, \
     PULPRQSiHardswishBindings, PULPRQSMatrixVecBindings, PULPRQSTallGEMMBindings, PULPSoftmaxBindings, \
-    PULPTransposeBindings, PULPUniformRQSBindings, SimpleTransformer
+    PULPTransposeBindings, PULPUniformRQSBindings, SimpleTransformer, NNToolRQSDWConv2DBindings
 from Deeploy.Targets.PULPOpen.TileConstraints.DWConvTileConstraint import DWConv2DTileConstraint
 from Deeploy.Targets.PULPOpen.TileConstraints.GEMMTileConstraint import GEMMTileConstraint, MatrixVecTileConstraint, \
     TallGEMMTileConstraint
@@ -53,7 +53,7 @@ from Deeploy.Targets.PULPOpen.TileConstraints.MatMulTileConstraint import MatMul
 from Deeploy.Targets.PULPOpen.TileConstraints.MaxPoolTileConstraint import MaxPoolTileConstraint
 from Deeploy.Targets.PULPOpen.TileConstraints.RequantShiftTileConstraint import RequantShiftTileConstraint
 from Deeploy.Targets.PULPOpen.TileConstraints.RQSConvTileConstraint import RQSConv2DTileConstraint
-from Deeploy.Targets.PULPOpen.TileConstraints.RQSDWConvTileConstraint import RQSDWConv2DTileConstraint
+from Deeploy.Targets.PULPOpen.TileConstraints.RQSDWConvTileConstraint import RQSDWConv2DTileConstraint, NNToolRQSDWConv2DTileConstraint
 from Deeploy.TilingExtension.TilerExtension import TilingReadyNodeBindings
 
 PULPRQSConv2DTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PULPRQSConv2DBindings,
@@ -85,6 +85,9 @@ PULPRQSiHardswishTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = PU
 
 NNToolDWConv2DTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = NNToolDWConv2DBindings,
                                                             tileConstraint = DWConv2DTileConstraint())
+
+NNToolRQSDWConv2DTilingReadyBindings = TilingReadyNodeBindings(nodeBindings = NNToolRQSDWConv2DBindings,
+                                                            tileConstraint = NNToolRQSDWConv2DTileConstraint())
 
 _BasicFlattenBindings = copy.deepcopy(BasicReshapeBindings)
 for binding in _BasicFlattenBindings:

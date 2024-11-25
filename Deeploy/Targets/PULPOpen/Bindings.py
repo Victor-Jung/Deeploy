@@ -187,6 +187,17 @@ PULPRQSDWConv2DBindings = [
     for type1, type2 in zip([int8_t, int8_t, uint8_t, uint8_t], [int8_t, uint8_t, int8_t, uint8_t])
 ]
 
+NNToolRQSDWConv2DBindings = [
+    NodeBinding(
+        PULPConvChecker([
+            PointerClass(int8_t),
+            PointerClass(int8_t),
+            PointerClass(int32_t),
+            PointerClass(int32_t),
+            PointerClass(int32_t)
+        ], [PointerClass(int8_t)]), ConvTemplate.NNToolRQSDWConv2D_8_Template, ForkTransformer)
+]
+
 NNToolDWConv2DBindings = [
     NodeBinding(
         ConvChecker([

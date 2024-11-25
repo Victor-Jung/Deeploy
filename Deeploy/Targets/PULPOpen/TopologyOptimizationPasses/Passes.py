@@ -192,8 +192,8 @@ def _merge_conv_rq_fun(graph: gs.Graph, match: Match, name: str):
     rqs = matched_nodes[1]
 
     # JUNGVI: We currently don't support RQConv with bias
-    if len(conv.inputs) == 3:
-        return graph
+    # if len(conv.inputs) == 3:
+    #     return graph
 
     totalShift = int(np.log2(rqs.attrs['div'].values))
 

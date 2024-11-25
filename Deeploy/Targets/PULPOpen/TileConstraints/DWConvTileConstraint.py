@@ -149,20 +149,6 @@ class DWConv2DTileConstraint(TileConstraint):
 
         return tilerModel
 
-    @staticmethod
-    def constructSymbolicNodeRep(tilerModel: TilerModel, parseDict: Dict,
-                                 ctxt: NetworkContext) -> Dict[str, Union[int, IntVar]]:
-
-        inputBuffer = ctxt.lookup(name = parseDict['data_in'])
-        weightBuffer = ctxt.lookup(name = parseDict['weight'])
-
-        symbolicParseDict = parseDict.copy()
-        symbolicParseDict['ch_im_in'] = tilerModel.getTensorDimVar(inputBuffer.name, 1)
-        symbolicParseDict['dim_kernel_x'] = tilerModel.getTensorDimVar(weightBuffer.name, 1)
-        symbolicParseDict['dim_kernel_y'] = tilerModel.getTensorDimVar(weightBuffer.name, 2)
-
-        return symbolicParseDict
-
     @classmethod
     def serializeTilingSolution(
             cls, tilingSolution: NodeMemoryConstraint, absoluteOutputCubes: List[AbsoluteHyperRectangle],

@@ -59,6 +59,7 @@ class PULPDeployer(SignPropDeployer):
                  default_channels_first = False,
                  deeployStateDir: str = "DeeployStateDir",
                  inputOffsets = {}):
+        default_channels_first = True # JUNGVI: Hack
         super().__init__(graph,
                          deploymentPlatform,
                          inputTypes,

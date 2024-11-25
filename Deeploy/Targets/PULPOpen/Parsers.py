@@ -223,7 +223,7 @@ class PULPRQSDWConv2DParser(RQSConv2DParser):
                 #self.operatorRepresentation['pads'][0] == 0,
                 # Don't support dilations
                 #all([coeff == 1 for coeff in self.operatorRepresentation['dilations']]),
-                len(node.inputs) == 4,
+                len(node.inputs) in [4, 5],
                 'shift' in node.attrs,
                 any(['n_levels' in node.attrs, 'n_levels_out' in node.attrs]),
                 'signed' in node.attrs
@@ -259,8 +259,12 @@ class PULPRQSDWConv2DParser(RQSConv2DParser):
         newCtxt, ret = super().parseNodeCtxt(ctxt, node)
 
         if ret:
-
-            inputs = ['data_in', 'weight', 'mul', 'add']
+            
+            if len(node.inputs) == 4:
+                inputs = ['data_in', 'weight', 'mul', 'add']
+            else:
+                inputs = ['data_in', 'weight', 'bias', 'mul', 'add']
+            
             for idx, inputNode in enumerate(node.inputs):
                 self.operatorRepresentation[inputs[idx]] = newCtxt.lookup(inputNode.name).name
 
@@ -481,3 +485,47 @@ class NNToolDWConv2DParser(Conv2DParser):
             return newCtxt, True
 
         return ctxt, False
+
+
+class NNToolRQSDWConv2DParser(PULPRQSDWConv2DParser):
+
+    def parseNode(self, node):
+        
+        wellFormed = super().parseNode(node)
+
+        if wellFormed: 
+            ret = all([
+                len(node.inputs) == 5,  # JUNVI: NNTools Conv kernels require a bias
+                self.operatorRepresentation['pads'][0] in [0, 1],
+                self.operatorRepresentation['strides'][0] == self.operatorRepresentation['strides']
+                [1],  # JUNGVI: Not supported yet
+                self.operatorRepresentation['dim_kernel_x'] ==
+                self.operatorRepresentation['dim_kernel_y'],  # JUNGVI: Not supported yet
+            ])
+
+            if self.operatorRepresentation['pads'][0] == 1 and self.operatorRepresentation['kernel_shape'][0] not in [
+                    3, 5
+            ]:
+                return False
+
+            return True
+        
+        return False
+
+    def parseNodeCtxt(self, ctxt, node, channels_first = True):
+        
+        self.operatorRepresentation['channels_first'] = True
+        
+        newCtxt, ret = super().parseNodeCtxt(ctxt, node, self.operatorRepresentation['channels_first'])
+
+        if ret:
+
+            self.operatorRepresentation['rqs_size'] = math.prod(newCtxt.lookup(self.operatorRepresentation['data_out']).shape)
+            self.operatorRepresentation['channel_width'] = int(self.operatorRepresentation['rqs_size'] /
+                                                           self.operatorRepresentation['ch_im_out'])
+            self.operatorRepresentation['output_min'] = -(self.operatorRepresentation['n_levels'] // 2)
+            self.operatorRepresentation['output_max'] = (self.operatorRepresentation['n_levels'] // 2) - 1
+
+            return newCtxt, True
+
+        return newCtxt, False

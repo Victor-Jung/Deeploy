@@ -27,6 +27,8 @@ from typing import Dict, List, Tuple, Union
 
 from ortools.constraint_solver.pywrapcp import IntVar
 
+from Deeploy.AbstractDataTypes import PointerClass
+from Deeploy.CommonExtensions.DataTypes import int32_t
 from Deeploy.DeeployTypes import NetworkContext, NodeTemplate, OperatorRepresentation
 
 
@@ -128,13 +130,14 @@ class PULP1DDWConvTemplate(PULP1DConvTemplate):
         super().__init__(templateStr)
 
 
-class NNTool2DDWConvTemplate(PULP1DConvTemplate):
+class NNTool2DDWConvTemplate(NodeTemplate):
 
     def __init__(self, templateStr):
         super().__init__(templateStr)
-
+    
+    @staticmethod
     def alignToContext(
-            self, ctxt: NetworkContext,
+            ctxt: NetworkContext,
             operatorRepresentation: OperatorRepresentation) -> Tuple[OperatorRepresentation, Dict, List[str]]:
 
         # JUNGVI: We have optimized kernels for kernel size 3 and 5 and strides 1 and 2
@@ -143,6 +146,7 @@ class NNTool2DDWConvTemplate(PULP1DConvTemplate):
         else:
             operatorRepresentation['strideSignature'] = "S"
 
+        # JUNGVI: Otherwise fallback on the generic kernels (not faster than PULP-NN kernels)
         if operatorRepresentation['dim_kernel_x'] in [3, 5, 7]:
             operatorRepresentation['kernelSizeSignature'] = str(operatorRepresentation['dim_kernel_x']) + "x" + str(
                 operatorRepresentation['dim_kernel_y'])
@@ -150,6 +154,33 @@ class NNTool2DDWConvTemplate(PULP1DConvTemplate):
             operatorRepresentation['kernelSizeSignature'] = "NxN"
 
         return ctxt, operatorRepresentation, []
+
+class NNToolRQS2DDWConvTemplate(NodeTemplate):
+
+    def __init__(self, templateStr):
+        super().__init__(templateStr)
+
+    def alignToContext(self, ctxt, operatorRepresentation):
+        return NNTool2DDWConvTemplate.alignToContext(ctxt, operatorRepresentation)
+
+    @staticmethod
+    def computeTransientBuffersSize(
+            ctxt: NetworkContext,
+            operatorRepresentation: OperatorRepresentation) -> List[Tuple[str, Union[int, IntVar]]]:
+        convOutputName = operatorRepresentation['nodeName'] + "_intermediate_buffer"
+        convOutputDim = operatorRepresentation['ch_im_out']*operatorRepresentation['dim_im_out_y']*operatorRepresentation['dim_im_out_x']*4 # JUNGVI: Output of conv kernel is in int32
+        return [(convOutputName, convOutputDim)]
+
+    def hoistTransientBuffers(self, ctxt: NetworkContext,
+                              operatorRepresentation: OperatorRepresentation) -> Tuple[NetworkContext, Dict, List[str]]:
+        convOutputName, convOutputDim = NNToolRQS2DDWConvTemplate.computeTransientBuffersSize(ctxt, operatorRepresentation)[0]
+        ctxt.hoistTransientBuffer(convOutputName, convOutputDim)
+        convOutputBuffer = ctxt.lookup(convOutputName)
+        convOutputBuffer._type = PointerClass(int32_t)
+
+        operatorRepresentation['convOutput'] = convOutputName
+        operatorRepresentation['convOutputSize'] = convOutputDim
+        return ctxt, operatorRepresentation, [convOutputName]
 
 
 PULPConv2D_8_Template = PULP2DConvTemplate("""
@@ -253,7 +284,7 @@ pulp_nn_depthwise${signatureString}(${data_in}, ${ctxtBuffer}, NULL, ${data_out}
 """)
 
 NNToolDWConv2D_8_Template = NNTool2DDWConvTemplate("""
-// NNTool-Lib DW Conv ${ch_im_in}
+// NNTool-Lib DW Conv
                                                
 KerConv_SQ8_T convArgs;
                                                
@@ -281,4 +312,37 @@ convArgs.Sy = ${strides[1]};
 convArgs.Dy = ${dilations[1]};
                                                
 KerParConvDW${kernelSizeSignature}Stride${strideSignature}B8_SQ8(&convArgs);                         
+""")
+
+NNToolRQSDWConv2D_8_Template = NNToolRQS2DDWConvTemplate("""
+// NNTool-Lib RQS DW Conv
+                                               
+KerConv_SQ8_T convArgs;
+                                               
+convArgs.In = ${data_in};
+convArgs.Filter = ${weight};
+convArgs.Bias = ${bias};
+convArgs.Out = ${convOutput};                                        
+                                               
+convArgs.W = ${dim_im_in_y};
+convArgs.UsedW = ${dim_im_in_y};
+convArgs.H = ${dim_im_in_x};
+convArgs.UsedH = ${dim_im_in_x};
+convArgs.InFeatures = ${ch_im_in};
+convArgs.OutFeatures = ${ch_im_out};
+convArgs.TotalInFeatures = ${ch_im_in};
+
+convArgs.Pad = ((v4s){${pads[0]}, ${pads[1]}, ${pads[2]}, ${pads[3]}});
+convArgs.NormBias = 0;
+convArgs.Orientation = 0;
+convArgs.N = ${dim_kernel_x};
+convArgs.S = ${strides[0]};
+convArgs.D = ${dilations[0]};
+convArgs.Ny = ${dim_kernel_y};
+convArgs.Sy = ${strides[1]};
+convArgs.Dy = ${dilations[1]};
+
+KerParConvDW${kernelSizeSignature}Stride${strideSignature}B8_SQ8(&convArgs);
+pi_cl_team_barrier();
+PULPRequantShift_s32_s8_NCHW(${convOutput}, ${rqs_size}, ${mul}, ${add}, ${data_out}, ${log2D}, ${channel_width}, 0, 0 , ${output_min}, ${output_max}, 0);                     
 """)
