@@ -300,9 +300,10 @@ class Tiler():
 
             if ctxt.is_global(tensorName) and len(tensorConstraint.memoryConstraints.values()) <= 1:
                 return False
-            if len(tensorConstraint.memoryConstraints.values()) <= 1 and not isinstance(
-                    ctxt.lookup(tensorName), TransientBuffer):
-                return False
+            # JUNGVI: For DFT some VariableBuffer become intermediate/transientBuffer but are not declared as if yet.
+            # if len(tensorConstraint.memoryConstraints.values()) <= 1 and not isinstance(
+            #         ctxt.lookup(tensorName), TransientBuffer):
+            #     return False
             return True
 
         for patternConstraints in allConstraints:
@@ -643,7 +644,7 @@ class Tiler():
             if (isinstance(value, ctxt.VariableBuffer) and value._users != [])
         }
 
-        # JUNGVI: make sure we take into account pattern, only the outputs of the last node in the pattern is produced (FIXME it's not complete)
+        # JUNGVI: make sure we take into account pattern, only the outputs of the last node in the pattern is produced (FIXME it's not complete, would break for non-sequential patterns)
         producedBuffers = {pattern[-1].outputs[0].name for pattern in schedule}
         inputBufferNames = initialLiveBuffers - producedBuffers
         inputBuffers = [ctxt.lookup(name) for name in inputBufferNames]
@@ -674,8 +675,11 @@ class Tiler():
             outerPatternMemoryConstraints.addConstraint(dynamicOuterBufferConstraints)
             outerMemConstraints.append(outerPatternMemoryConstraints)
 
-            # JUNGVI: Temporary! To check!
-            mergedFlow = [deltaFlow(patternFlow)]*len(pattern)
+            # JUNGVI: Temporary hack for pattern of size 2
+            if len(patternFlow) == 2:
+                mergedFlow = [deltaFlow(patternFlow)]
+            else:
+                mergedFlow = [deltaFlow(patternFlow[0:2]), deltaFlow(patternFlow[1:3])]
 
             for step, innerFlowState in zip(pattern, mergedFlow):
                 transientBufferConstraints = self._generatePatternStepTransientBufferConstraints(
