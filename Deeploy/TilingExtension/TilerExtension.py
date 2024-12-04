@@ -29,7 +29,7 @@
 # Like Template-T-Obj mapping, propagate cst, graph edition, etc
 
 import copy
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, OrderedDict, Tuple, Type, Union
 
 import numpy as np
 import onnx_graphsurgeon as gs
@@ -727,6 +727,25 @@ class Tiler():
             patternStepTransientBufferSizes.addTensorConstraint(transientBufferConstraint, "intermediate")
 
         return patternStepTransientBufferSizes
+    
+    def _fuseLayersWithinPattern(self, pattern: List[gs.Node], layerBinding: OrderedDict[str, ONNXLayer], layerIdx: int):
+
+        patternLen = len(pattern)
+        if patternLen == 1:
+            return layerBinding
+        
+        layersToFuse = list(layerBinding.values())[layerIdx:(layerIdx + patternLen)]
+        # JUNGVI: TODO: Create a wrapper class to represent fused nodes
+        newLayer = layersToFuse[0]
+
+        for layer in layersToFuse[1:]:
+            newLayer.mapper.binder.executionBlock.codeSnippets.extend(layer.mapper.binder.executionBlock.codeSnippets)
+
+        layerBindingsItems = list(layerBinding.items())
+        layerBindingsItems[layerIdx:layerIdx + patternLen] = [("FusedLayers", newLayer)]
+        layerBinding = OrderedDict(layerBindingsItems)
+
+        return layerBinding
 
 
 class TilerAwareDeployer(MemoryLevelAwareDeployer):
@@ -803,8 +822,8 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
             schedule = self.scheduler(self.graph)
 
             # JUNGVI: Mock scheduler for tiling together the first conv and maxpool
-            schedule[1] += schedule[2]
-            schedule.pop(2)
+            schedule[0] += schedule[1]
+            schedule.pop(1)
 
             self.tiler.setupModel(ctxt = self.ctxt,
                                   schedule = schedule,
@@ -812,10 +831,19 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
                                   targetMemoryLevelMapping = self.getTargetMemoryLevelMapping())
             tilingSolution = self.tiler.computeTilingSchedule(self.ctxt)
 
+        # JUNGVI: Transientify Buffers within fused schedules
+        # JUNVI: Fuse the layers according to the schedule
+        _layerIdx = 0
+        for pattern in schedule:
+            self.layerBinding = self.tiler._fuseLayersWithinPattern(pattern, self.layerBinding, _layerIdx)
+            _layerIdx += len(pattern)
+
+
         # SCHEREMO: Annotate execution block with solution
         for layer, pattern in zip(self.layerBinding.values(), tilingSolution):
             layer.mapper.binder.executionBlock.patternMemoryConstraint = pattern
 
+        a = 42
         # SCHEREMO: Code generation STUB
 
     def bind(self):

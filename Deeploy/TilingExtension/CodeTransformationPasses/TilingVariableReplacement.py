@@ -229,40 +229,56 @@ class TilingVariableReplacement(CodeTransformationPass, IntrospectiveCodeTransfo
             node for node in baseExecutionBlock.codeSnippets if hasattr(node.template, 'tileConstraint')
         ]
 
-        assert len(possibleTemplateNodes) == 1, "More than one template node with TCF found"
+        # assert len(possibleTemplateNodes) == 1, "More than one template node with TCF found"
+        # templateNode = possibleTemplateNodes[0]
 
-        templateNode = possibleTemplateNodes[0]
-        operatorRepresentation = templateNode.operatorRepresentation
+        # JUNGVI: Get the varRepl and tilingSchedules for each possible template nodes, then filter the variables inner to the pattern 
+        for templateNode in possibleTemplateNodes:
+            operatorRepresentation = templateNode.operatorRepresentation
 
-        unravelRep = operatorRepresentation.copy()
-        for key in unravelRep.keys():
+            unravelRep = operatorRepresentation.copy()
+            for key in unravelRep.keys():
 
-            val = unravelRep[key]
-            if not isinstance(val, str):
-                continue
+                val = unravelRep[key]
+                if not isinstance(val, str):
+                    continue
 
-            unravelRep[key] = unravelReference(ctxt, val)
+                unravelRep[key] = unravelReference(ctxt, val)
 
-        template = templateNode.template
+            template = templateNode.template
 
-        variableReplacement, tilingSchedules = template.tileConstraint.wrapTilingSolution(
-            nodeMemoryConstraint, self.targetMemLevel, ctxt, unravelRep)
+            variableReplacement, tilingSchedules = template.tileConstraint.wrapTilingSolution(
+                nodeMemoryConstraint, self.targetMemLevel, ctxt, unravelRep)
 
-        minimalVariableReplacement, newNodeRep = minimizeVariableReplacement(variableReplacement,
+            minimalVariableReplacement, newNodeRep = minimizeVariableReplacement(variableReplacement,
                                                                              templateNode.operatorRepresentation)
-        for key, value in newNodeRep.items():
-            templateNode.operatorRepresentation[key] = value
+            for key, value in newNodeRep.items():
+                templateNode.operatorRepresentation[key] = value
 
-        flatTilingSchedule = copy.copy(tilingSchedules[0])
-        for tilingSchedule in tilingSchedules[1:]:
-            flatTilingSchedule += tilingSchedule
+            flatTilingSchedule = copy.copy(tilingSchedules[0])
+            for tilingSchedule in tilingSchedules[1:]:
+                flatTilingSchedule += tilingSchedule
 
-        ctxt = self._replaceTiledExpressions(ctxt, templateNode, minimalVariableReplacement, flatTilingSchedule,
-                                             nodeMemoryConstraint)
+            
+            # JUNGVI: Filter the Cubes and Offset if they don't have an input/output Tensor Constraint (I should probably move that to wrapTilingSolution)
+            # JUNGVI: inputBaseOffsets and inputLoadSchedule share the same keys
+            # JUNGVI: TODO: Refactor, this is ugly
+            inputKeyList = copy.deepcopy(list(flatTilingSchedule.inputBaseOffsets.keys()))
+            outputKeyList = copy.deepcopy(list(flatTilingSchedule.outputBaseOffsets.keys()))
+            for tensorName in inputKeyList:
+                if templateNode.operatorRepresentation[tensorName] not in list(executionBlock.patternMemoryConstraint.nodeConstraints[0].inputTensorMemoryConstraints.keys()):
+                    del flatTilingSchedule.inputBaseOffsets[tensorName]
+                    flatTilingSchedule.inputLoadSchedule = [hyperRectDict for hyperRectDict in flatTilingSchedule.inputLoadSchedule if tensorName not in hyperRectDict.keys()]
+            for tensorName in outputKeyList:
+                if templateNode.operatorRepresentation[tensorName] not in list(executionBlock.patternMemoryConstraint.nodeConstraints[0].outputTensorMemoryConstraints.keys()):
+                    del flatTilingSchedule.outputBaseOffsets[tensorName]
+                    flatTilingSchedule.outputLoadSchedule = [hyperRectDict for hyperRectDict in flatTilingSchedule.outputLoadSchedule if tensorName not in hyperRectDict.keys()]
 
-        for codeSnippet in executionBlock.codeSnippets:
 
-            template, nRep = codeSnippet.template, codeSnippet.operatorRepresentation
+            ctxt = self._replaceTiledExpressions(ctxt, templateNode, minimalVariableReplacement, flatTilingSchedule,
+                                                nodeMemoryConstraint)
+
+            template, nRep = templateNode.template, templateNode.operatorRepresentation
 
             if not "closureStructArgs" in nRep:
                 continue

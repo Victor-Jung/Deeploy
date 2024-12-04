@@ -96,9 +96,12 @@ class iSoftmaxTileConstraint(TileConstraint):
             operatorRepresentation: OperatorRepresentation) -> Tuple[VariableReplacementScheme, TilingSchedule]:
         outputCubes = [cube.rectangle for cube in absoluteOutputCubes]
 
-        addrNames = ['data_in', 'data_out']
-        inputBaseOffsets, outputBaseOffsets = cls.extractBaseAddr(tilingSolution, targetMemLevel,
-                                                                  operatorRepresentation, addrNames)
+        inputAddrNames = ['data_in']
+        outputAddrNames = ['data_out']
+        inputBaseOffsets, _ = cls.extractBaseAddr(tilingSolution, targetMemLevel,
+                                                                  operatorRepresentation, inputAddrNames)
+        outputBaseOffsets, _  = cls.extractBaseAddr(tilingSolution, targetMemLevel,
+                                                                  operatorRepresentation, outputAddrNames)
 
         replacements = {"lastDimLength": [], "size": []}
 

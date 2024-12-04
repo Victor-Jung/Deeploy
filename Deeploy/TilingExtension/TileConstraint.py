@@ -90,13 +90,15 @@ class TileConstraint():
         inputBaseOffsets = {}
         outputBaseOffsets = {}
 
+        # JUNGVI: Hack for DFT experimental, TODO disambiguate I/O base addr
         for addr, addrName, varName in zip(addrList, addrNames, varList):
-            if varName in tilingSolution.outputTensorMemoryConstraints.keys():
-                outputBaseOffsets[addrName] = addr
-            elif varName in tilingSolution.inputTensorMemoryConstraints.keys():
-                inputBaseOffsets[addrName] = addr
-            else:
-                raise Exception(f"{addrName} not in input or output!")
+            # if varName in tilingSolution.outputTensorMemoryConstraints.keys() or varName in tilingSolution.intermediateTensorMemoryConstraints.keys():
+            #     outputBaseOffsets[addrName] = addr
+            # elif varName in tilingSolution.inputTensorMemoryConstraints.keys() or varName in tilingSolution.intermediateTensorMemoryConstraints.keys():
+            #     inputBaseOffsets[addrName] = addr
+            inputBaseOffsets[addrName] = addr
+            # else:
+            #     raise Exception(f"{addrName} not in input or output!")
 
         return inputBaseOffsets, outputBaseOffsets
 
