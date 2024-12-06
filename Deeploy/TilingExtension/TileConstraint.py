@@ -64,9 +64,12 @@ class TileConstraint():
         return {}
 
     @staticmethod
-    def getBaseAddr(tilingSolution, targetMemLevel, name) -> List[Optional[int]]:
+    def getBaseAddr(tensorMemoryConstraints, targetMemLevel, name) -> List[Optional[int]]:
 
-        block = tilingSolution.tensorMemoryConstraints[name].memoryConstraints[targetMemLevel]
+        try:
+            block = tensorMemoryConstraints[name].memoryConstraints[targetMemLevel]
+        except KeyError:
+            return [None]
 
         if block.addrSpace is None:
             return [None]
@@ -84,8 +87,12 @@ class TileConstraint():
                         operatorRepresentation: OperatorRepresentation,
                         addrNames: List[str]) -> Tuple[Dict[str, int], Dict[str, int]]:
 
+        # JUNGVI: Filter the tensorMemoryConstraints of the targetMemLevel
+        filteredTensorMemoryConstraints = {key : val for key, val in tilingSolution.tensorMemoryConstraints.items() if targetMemLevel in val.memoryConstraints.keys()}
+        
+
         varList = list(map(lambda x: operatorRepresentation[x], addrNames))
-        addrList = list(map(lambda x: TileConstraint.getBaseAddr(tilingSolution, targetMemLevel, x), varList))
+        addrList = list(map(lambda x: TileConstraint.getBaseAddr(filteredTensorMemoryConstraints, targetMemLevel, x), varList))
 
         inputBaseOffsets = {}
         outputBaseOffsets = {}

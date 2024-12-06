@@ -23,6 +23,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from abc import abstractmethod
 from typing import List, Tuple
 
@@ -48,8 +49,7 @@ class TilingCodeGeneration(CodeTransformationPass, IntrospectiveCodeTransformati
     @abstractmethod
     def generateTilingLoop(
             self, ctxt: NetworkContext, executionBlock: ExecutionBlock, nodeMemoryConstraint: NodeMemoryConstraint,
-            tilingSchedule: TilingSchedule, variableReplacement: VariableReplacementScheme,
-            operatorRepresentation: OperatorRepresentation) -> Tuple[NetworkContext, ExecutionBlock, bool]:
+            tilingSchedule: TilingSchedule, variableReplacement: VariableReplacementScheme) -> Tuple[NetworkContext, ExecutionBlock, bool]:
 
         return ctxt, executionBlock, False
 
@@ -148,7 +148,7 @@ class TilingCodeGeneration(CodeTransformationPass, IntrospectiveCodeTransformati
         if patternMemoryConstraint is None:
             return ctxt, executionBlock
 
-        assert len(patternMemoryConstraint.nodeConstraints) == 1, "Only layerwise supported for now!"
+        # assert len(patternMemoryConstraint.nodeConstraints) == 1, "Only layerwise supported for now!"
         #assert len(baseExecutionBlock.codeSnippets) == 1, "Only layerwise supported for now!"
 
         nodeMemoryConstraint = patternMemoryConstraint.nodeConstraints[0]
@@ -157,34 +157,65 @@ class TilingCodeGeneration(CodeTransformationPass, IntrospectiveCodeTransformati
             node for node in baseExecutionBlock.codeSnippets if hasattr(node.template, 'tileConstraint')
         ]
 
-        assert len(possibleTemplateNodes) == 1, "More than one template node with TCF found"
+        # assert len(possibleTemplateNodes) == 1, "More than one template node with TCF found"
+        # templateNode = possibleTemplateNodes[0]
 
-        templateNode = possibleTemplateNodes[0]
+        variableReplacementList = []
+        tilingSchedulesList = []
 
-        operatorRepresentation = templateNode.operatorRepresentation
-        unravelRep = operatorRepresentation.copy()
-        for key in unravelRep.keys():
+        for templateNode in possibleTemplateNodes:
 
-            val = unravelRep[key]
-            if not isinstance(val, str):
-                continue
+            operatorRepresentation = templateNode.operatorRepresentation
+            unravelRep = operatorRepresentation.copy()
+            for key in unravelRep.keys():
 
-            unravelRep[key] = unravelReference(ctxt, val)
+                val = unravelRep[key]
+                if not isinstance(val, str):
+                    continue
 
-        template = templateNode.template
+                unravelRep[key] = unravelReference(ctxt, val)
 
-        variableReplacement, tilingSchedules = template.tileConstraint.wrapTilingSolution(
-            nodeMemoryConstraint, self.targetMemLevel, ctxt, unravelRep)
+            template = templateNode.template
 
-        minimalVariableReplacement, newNodeRep = minimizeVariableReplacement(variableReplacement,
+            variableReplacement, tilingSchedules = template.tileConstraint.wrapTilingSolution(
+                nodeMemoryConstraint, self.targetMemLevel, ctxt, unravelRep)
+            
+            # JUNGVI: Filter the Cubes and Offset if they don't have an input/output Tensor Constraint (I should probably move that to wrapTilingSolution)
+            # JUNGVI: inputBaseOffsets and inputLoadSchedule share the same keys
+            # JUNGVI: TODO: Refactor, this is ugly
+            inputKeyList = copy.deepcopy(list(tilingSchedules[0].inputBaseOffsets.keys()))
+            outputKeyList = copy.deepcopy(list(tilingSchedules[0].outputBaseOffsets.keys()))
+            for tensorName in inputKeyList:
+                if hasattr(ctxt.lookup(templateNode.operatorRepresentation[tensorName]), "_referenceName"):
+                    baseName = ctxt.lookup(templateNode.operatorRepresentation[tensorName])._referenceName
+                else:
+                    baseName = ctxt.lookup(templateNode.operatorRepresentation[tensorName]).name
+                if baseName not in list(baseExecutionBlock.patternMemoryConstraint.nodeConstraints[0].inputTensorMemoryConstraints.keys()):
+                    del tilingSchedules[0].inputBaseOffsets[tensorName]
+                    tilingSchedules[0].inputLoadSchedule = [hyperRectDict for hyperRectDict in tilingSchedules[0].inputLoadSchedule if tensorName not in hyperRectDict.keys()]
+            for tensorName in outputKeyList:
+                if hasattr(ctxt.lookup(templateNode.operatorRepresentation[tensorName]), "_referenceName"):
+                    baseName = ctxt.lookup(templateNode.operatorRepresentation[tensorName])._referenceName
+                else:
+                    baseName = ctxt.lookup(templateNode.operatorRepresentation[tensorName]).name
+                if baseName not in list(baseExecutionBlock.patternMemoryConstraint.nodeConstraints[0].outputTensorMemoryConstraints.keys()):
+                    del tilingSchedules[0].outputBaseOffsets[tensorName]
+                    tilingSchedules[0].outputLoadSchedule = [hyperRectDict for hyperRectDict in tilingSchedules[0].outputLoadSchedule if tensorName not in hyperRectDict.keys()]
+
+            minimalVariableReplacement, newNodeRep = minimizeVariableReplacement(variableReplacement,
                                                                              templateNode.operatorRepresentation)
-        for key, value in newNodeRep.items():
-            templateNode.operatorRepresentation[key] = value
+            for key, value in newNodeRep.items():
+                templateNode.operatorRepresentation[key] = value
+            
+            tilingSchedulesList.append(tilingSchedules)
+            variableReplacementList.append(minimalVariableReplacement)
 
+        # JUNGVI: Keep the tiling schedule of the subtemplates separated since they depend on their operator representation
+        # Should use the opRepr from execBlock, this is the source of truth
         ctxt, executionBlock, applicable = self.generateTilingLoop(ctxt, executionBlock, nodeMemoryConstraint,
-                                                                   tilingSchedules, minimalVariableReplacement,
-                                                                   operatorRepresentation)
+                                                                   tilingSchedulesList, variableReplacementList)
         if applicable:
-            ctxt, executionBlock = self.argStructGeneration.apply(ctxt, executionBlock, name)
+            for codeSnippet in executionBlock.baseBlock.codeSnippets:
+                ctxt, executionBlock = self.argStructGeneration.apply(ctxt, executionBlock, codeSnippet.operatorRepresentation['nodeName'])
 
         return ctxt, executionBlock

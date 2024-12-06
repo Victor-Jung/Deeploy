@@ -39,7 +39,7 @@ import Deeploy.CommonExtensions.DataTypes as BasicDataTypes
 from Deeploy.AbstractDataTypes import Pointer, PointerClass
 from Deeploy.CommonExtensions.NetworkDeployers.NetworkDeployerWrapper import NetworkDeployerWrapper
 from Deeploy.DeeployTypes import ConstantBuffer, GlobalDefinition, NetworkContext, NetworkOptimizationPass, \
-    NodeBinding, NodeTemplate, ONNXLayer, Schedule, SubGraph, TopologyOptimizer, TransientBuffer
+    NodeBinding, NodeTemplate, ONNXLayer, Schedule, SubGraph, TopologyOptimizer, TransientBuffer, VariableBuffer
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryDeployerWrapper, \
     MemoryLevelAwareDeployer, MemoryPlatform, MemoryPlatformWrapper, TargetMemoryLevelMapping
@@ -831,7 +831,6 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
                                   targetMemoryLevelMapping = self.getTargetMemoryLevelMapping())
             tilingSolution = self.tiler.computeTilingSchedule(self.ctxt)
 
-        # JUNGVI: Transientify Buffers within fused schedules
         # JUNVI: Fuse the layers according to the schedule
         _layerIdx = 0
         for pattern in schedule:
@@ -843,6 +842,13 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
         for layer, pattern in zip(self.layerBinding.values(), tilingSolution):
             layer.mapper.binder.executionBlock.patternMemoryConstraint = pattern
 
+        # WIP
+        # JUNGVI: Annotate inner-pattern tensors with the home memory level of their engine
+        # for bufferName in self.layerBinding['FusedLayers'].mapper.binder.executionBlock.patternMemoryConstraint.nodeConstraints[0].intermediateTensorMemoryConstraints.keys():
+        #     _buffer = self.ctxt.lookup(bufferName)
+        #     if not isinstance(_buffer, TransientBuffer):
+        #         _buffer._memoryLevel = 'L1'
+        
         a = 42
         # SCHEREMO: Code generation STUB
 

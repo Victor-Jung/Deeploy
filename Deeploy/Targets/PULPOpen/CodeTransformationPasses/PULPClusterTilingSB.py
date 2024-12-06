@@ -576,33 +576,49 @@ class PULPClusterTilingSB(TilingCodeGeneration):
         return egressDMATransferCalls, egressDMAWaitStatements
 
     def _tilingLoop(self, ctxt: NetworkContext, executionBlock: ExecutionBlock,
-                    nodeMemoryConstraint: NodeMemoryConstraint, tilingSchedule: TilingSchedule,
-                    variableReplacement: VariableReplacementScheme,
-                    operatorRepresentation: OperatorRepresentation) -> Tuple[NetworkContext, ExecutionBlock, bool]:
+                    nodeMemoryConstraint: NodeMemoryConstraint, tilingScheduleList: TilingSchedule,
+                    variableReplacementList: VariableReplacementScheme) -> Tuple[NetworkContext, ExecutionBlock, bool]:
 
-        tileIdxPtr = self._hoistTileIdxPtr(ctxt, operatorRepresentation)
+        tileIdxPtr = self._hoistTileIdxPtr(ctxt, executionBlock.baseBlock.codeSnippets[0].operatorRepresentation)
 
-        ingressDMATransferCalls, ingressDMAWaitStatements = self._generateIngressDMACode(
-            tilingSchedule, nodeMemoryConstraint, ctxt, operatorRepresentation)
+        ingressDMATransferCalls = []
+        ingressDMAWaitStatements = []
+        ingressDMAUpdates = []
+        
+        egressDMATransferCalls = []
+        egressDMAWaitStatements = []
+        egressDMAUpdates = []
 
-        egressDMATransferCalls, egressDMAWaitStatements = self._generateEgressDMACode(
-            tilingSchedule, nodeMemoryConstraint, ctxt, operatorRepresentation)
+        for tilingSchedule, codeSnippet in zip(tilingScheduleList, executionBlock.baseBlock.codeSnippets):
+            if len(tilingSchedule.inputLoadSchedule) > 0:
+                ingressDMATransferCall, ingressDMAWaitStatement = self._generateIngressDMACode(
+                    tilingSchedule, nodeMemoryConstraint, ctxt, codeSnippet.operatorRepresentation)
+                ctxt, ingressDMAUpdate = self._generateIngressPointerUpdates(nodeMemoryConstraint, tilingSchedule, ctxt, codeSnippet.operatorRepresentation)
+                
+                ingressDMATransferCalls += ingressDMATransferCall
+                ingressDMAWaitStatements += ingressDMAWaitStatement
+                ingressDMAUpdates += ingressDMAUpdate
+            
+            if len(tilingSchedule.outputLoadSchedule) > 0:
+                egressDMATransferCall, egressDMAWaitStatement = self._generateEgressDMACode(
+                    tilingSchedule, nodeMemoryConstraint, ctxt, codeSnippet.operatorRepresentation)
+                ctxt, egressDMAUpdate = self._generateEgressPointerUpdates(nodeMemoryConstraint, tilingSchedule, ctxt, codeSnippet.operatorRepresentation)
+                
+                egressDMATransferCalls += egressDMATransferCall
+                egressDMAWaitStatements += egressDMAWaitStatement
+                egressDMAUpdates += egressDMAUpdate
 
-        ctxt, ingressDMAUpdates = self._generateIngressPointerUpdates(nodeMemoryConstraint, tilingSchedule, ctxt,
-                                                                      operatorRepresentation)
-        ctxt, egressDMAUpdates = self._generateEgressPointerUpdates(nodeMemoryConstraint, tilingSchedule, ctxt,
-                                                                    operatorRepresentation)
 
         openLoopStatement = [
             CodeSnippet(self._openTileLoopTemplate, {
-                "numTiles": operatorRepresentation["numTiles"],
+                "numTiles": executionBlock.baseBlock.codeSnippets[0].operatorRepresentation["numTiles"],
                 "tileIdxPtr": tileIdxPtr
             })
         ]
 
         closeLoopStatement = [
             CodeSnippet(self._closeTileLoopTemplate, {
-                "numTiles": operatorRepresentation["numTiles"],
+                "numTiles": executionBlock.baseBlock.codeSnippets[0].operatorRepresentation["numTiles"],
                 "tileIdxPtr": tileIdxPtr
             })
         ]
@@ -619,11 +635,14 @@ class PULPClusterTilingSB(TilingCodeGeneration):
                         {"stateReference": ingressDMAUpdates[0].operatorRepresentation["stateReference"]})
         ]
 
-        variableUpdates = self._generateVariableUpdates(tilingSchedule, variableReplacement, ctxt,
-                                                        operatorRepresentation)
+        variableUpdates = []
 
-        metaInfo = TilingMetaInfo(nodeName = operatorRepresentation['nodeName'] + "_L2",
-                                  nodeOps = operatorRepresentation['nodeOps'],
+        for variableReplacement, codeSnippet in zip(variableReplacementList, executionBlock.baseBlock.codeSnippets):
+            variableUpdate = self._generateVariableUpdates(tilingSchedule, variableReplacement, ctxt, codeSnippet.operatorRepresentation)
+            variableUpdates += variableUpdate
+
+        metaInfo = TilingMetaInfo(nodeName = executionBlock.baseBlock.codeSnippets[0].operatorRepresentation["nodeName"] + "_L2",
+                                  nodeOps = executionBlock.baseBlock.codeSnippets[0].operatorRepresentation["nodeOps"],
                                   numTiles = len(tilingSchedule.outputLoadSchedule),
                                   tileIdxVar = "TILING_I")
 
@@ -637,29 +656,33 @@ class PULPClusterTilingSB(TilingCodeGeneration):
 
     def generateTilingLoop(
             self, ctxt: NetworkContext, executionBlock: ExecutionBlock, nodeMemoryConstraint: NodeMemoryConstraint,
-            tilingSchedules: List[TilingSchedule], variableReplacement: VariableReplacementScheme,
-            operatorRepresentation: OperatorRepresentation) -> Tuple[NetworkContext, ExecutionBlock, bool]:
+            tilingSchedulesList: List[TilingSchedule], variableReplacementList: VariableReplacementScheme) -> Tuple[NetworkContext, ExecutionBlock, bool]:
 
-        flatTilingSchedule = copy.copy(tilingSchedules[0])
-        for tilingSchedule in tilingSchedules[1:]:
-            flatTilingSchedule += tilingSchedule
+        flatTilingScheduleList = []
+        
+        for tilingSchedules in tilingSchedulesList:
+            flatTilingSchedule = copy.copy(tilingSchedules[0])
+            for tilingSchedule in tilingSchedules[1:]:
+                flatTilingSchedule += tilingSchedule
+            flatTilingScheduleList.append(flatTilingSchedule)
 
-        # SCHEREMO: hoist numTiles
+            # SCHEREMO: hoist numTiles
+            offsetLists = list({**flatTilingSchedule.inputBaseOffsets, **flatTilingSchedule.outputBaseOffsets}.values())
 
-        offsetLists = list({**flatTilingSchedule.inputBaseOffsets, **flatTilingSchedule.outputBaseOffsets}.values())
-
-        if len(offsetLists) == 0:
-            return ctxt, executionBlock, False
-
-        for offsetList in offsetLists:
-            if not len(offsetList) == 1:
+            if len(offsetLists) == 0:
                 return ctxt, executionBlock, False
 
-        operatorRepresentation["numTiles"] = self._hoistNumTiles(ctxt, operatorRepresentation['nodeName'],
-                                                                 tilingSchedules)
+            for offsetList in offsetLists:
+                if not len(offsetList) == 1:
+                    return ctxt, executionBlock, False
 
-        return self._tilingLoop(ctxt, executionBlock, nodeMemoryConstraint, flatTilingSchedule, variableReplacement,
-                                operatorRepresentation)
+        # JUNGVI: Hoist num tiles using info from the first template of the codeSnippet and propagate the opRepr update to other CodeSnippet
+        executionBlock.baseBlock.codeSnippets[0].operatorRepresentation["numTiles"] = self._hoistNumTiles(ctxt, executionBlock.baseBlock.codeSnippets[0].operatorRepresentation['nodeName'],
+                                                                 tilingSchedulesList[-1])
+        for codeSnippet in list(executionBlock.baseBlock.codeSnippets)[1:]:
+            codeSnippet.operatorRepresentation["numTiles"] = executionBlock.baseBlock.codeSnippets[0].operatorRepresentation["numTiles"]
+
+        return self._tilingLoop(ctxt, executionBlock, nodeMemoryConstraint, flatTilingScheduleList, variableReplacementList)
 
 
 class PULPClusterTilingGenerationSB(PULPClusterTilingSB, SingleBufferingTilingMixIn):
