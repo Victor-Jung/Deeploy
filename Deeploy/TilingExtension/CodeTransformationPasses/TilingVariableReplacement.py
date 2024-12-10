@@ -235,6 +235,7 @@ class TilingVariableReplacement(CodeTransformationPass, IntrospectiveCodeTransfo
         # JUNGVI: Get the varRepl and tilingSchedules for each possible template nodes, then filter the variables inner to the pattern 
         for templateNode in possibleTemplateNodes:
             operatorRepresentation = templateNode.operatorRepresentation
+            self._name = operatorRepresentation['nodeName']
 
             unravelRep = operatorRepresentation.copy()
             for key in unravelRep.keys():
