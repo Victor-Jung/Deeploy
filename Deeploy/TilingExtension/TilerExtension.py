@@ -822,8 +822,8 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
             schedule = self.scheduler(self.graph)
 
             # JUNGVI: Mock scheduler for tiling together the first conv and maxpool
-            schedule[0] += schedule[1]
-            schedule.pop(1)
+            # schedule[0] += schedule[1]
+            # schedule.pop(1)
 
             self.tiler.setupModel(ctxt = self.ctxt,
                                   schedule = schedule,

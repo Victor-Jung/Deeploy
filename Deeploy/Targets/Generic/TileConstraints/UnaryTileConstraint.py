@@ -66,10 +66,8 @@ class UnaryTileConstraint(TileConstraint):
 
         inputAddrNames = ['data_in']
         outputAddrNames = ['data_out']
-        inputBaseOffsets, _ = cls.extractBaseAddr(tilingSolution, targetMemLevel,
-                                                                  operatorRepresentation, inputAddrNames)
-        outputBaseOffsets, _  = cls.extractBaseAddr(tilingSolution, targetMemLevel,
-                                                                  operatorRepresentation, outputAddrNames)
+        inputBaseOffsets, outputBaseOffsets = cls.extractIOBaseAddr(tilingSolution, targetMemLevel,
+                                                                  operatorRepresentation, inputAddrNames, outputAddrNames)
 
         replacements = {"size": []}
         replacementTypes = {"size": PointerClass(uint16_t)}

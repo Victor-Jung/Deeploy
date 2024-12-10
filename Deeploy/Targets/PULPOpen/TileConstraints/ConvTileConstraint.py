@@ -203,9 +203,10 @@ class Conv2DTileConstraint(TileConstraint):
             operatorRepresentation: OperatorRepresentation) -> Tuple[VariableReplacementScheme, TilingSchedule]:
         outputCubes = [cube.rectangle for cube in absoluteOutputCubes]
 
-        addrNames = ['data_in', 'weight', 'mul', 'add', 'data_out']
-        inputBaseOffsets, outputBaseOffsets = cls.extractBaseAddr(tilingSolution, targetMemLevel,
-                                                                  operatorRepresentation, addrNames)
+        inputAddrNames = ['data_in', 'weight', 'mul', 'add']
+        outputAddrNames = ['data_out']
+        inputBaseOffsets, outputBaseOffsets = cls.extractIOBaseAddr(tilingSolution, targetMemLevel,
+                                                                  operatorRepresentation, inputAddrNames, outputAddrNames)
 
         varWeight = operatorRepresentation['weight']
         varOut = operatorRepresentation['data_out']

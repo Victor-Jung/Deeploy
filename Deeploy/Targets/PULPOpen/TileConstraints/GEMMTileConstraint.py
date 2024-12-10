@@ -114,9 +114,11 @@ class GEMMTileConstraint(TileConstraint):
             operatorRepresentation: OperatorRepresentation) -> Tuple[VariableReplacementScheme, TilingSchedule]:
         outputCubes = [cube.rectangle for cube in absoluteOutputCubes]
 
-        addrNames = ['A', 'B', 'mul', 'C', 'data_out']
-        inputBaseOffsets, outputBaseOffsets = cls.extractBaseAddr(tilingSolution, targetMemLevel,
-                                                                  operatorRepresentation, addrNames)
+        inputAddrNames = ['A', 'B', 'mul', 'C',]
+        outputAddrNames = ['data_out']
+        inputBaseOffsets, outputBaseOffsets = cls.extractIOBaseAddr(tilingSolution, targetMemLevel,
+                                                                  operatorRepresentation, inputAddrNames, outputAddrNames)
+        
         varA = operatorRepresentation['A']
 
         NSize = ctxt.lookup(varA).shape[-1]

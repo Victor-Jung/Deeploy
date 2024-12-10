@@ -64,9 +64,10 @@ class TransposeTileConstraint(TileConstraint):
             operatorRepresentation: OperatorRepresentation) -> Tuple[VariableReplacementScheme, TilingSchedule]:
         outputCubes = [cube.rectangle for cube in absoluteOutputCubes]
 
-        addrNames = ['data_in', 'data_out']
-        inputBaseOffsets, outputBaseOffsets = cls.extractBaseAddr(tilingSolution, targetMemLevel,
-                                                                  operatorRepresentation, addrNames)
+        inputAddrNames = ['data_in']
+        outputAddrNames = ['data_out']
+        inputBaseOffsets, outputBaseOffsets = cls.extractIOBaseAddr(tilingSolution, targetMemLevel,
+                                                                  operatorRepresentation, inputAddrNames, outputAddrNames)
 
         inputInCubes = []
 
