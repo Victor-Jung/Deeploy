@@ -83,30 +83,33 @@ class TileConstraint():
         return sol
 
     @staticmethod
-    def extractBaseAddr(tilingSolution: NodeMemoryConstraint, targetMemLevel: str,
+    def extractIOBaseAddr(tilingSolution: NodeMemoryConstraint, targetMemLevel: str,
                         operatorRepresentation: OperatorRepresentation,
-                        addrNames: List[str]) -> Tuple[Dict[str, int], Dict[str, int]]:
+                        inputAddrNames: List[str], outputAddrNames: List[str]) -> Tuple[Dict[str, int], Dict[str, int]]:
 
         # JUNGVI: Filter the tensorMemoryConstraints of the targetMemLevel
         filteredTensorMemoryConstraints = {key : val for key, val in tilingSolution.tensorMemoryConstraints.items() if targetMemLevel in val.memoryConstraints.keys()}
         
 
-        varList = list(map(lambda x: operatorRepresentation[x], addrNames))
-        addrList = list(map(lambda x: TileConstraint.getBaseAddr(filteredTensorMemoryConstraints, targetMemLevel, x), varList))
+        inputVarList = list(map(lambda x: operatorRepresentation[x], inputAddrNames))
+        outputVarList = list(map(lambda x: operatorRepresentation[x], outputAddrNames))
+        inputAddrList = list(map(lambda x: TileConstraint.getBaseAddr(filteredTensorMemoryConstraints, targetMemLevel, x), inputVarList))
+        outputAddrList = list(map(lambda x: TileConstraint.getBaseAddr(filteredTensorMemoryConstraints, targetMemLevel, x), outputVarList))
 
         inputBaseOffsets = {}
         outputBaseOffsets = {}
 
-        # JUNGVI: Hack for DFT experimental, TODO disambiguate I/O base addr
-        for addr, addrName, varName in zip(addrList, addrNames, varList):
-            # if varName in tilingSolution.outputTensorMemoryConstraints.keys() or varName in tilingSolution.intermediateTensorMemoryConstraints.keys():
-            #     outputBaseOffsets[addrName] = addr
-            # elif varName in tilingSolution.inputTensorMemoryConstraints.keys() or varName in tilingSolution.intermediateTensorMemoryConstraints.keys():
-            #     inputBaseOffsets[addrName] = addr
-            inputBaseOffsets[addrName] = addr
-            # else:
-            #     raise Exception(f"{addrName} not in input or output!")
-
+        for addr, addrName, varName in zip(inputAddrList, inputAddrNames, inputVarList):
+            if varName in tilingSolution.inputTensorMemoryConstraints.keys() | tilingSolution.intermediateTensorMemoryConstraints.keys():
+                inputBaseOffsets[addrName] = addr
+            else:
+                raise Exception(f"{addrName} not in input or output!")
+        for addr, addrName, varName in zip(outputAddrList, outputAddrNames, outputVarList):
+            if varName in tilingSolution.outputTensorMemoryConstraints.keys() | tilingSolution.intermediateTensorMemoryConstraints.keys():
+                outputBaseOffsets[addrName] = addr
+            else:
+                raise Exception(f"{addrName} not in input or output!")
+            
         return inputBaseOffsets, outputBaseOffsets
 
     @staticmethod
