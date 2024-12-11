@@ -175,11 +175,16 @@ class TileConstraint():
             return solution, solutionLengths
 
         assert len(tilingSolution.outputTensorMemoryConstraints.keys()) == 1, "Expected node to have only one output!"
-        varOut = list(tilingSolution.outputTensorMemoryConstraints.keys())[0]
+        # varOut = list(tilingSolution.outputTensorMemoryConstraints.keys())[0]
+        varOut = operatorRepresentation['data_out']
 
         outTensorConstraint = tilingSolution.tensorMemoryConstraints[varOut]
         outTensorMemoryLevelPath = list(outTensorConstraint.memoryConstraints.keys())
         targetIdxs = [idx for idx, key in enumerate(outTensorMemoryLevelPath) if key == targetMemLevel]
+
+        # JUNGVI: HACK
+        if outTensorMemoryLevelPath[0] == 'L1' and targetMemLevel == 'L2':
+            targetIdxs = [0]
 
         assert len(targetIdxs) == 1, f"Received more than one spec for memoryLevel {targetMemLevel}"
         targetIdx = targetIdxs[0]
@@ -194,6 +199,10 @@ class TileConstraint():
             AbsoluteHyperRectangle(rectangle = HyperRectangle(offset = initialOffset, dims = tuple(fullShape)),
                                    absoluteOffset = initialOffset)
         ]
+
+        # JUNGVI: HACK
+        if len(outTensorMemoryLevelPath) == 1:
+            outTensorMemoryLevelPath.append(outTensorMemoryLevelPath[0])
 
         for targetIdx in list(range(targetIdx + 1))[1:]:
             sourceMemoryLevel = outTensorMemoryLevelPath[targetIdx - 1]
