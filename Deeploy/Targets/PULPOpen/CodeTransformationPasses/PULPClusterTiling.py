@@ -47,7 +47,7 @@ class PULPClusterTiling(CodeTransformationPass):
 
         if verbose.tilingProfiling == "L2":
             ctxt, executionBlock = self.profilingSB.apply(ctxt, executionBlock, name)
-            ctxt, executionBlock = self.profilingDB.apply(ctxt, executionBlock, name) 
+            # ctxt, executionBlock = self.profilingDB.apply(ctxt, executionBlock, name) # JUNGVI: Temporary HACK
         else:
             ctxt, executionBlock = self.SB.apply(ctxt, executionBlock, name)
             # ctxt, executionBlock = self.DB.apply(ctxt, executionBlock, name) # JUNGVI: Temporary HACK
