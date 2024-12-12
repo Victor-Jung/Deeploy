@@ -96,11 +96,11 @@ class MemoryManagementGeneration(CodeTransformationPass, IntrospectiveCodeTransf
         ret = self.regex.findall(ctxt.lookup(key)._memoryLevel)
         return ret != []
 
-    def _extractTransientBuffers(self, ctxt: NetworkContext, name: str) -> List[str]:
+    def _extractTransientBuffers(self, ctxt: NetworkContext, patternNodeNames: List[str]) -> List[str]:
         names = []
 
         for key, _buffer in ctxt.localObjects.items():
-            if isinstance(_buffer, TransientBuffer) and name in _buffer._users:
+            if isinstance(_buffer, TransientBuffer) and set(patternNodeNames) & set(_buffer._users):
                 names.append(key)
 
         filteredNames = [key for key in names if self._matchesRegex(ctxt, key)]
@@ -144,10 +144,14 @@ class MemoryManagementGeneration(CodeTransformationPass, IntrospectiveCodeTransf
               executionBlock: ExecutionBlock,
               name: str,
               verbose: CodeGenVerbosity = _NoVerbosity) -> Tuple[NetworkContext, ExecutionBlock]:
+        
+        # JUNGVI: Make sure we take into account all nodes from the pattern
+        patternNodeNames = [snippet.operatorRepresentation['nodeName'] for snippet in executionBlock.baseBlock.codeSnippets]
 
+        # JUNGVI: TODO: Check if changes are needed for I/O
         outputNames = self._getOutputNames(ctxt, executionBlock, name)
         inputNames = self._getFinalInputNames(ctxt, executionBlock, name)
-        transientBuffers = self._extractTransientBuffers(ctxt, name)
+        transientBuffers = self._extractTransientBuffers(ctxt, patternNodeNames)
 
         # We have to allocate the output buffers, unless they are global
 

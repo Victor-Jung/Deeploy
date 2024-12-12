@@ -822,8 +822,10 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
             schedule = self.scheduler(self.graph)
 
             # JUNGVI: Mock scheduler for tiling together the first conv and maxpool
-            # schedule[0] += schedule[1]
-            # schedule.pop(1)
+            schedule[1] += schedule[2]
+            schedule.pop(2)
+
+            # JUNGVI: Transientify the buffers based on the schedule
 
             self.tiler.setupModel(ctxt = self.ctxt,
                                   schedule = schedule,
@@ -844,10 +846,17 @@ class TilerDeployerWrapper(NetworkDeployerWrapper):
 
         # WIP
         # JUNGVI: Annotate inner-pattern tensors with the home memory level of their engine
-        # for bufferName in self.layerBinding['FusedLayers'].mapper.binder.executionBlock.patternMemoryConstraint.nodeConstraints[0].intermediateTensorMemoryConstraints.keys():
-        #     _buffer = self.ctxt.lookup(bufferName)
-        #     if not isinstance(_buffer, TransientBuffer):
-        #         _buffer._memoryLevel = 'L1'
+        for bufferName in self.layerBinding['FusedLayers'].mapper.binder.executionBlock.patternMemoryConstraint.nodeConstraints[0].intermediateTensorMemoryConstraints.keys():
+            _buffer = self.ctxt.lookup(bufferName)
+            if not isinstance(_buffer, TransientBuffer):
+                self.ctxt.localObjects[bufferName] = self.Platform.TransientBuffer(name=bufferName, size=np.prod(_buffer.shape))
+                self.ctxt.localObjects[bufferName]._memoryLevel = 'L1'
+                self.ctxt.localObjects[bufferName].shape = _buffer.shape
+                self.ctxt.localObjects[bufferName]._type = _buffer._type
+                self.ctxt.localObjects[bufferName]._users = _buffer._users
+                self.ctxt.localObjects[bufferName]._signed = _buffer._signed
+                self.ctxt.localObjects[bufferName].nLevels = _buffer.nLevels
+
         
         a = 42
         # SCHEREMO: Code generation STUB
