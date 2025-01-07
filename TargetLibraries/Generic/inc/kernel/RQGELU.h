@@ -41,8 +41,8 @@
 /*                 GELU with requantization to 8bit                       */
 /******************************************************************************/
 
-void RQGELU_s8_s8(int8_t *data_in, int8_t *data_out, int32_t dataSize, int8_t b,
-                  int16_t one, int32_t input_offset, int32_t output_offset,
+void RQGELU_s8_s8(int8_t *data_in, int8_t *data_out, int32_t dataSize, int32_t b,
+                  int32_t one, int32_t input_offset, int32_t output_offset,
                   int32_t *mul, int32_t *add, int32_t *shift);
 
 #endif //__DEEPLOY_BASIC_MATH_RQGELU_KERNEL_HEADER_
