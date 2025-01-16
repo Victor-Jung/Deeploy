@@ -36,7 +36,7 @@ from Deeploy.CommonExtensions.DataTypes import IntegerDataTypes, SignedIntegerDa
 from Deeploy.DeeployTypes import CodeTransformation, NodeBinding, NodeTemplate
 from Deeploy.FutureExtension.Bindings.AutoFutureBinding import AutoFutureBinding
 from Deeploy.FutureExtension.CodeTransformationPasses.FutureCodeTransformation import FutureGeneration
-from Deeploy.Targets.Generic.Templates import ConcatTemplate, RQSiGELUTemplate, iHardswishTemplate
+from Deeploy.Targets.Generic.Templates import ConcatTemplate, iHardswishTemplate#, RQSiGELUTemplate
 from Deeploy.Targets.Generic.TypeCheckers import ConcatChecker, GELUChecker, HardswishChecker, MatMulChecker, \
     MulChecker, ReduceMeanChecker, RQHardswishChecker, SliceChecker, SoftmaxChecker, TransposeChecker, \
     iLayerNormChecker
@@ -46,7 +46,7 @@ from Deeploy.Targets.PULPOpen.CodeTransformationPasses.PULPL3Tiling import PULPL
 from Deeploy.Targets.PULPOpen.DataTypes import PULPDMAFuture
 from Deeploy.Targets.PULPOpen.Templates import ConvTemplate, GEMMTemplate, MatrixVectorTemplate, MaxPool2DTemplate, \
     MulTemplate, ReduceMeanTemplate, RequantShiftTemplate, RQAddTemplate, RQSiHardswishTemplate, SliceTemplate, \
-    TallGEMMTemplate, TransposeTemplate, UniformRequantShiftTemplate, iRMSNormTemplate, iSoftmaxTemplate
+    TallGEMMTemplate, TransposeTemplate, UniformRequantShiftTemplate, iRMSNormTemplate, iSoftmaxTemplate, RQSiGELUTemplate
 from Deeploy.Targets.PULPOpen.TypeCheckers import PULPConvChecker, PULPLinearChecker, PULPMaxPoolChecker, \
     PULPRequantShiftChecker, PULPRQAddChecker
 from Deeploy.TilingExtension.CodeTransformationPasses.TilingVariableReplacement import TilingVariableReplacement
@@ -299,7 +299,7 @@ PULPiRQSGELUBindings = [
                      PointerClass(int32_t),
                      PointerClass(int32_t),
                      PointerClass(int32_t)], [PointerClass(int8_t)]), RQSiGELUTemplate.referenceTemplate,
-        ClusterTransformer)
+        ForkTransformer)
 ]
 
 PULPMulBindings = [
