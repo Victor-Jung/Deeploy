@@ -35,9 +35,9 @@ void PULPiGELU_s8_s8(int8_t *data_in,
                      int16_t one,
                      int32_t input_offset,
                      int32_t output_offset,
-                     int32_t *mul,
-                     int32_t *add,
-                     int32_t *shift)
+                     int32_t mul,
+                     int32_t add,
+                     int32_t shift)
 {
     int core_id    = pi_core_id();
     int num_cores  = NUM_CORES;
@@ -47,9 +47,9 @@ void PULPiGELU_s8_s8(int8_t *data_in,
     int16_t chunk_start = (chunk * core_id < dataSize) ? (chunk * core_id) : dataSize;
     int16_t chunk_stop  = (chunk_start + chunk < dataSize) ? (chunk_start + chunk) : dataSize;
 
-    int32_t rq_mul   = mul[0];
-    int32_t rq_add   = add[0];
-    int32_t rq_shift = shift[0];
+    int32_t rq_mul   = mul;
+    int32_t rq_add   = add;
+    int32_t rq_shift = shift;
 
     for (int i = chunk_start; i < chunk_stop; i++)
     {

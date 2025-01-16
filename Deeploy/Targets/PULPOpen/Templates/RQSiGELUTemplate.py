@@ -45,9 +45,9 @@ PULPiGELU_s8_s8(
     ${one},                 /* 'one' param (int16)            */
     ${input_offset},        /* input offset                   */
     ${output_offset},       /* output offset                  */
-    &${mul_scalar}[0],      /* pointer to 'mul' scalar        */
-    &${add_scalar}[0],      /* pointer to 'add' scalar        */
-    &${shift_scalar}[0]     /* pointer to 'shift' scalar      */
+    2,      /* pointer to 'mul' scalar        */
+    0,      /* pointer to 'add' scalar        */
+    16     /* pointer to 'shift' scalar      */
 );
 
 pi_cl_team_barrier();
