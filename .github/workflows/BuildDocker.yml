@@ -38,4 +38,5 @@ jobs:
           file: Container/Dockerfile
           push: true
           # JUNGVI: If you operate from a fork and want to build a new docker make sure to replace 'pulp-platform' by your uname. 
-          tags: ghcr.io/Victor-Jung/deeploy:main 
+          # JUNGVI: The link should not contain upper-case, for some reason...
+          tags: ghcr.io/victor-jung/deeploy:main 

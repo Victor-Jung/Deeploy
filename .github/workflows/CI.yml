@@ -25,7 +25,7 @@ jobs:
   build-docs:
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/Victor-Jung/deeploy:main
+      image: ghcr.io/victor-jung/deeploy:main
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
