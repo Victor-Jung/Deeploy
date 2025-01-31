@@ -109,7 +109,11 @@ RUN rm -rf toolchain
 FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
+
 ENV TZ=Etc/UTC
+ENV LC_ALL=C
+ENV LANG=C
+ENV LANGUAGE=C
 
 # Export symbols necessary for Deeploy's build flow 
 ENV CMAKE=/usr/bin/cmake

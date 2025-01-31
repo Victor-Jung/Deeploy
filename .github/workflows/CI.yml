@@ -22,6 +22,17 @@ jobs:
       - name: Build Deeploy
         run: pip install -e .
   
+  build-docs:
+    runs-on: ubutntu-22.04
+    container:
+      image: ghcr.io/Victor-Jung/deeploy:main
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Documentation
+        run: make docs
   
   ### Generic Tests ###
   generic-kernels:
