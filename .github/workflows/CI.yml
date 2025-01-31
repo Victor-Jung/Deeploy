@@ -23,7 +23,7 @@ jobs:
         run: pip install -e .
   
   build-docs:
-    runs-on: ubutntu-22.04
+    runs-on: ubuntu-22.04
     container:
       image: ghcr.io/Victor-Jung/deeploy:main
     steps:
