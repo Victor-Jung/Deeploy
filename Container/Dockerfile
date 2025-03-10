@@ -120,6 +120,7 @@ ENV GVSOC_INSTALL_DIR=/app/install/gvsoc
 ENV MEMPOOL_HOME=/app/install/mempool
 ENV PATH=/app/install/qemu/bin:/app/install/banshee:$PATH
 ENV PATH="/root/.cargo/bin:${PATH}"
+ENV CCACHE_DIR=/app/.ccache
 
 WORKDIR /app
 
@@ -151,3 +152,5 @@ RUN pip install -r core-requirements.txt -r gapy-requirements.txt
 COPY --from=builder /app/install ./install
 COPY --from=builder /root/.cargo/bin/banshee /root/.cargo/bin/banshee
 COPY --from=builder /app/riscv-llvm ./install/riscv-llvm
+
+ENTRYPOINT ["bash", "-c", "source /app/install/pulp-sdk/configs/siracusa.sh && exec bash -l"]
