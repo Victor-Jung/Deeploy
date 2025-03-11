@@ -21,8 +21,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
   
   
@@ -676,8 +676,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
       - name: Run Test
         run: |
@@ -699,8 +699,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
       - name: Run Test
         run: |
@@ -722,8 +722,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
       - name: Run Test
         run: |
@@ -749,8 +749,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
       - name: Run Test
         run: |
@@ -774,8 +774,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
       - name: Run Test
         run: |
@@ -794,8 +794,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
       - name: Run Test
         run: |
@@ -814,8 +814,8 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install setuptools==75.0.0
-          wheel==0.45.1
+          pip install setuptools==75.0.0 --index-url=https://pypi.org/simple
+          pip install wheel==0.45.1
           pip install -e .
           cd DeeployTest
       - name: Format Python
