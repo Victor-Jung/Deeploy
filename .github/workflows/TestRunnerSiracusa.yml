@@ -21,7 +21,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
       - name: Cache ccache
         id: ccache-cache
         uses: actions/cache@v4

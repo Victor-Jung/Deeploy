@@ -20,7 +20,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
   
   
   ### Generic Tests ###
@@ -672,7 +675,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -692,7 +698,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -712,7 +721,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -736,7 +748,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -758,7 +773,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -775,7 +793,10 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install  --no-cache-dir -e .
+        run: |
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -793,7 +814,9 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install  --no-cache-dir -e .
+          pip install setuptools==75.0.0
+          wheel==0.45.1
+          pip install -e .
           cd DeeployTest
       - name: Format Python
         run: |
