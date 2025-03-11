@@ -24,7 +24,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Run Test
         run: |
           testNames="${{ inputs.test-names }}"

@@ -31,7 +31,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Install jq
         run: apt-get install -y jq
       - name: Cache ccache

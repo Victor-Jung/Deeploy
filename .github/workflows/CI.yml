@@ -20,7 +20,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
   
   
   ### Generic Tests ###
@@ -672,7 +672,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -692,7 +692,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -712,7 +712,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -736,7 +736,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -758,7 +758,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -775,7 +775,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build Deeploy
-        run: pip install -e .
+        run: pip install  --no-cache-dir -e .
       - name: Run Test
         run: |
           cd DeeployTest
@@ -793,7 +793,7 @@ jobs:
           submodules: recursive
       - name: Build Deeploy
         run: |
-          pip install -e .
+          pip install  --no-cache-dir -e .
           cd DeeployTest
       - name: Format Python
         run: |

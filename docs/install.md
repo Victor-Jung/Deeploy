@@ -42,7 +42,7 @@ export PATH=~/.local/bin:$PATH
 ### Installing Deeploy
 
 ```
-pip install -e .
+pip install  --no-cache-dir -e .
 ```
 
 ## Testing Framework Installation
