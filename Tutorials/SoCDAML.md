@@ -32,6 +32,10 @@ Once all these basic tests are passing, we can jump into the basics of Deeploy.
 
 ## I: Deeploy 101
 
+Paragraph to introduce Deeploy's I/O
+
+![Deeploy's System](Images/DeeploySystem.png)
+
 - Format of the tests and how to visualize the ONNX using Netron
     - Visualize Add
     - Visualize ResNet
@@ -40,8 +44,27 @@ Once all these basic tests are passing, we can jump into the basics of Deeploy.
 
 ## II: Tiny Llama on Siracusa
 
-
+- Explain the impact of the arguments of the command line for executing tiny llama on Siracusa
+- Save the profiling traces for several networks in several modes
+- Some questions for the students:
+  - When using NEUREKA, why do we observe a higher speedup in parallel model compared to autoregressive mode?
+  - Why is the impact of the NMS higher in autoregressive mode compared to parallel mode?
 
 ## III: Visualizing and Understanding Tiling and Memory Allocation
 
 
+
+
+
+
+<details>
+  <summary>Click to reveal the solution</summary>
+
+  **Solution:**  
+  The derivative of `x^2` is `2x`.
+</details>
+
+**Your answer:**
+
+```markdown
+# Write your answer here:
