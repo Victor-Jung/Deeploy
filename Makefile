@@ -358,7 +358,8 @@ ${TOOLCHAIN_DIR}/pulp-sdk:
 	cd ${TOOLCHAIN_DIR} && \
 	git clone https://github.com/Victor-Jung/pulp-sdk.git -b deeploy && \
 	cd ${TOOLCHAIN_DIR}/pulp-sdk && git checkout ${PULP_SDK_COMMIT_HASH} && \
-	git submodule update --init --recursive
+	git submodule update --init --recursive && \
+	git apply ${TOOLCHAIN_DIR}/pulp-sdk.patch
 
 ${PULP_SDK_INSTALL_DIR}: ${TOOLCHAIN_DIR}/pulp-sdk
 	mkdir -p ${PULP_SDK_INSTALL_DIR}
