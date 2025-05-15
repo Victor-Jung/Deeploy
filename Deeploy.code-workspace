@@ -14,7 +14,8 @@
 			"josetr.cmake-language-support-vscode",
 			"ms-vscode.cmake-tools",
 			"ms-python.python",
-			"ms-vscode-remote.remote-containers"
+			"ms-vscode-remote.remote-containers",
+			"rioj7.command-variable"
 		],
 	}
 }
