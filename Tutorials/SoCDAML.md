@@ -179,30 +179,53 @@ To use the NPU, you can use the `testRunner_tiled_siracusa_w_neureka.py`. The Li
 <details>
   <summary><span style="font-weight: bold; font-size: 1.3em;">Solution</span></summary>
 
-  > TODO
+  > The runtime in parallel mode with NPU is obtained with:
+  >
+  >`
+  python testRunner_tiled_siracusa_w_neureka.py -t Tests/microLlama/microLlama64_parallel --cores=8 --l1 64000 --defaultMemLevel=L2 
+  `
+  >
+  > And returns 28.6 MCycles of runtime. The runtime without NPU was measured above and is 35.3 MCycles. Hence the speedup is ~1.23 times. 
+  >
+  > We apply the same methodology on `microLlama64` and get a speedup of ~1.04 times.
+  >
+  > Now, why is the speedup lesser in autoregressive mode compared to parallel mode? It is because the parallel mode is composed mainly of GEMM while the autoregressive mode uses GEMV. With GEMV, the accelerator is underutilised as the [operational intensity](https://spcl.inf.ethz.ch/Teaching/2013-dphpc/lecture9-6up.pdf) of GEMV is very low, especially compared to GEMM.
+  >
+  > Additionally, in autoresressive mode (unlike in parallel mode), you have to load the KV cache, which requieres lots of data movement not accelerated by the NPU.
 
 </details>
 <br>
 
-<!--
-parallel: 35.4M
-parallel npu: 28.6M
-parallel npu nms: 283.8M
-ag: 898K
-ag npu: 857K
-ag npu nms: 780K
--->
+> ✅ **Task:** Benchmark the effect of the NMS on the model runtime and at the layer level. Do you notice any speedup? If yes, where does it comes from?
 
-<!-- - Explain the impact of the arguments of the command line for executing micro llama on Siracusa
-- Save the profiling traces for several networks in several modes
-- Some questions for the students:
-  - When using NEUREKA, why do we observe a higher speedup in parallel model compared to autoregressive mode?
-  - Why is the impact of the NMS higher in autoregressive mode compared to parallel mode? -->
+<details>
+  <summary><span style="font-weight: bold; font-size: 1.3em;">Solution</span></summary>
 
-<!-- 
-WIP Section
-## III : Visualizing and Understanding Tiling and Memory Allocation
+  > Using the NMS brings the runtime from 857 to 780 KCycles for the autoregressive mode and from 28.6 to 28.3 MCycles for the parallel mode. By inspecting the trace, you can notice that the NMS drastically reduces the time spent on input DMA transfers for the layers offloaded to the NPU.
+  >
+  > This is the profiling trace for a layer without using the NMS:
+  ```
+  [RequantizedPwConv_L2][SB][32771 ops][Tile 0] Input DMA took 2037 cycles
+  [RequantizedPwConv_L2][SB][32771 ops][Tile 0] Kernel took 2649 cycles
+  [RequantizedPwConv_L2][SB][32771 ops][Tile 0] Output DMA took 50 cycles
+  ```
+  > And this is with the NMS activated:
+  ```
+  [RequantizedPwConv_L2][SB][32771 ops][Tile 0] Input DMA took 125 cycles
+  [RequantizedPwConv_L2][SB][32771 ops][Tile 0] Kernel took 2595 cycles
+  [RequantizedPwConv_L2][SB][32771 ops][Tile 0] Output DMA took 56 cycles
+  ```
+</details>
+<br>
 
-  - Visualize tiling and memory alloc 
-  - Visualization of profiling (to be merged)
--->
+> ✅ **Task:** Why does the autoregressive mode benefit more from the NMS than the parallel mode?
+
+<details>
+  <summary><span style="font-weight: bold; font-size: 1.3em;">Solution</span></summary>
+
+  > Using the NMS relaxes the memory boundness of the NPU. In the GEMM, we are not in a memory bound regime, and the DMA transfer overhead is negligible with regards to the total runtime. In the autoregressive mode, we spend lots of time in DMA transfers, hence, providing more bandwidth to the accelerator is very beneficial.
+
+</details>
+<br>
+
+Et voilà, this is the end of the tutorial. Thank you for following it until the end. If you are interested in learning more about Deeploy or the SoCs we develop at the [PULP Platform](https://pulp-platform.org/), please reach out!
