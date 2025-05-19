@@ -47,8 +47,7 @@ cd DeeployTest
 python testRunner_generic.py -t Tests/Adder
 python testRunner_cortexm.py -t Tests/Adder
 python testRunner_mempool.py -t Tests/Adder
-python testRunner_snitch.py -t Tests/Adder/ --toolchain_install_dir /app/install/riscv-llvm/ --simulator=banshee
-python testRunner_snitch.py -t Tests/Adder/ --toolchain_install_dir /app/install/riscv-llvm/ --simulator=gvsoc
+python testRunner_snitch.py -t Tests/Adder/
 python testRunner_siracusa.py -t Tests/Adder --cores=8
 python testRunner_snitch.py -t Tests/Adder --cores=9
 ```

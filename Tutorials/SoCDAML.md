@@ -24,8 +24,7 @@ To validate that your install is correct you can run a simple Add node on each p
 python testRunner_generic.py -t Tests/Adder
 python testRunner_cortexm.py -t Tests/Adder
 python testRunner_mempool.py -t Tests/Adder
-python testRunner_snitch.py -t Tests/Adder/ --toolchain_install_dir /app/install/riscv-llvm/ --simulator=banshee
-python testRunner_snitch.py -t Tests/Adder/ --toolchain_install_dir /app/install/riscv-llvm/ --simulator=gvsoc
+python testRunner_snitch.py -t Tests/Adder/
 python testRunner_siracusa.py -t Tests/Adder --cores=8
 ```
 Once all these basic tests are passing, we can jump into the basics of Deeploy. 
@@ -77,9 +76,10 @@ You can notice the effect of two passes on the graph:
 
 Now that you understand the basics of Deeploy, let's jump into the optimized deployment of a small language model on the Siracusa SoC.
 
-## II : Tiny Llama on Siracusa
+## II : Micro Llama on Siracusa
 
-<!-- Quickly introduce TinyLLama, autoregressive and parallel mode. -->
+### Transformers 101
+
 In this section, we will study the optimization of the deployment of a small language model. To fully understand this section, you need some basic understanding of Transformer's architecture and Language Model inference mode. If you need a refresher of Transformer's architecture check out the *Transformer Basics* section of [Lilian Weng's blog post](https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/#transformer-basics). 
 
 Now, Language Models have two inference modes:
@@ -96,6 +96,8 @@ The slide below provides a visual representation to the **Parallel Mode** and **
     <img src="Images/Victor_Jung_EDGEAIForumDeeploy_S5.png" alt="Description" width="75%">
 </p>
 
+### The Siracusa Platform
+
 Let's also quickly refresh our knowledge of the Siracusa platform to understand what kind of hardware we are tying to deploy on. Below is the high-level block diagram of Siracusa, compute-wise we will mainly use:
 - The cluster of RV32 cores, they are modified to be great at crunching numbers. They feature [SIMD](), hardware loops (see the [RI5CY user manual](https://www.pulp-platform.org/docs/ri5cy_user_manual.pdf), p17), and the [XPULP](https://pulp-platform.org/docs/hipeac/acaces2021/04_PULP_Accelerators.pdf) ISA extensions.
 - The [NEUREKA](https://github.com/pulp-platform/neureka) NPU, an accelerator targeting integer convolutions.
@@ -108,8 +110,6 @@ In terms of memories, we have:
 
 The on-chip DMA indicated on the block diagram can transfer data between the Weight Memory, the L2, and the L1.
 
-
-
 <p align="center">
     <img src="Images/Siracusa.png" alt="Description" width="75%">
 </p>
@@ -121,41 +121,88 @@ Now that you understand the hardware and the kind of workload we want to execute
 *Hint:* `python testRunner_siracusa.py --help` will list and explain the available flags.
 
 <details>
-  <summary>Solution</summary>
+  <summary><span style="font-weight: bold; font-size: 1.3em;">Solution</span></summary>
 
-  If you run `python testRunner_siracusa.py -t Tests/microLlama/microLlama128 --cores=1` and then `python testRunner_siracusa.py -t Tests/microLlama/microLlama128 --cores=8`, you should measure a runtime of ~16,1M cycles for 1 core and 3.1M cycles for 8 cores.
-
-  The speedup ratio is obtained via $\frac{\text{Runtime 1 cores}}{\text{Runtime 8 cores}} = 5.2$. Hence, using 8 cores instead of 1 leads to a 5.2 times speedup.
-
-  So why is the speedup ratio below 8? Mostly because all data movement is not overlapped with computation. Additionally, some kernels are probably not optimally parallelized for this specific network.
+  > If you run `python testRunner_siracusa.py -t Tests/microLlama/microLlama128 --cores=1` and then `python testRunner_siracusa.py -t Tests/microLlama/microLlama128 --cores=8`, you should measure a runtime of ~16,1M cycles for 1 core and 3.1M cycles for 8 cores.
+  >
+  > The speedup ratio is obtained via $\frac{\text{Runtime 1 cores}}{\text{Runtime 8 cores}} = 5.2$. Hence, using 8 cores instead of 1 leads to a 5.2 times speedup.
+  >
+  > So why is the speedup ratio below 8? Mostly because all data movement is not overlapped with computation. Additionally, some kernels are probably not optimally parallelized for this specific network.
 </details>
 
+### Tiling Basics
 
+It's due time to talk about data movement now! We use all 8 cores of the cluster, that great, but where do these core fetch the data from? By default, when using `testRunner_siracusa.py`, all data is in L2, there is not tiling and cores read and write data directly to/from L2. As the L2 memory is "further away" from the cluster, load/store take several cycles, which is non-optimal.
 
-<!-- Explain the difference between tiled and non-tiled execution, ask them to see the difference in the runtime.  -->
+What we really want is to use the L1 memory, which provides 1 cycle latency load/store! But as the capacity is quite small (256KB), we need to **tile our layers**. Tiling operands for an accelerator featuring only scratchpad memories is not trivial (unlike in architectures with data caches). For each layer, the compiler has to decide on a tile size, a tiling schedule, a buffering strategy (singlebuffer, doublebuffer, etc...), and a memory allocation strategy. Then, the compiler has to generate the code to configure and launch each transfer, and finally place barriers accordingly to maximize concurrency.
 
+The good news is, Deeploy can already do that! So let's generate and run some tiled code to see the impact of tiling on the runtime.
 
-<!-- - Explain the impact of the arguments of the command line for executing tiny llama on Siracusa
+> ✅ **Task:** Get familiar with the CLI arguments of `testRunner_tiled_siracusa.py`, then run `microLlama64_parallel` with different configurations. Find one "bad" and one "good" configuration, explain why.
+
+*Hint:* Use the `--help` flag to list and explain the available flags.
+
+<details>
+  <summary><span style="font-weight: bold; font-size: 1.3em;">Solution</span></summary>
+
+  > Bad configuration: `python testRunner_tiled_siracusa.py -t Tests/microLlama/microLlama64_parallel --cores=8 --l1 8000 --defaultMemLevel=L2` -> Runtime: 47.5 MCycles
+  >
+  > Good configuration `python testRunner_tiled_siracusa.py -t Tests/microLlama/microLlama64_parallel --cores=8 --l1 64000 --defaultMemLevel=L2`: -> Runtime: 35.3 MCycles
+  >
+  > Justification: As the size of the L1 memory is getting smaller, tiles are getting smaller and smaller. Smaller tiles usually means that it's harder to keep the core properly utilized.
+
+</details>
+
+### Profiling the Execution
+
+To measure the effect of some optimizations in more details, you can use the `--profileTiling=L2` flag. This flag will enable a code transformation that will insert print displaying the runtime of several critical code sections. For instance, profiling an *Integer Layer Normalization* layer from L2 with two tiles will return the print the folowing:
+```
+[INTEGER_RMSNORM L2][SB][0 ops][Tile 0] Input DMA took 489 cycles
+[INTEGER_RMSNORM L2][SB][0 ops][Tile 0] Kernel took 43305 cycles
+[INTEGER_RMSNORM L2][SB][0 ops][Tile 0] Output DMA took 534 cycles
+[INTEGER_RMSNORM L2][SB][0 ops][Tile 1] Input DMA took 82 cycles
+[INTEGER_RMSNORM L2][SB][0 ops][Tile 1] Kernel took 3254 cycles
+[INTEGER_RMSNORM L2][SB][0 ops][Tile 1] Output DMA took 49 cycles
+```
+With this profiling trace you can clearly measure the overhead of DMA transfers. When the profiling is turned ON, the total runtime of the application will encompass the prints
+
+### Using the NPU and the Neural Memory Subsystem (NMS)
+
+To use the NPU, you can use the `testRunner_tiled_siracusa_w_neureka.py`. The Linear layers will automatically be executed by the NPU. To enable the NMS, use the `--neureka-wmem` flag. When the NMS in enabled, the constant tensors used by the accelerator will be placed in the Weight Memory.
+
+> ✅ **Task:** Execute Micro Llama in parallel and autoregressive mode using the NPU, derive the speedup at the model level and at the layer level compared to an execution without NPU. 
+
+*Hint:* Save the profiling traces somewhere to reason about them later on.
+
+> ✅ **Task:** Why does the NPU bring more speedup in parallel mode than in autoregressive mode?
+
+<details>
+  <summary><span style="font-weight: bold; font-size: 1.3em;">Solution</span></summary>
+
+  > TODO
+
+</details>
+<br>
+
+<!--
+parallel: 35.4M
+parallel npu: 28.6M
+parallel npu nms: 283.8M
+ag: 898K
+ag npu: 857K
+ag npu nms: 780K
+-->
+
+<!-- - Explain the impact of the arguments of the command line for executing micro llama on Siracusa
 - Save the profiling traces for several networks in several modes
 - Some questions for the students:
   - When using NEUREKA, why do we observe a higher speedup in parallel model compared to autoregressive mode?
   - Why is the impact of the NMS higher in autoregressive mode compared to parallel mode? -->
 
+<!-- 
+WIP Section
 ## III : Visualizing and Understanding Tiling and Memory Allocation
 
-
-
-
-
-
-<details>
-  <summary>Click to reveal the solution</summary>
-
-  **Solution:**  
-  The derivative of `x^2` is `2x`.
-</details>
-
-**Your answer:**
-
-```markdown
-# Write your answer here:
+  - Visualize tiling and memory alloc 
+  - Visualization of profiling (to be merged)
+-->
