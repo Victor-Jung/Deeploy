@@ -16,8 +16,7 @@
                 "Tests/Adder",
                 "-p",
                 "Generic"
-            ],
-
+            ]
         },
         {
             "name": "Deeploy Generate Untiled",
@@ -28,11 +27,10 @@
             "cwd": "${workspaceFolder}/DeeployTest",
             "justMyCode": false,
             "args": [
-                "-v",
                 "-p${input:platformUntiled}",
                 "-t${input:model}",
-                "${input:additionalArgsUntiled}"
-            ],
+                "${input:additionalArgs}"
+            ]
         },
         {
             "name": "Deeploy Generate Tiled",
@@ -46,24 +44,24 @@
                 "-v",
                 "-p${input:platformTiled}",
                 "-t${input:model}",
-                "${input:additionalArgsTiled}"
-            ],
-        },
+                "${input:additionalArgs}"
+            ]
+        }
     ],
     "inputs": [
         {
             "id": "platformUntiled",
             "type": "pickString",
             "description": "Problem",
+            "default": "Generic",
             "options": [
                 "QEMU-ARM",
                 "Generic",
                 "MemPool",
                 "Apollo3",
                 "Apollo4",
-                "Snitch",
-              ],
-            "default": "Generic"
+                "Snitch"
+              ]
         },
          {
             "id": "platformTiled",
@@ -72,7 +70,7 @@
             "options": [
                 "Snitch",
                 "Siracusa",
-                "Siracusa_w_neureka",
+                "Siracusa_w_neureka"
               ],
             "default": "Siracusa"
         },
@@ -84,22 +82,16 @@
                 "description": "Select ONNX File",
                 "include" : "DeeployTest/Tests/**/*.onnx",
                 "transform": {
-                    "text": "${fileDirname}",
+                    "text": "${fileDirname}"
                 }
 
             }
         },
         {
-            "id": "additionalArgsUntiled",
+            "id": "additionalArgs",
             "type": "promptString",
             "description": "Additional Arguments",
-            "default": ""
-        },
-        {
-            "id": "additionalArgsTiled",
-            "type": "promptString",
-            "description": "Additional Arguments",
-            "default": "--doublebuffer"
+            "default": "-v"
         }
     ]
 }
