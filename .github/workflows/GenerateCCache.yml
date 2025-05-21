@@ -1,0 +1,35 @@
+name: GenerateCCache
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+    generate-ccache:
+      runs-on: ubuntu-latest
+      container:
+        image: ghcr.io/pulp-platform/deeploy:main
+      steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Deeploy
+        run: pip install -e .
+      - name: Generate CCache
+        run: |
+          cd DeeployTest
+          mkdir -p /app/.ccache
+          export CCACHE_DIR=/app/.ccache
+          python testRunner_generic.py -t ./Tests/Adder
+          python testRunner_siracusa.py  -t ./Tests/Adder
+          python testRunner_snitch.py  -t ./Tests/Adder
+          python testRunner_tiled_siracusa.py  -t ./Tests/Adder
+          python testRunner_tiled_siracusa_w_neureka.py  -t ./Tests/Adder
+      - name: Clean and Upload CCache
+        uses: actions/cache@v3
+        with:
+          path: /app/.ccache
+          key: ccache-ci
+
+    

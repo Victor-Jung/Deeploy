@@ -59,7 +59,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /app/.ccache
-          key: ${{ runner.os }}-ccache
+          key: ccache-ci
       - name: Run Test
         uses: nick-fields/retry@v3
         with:
