@@ -55,7 +55,7 @@ jobs:
       - name: Build Deeploy
         run: pip install -e .
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: /app/.ccache
           key: ccache-ci
