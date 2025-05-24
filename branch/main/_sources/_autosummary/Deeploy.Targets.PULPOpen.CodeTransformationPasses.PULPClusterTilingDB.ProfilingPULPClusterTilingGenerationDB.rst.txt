@@ -1,0 +1,39 @@
+Deeploy.Targets.PULPOpen.CodeTransformationPasses.PULPClusterTilingDB.ProfilingPULPClusterTilingGenerationDB
+============================================================================================================
+
+.. currentmodule:: Deeploy.Targets.PULPOpen.CodeTransformationPasses.PULPClusterTilingDB
+
+.. autoclass:: ProfilingPULPClusterTilingGenerationDB
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~ProfilingPULPClusterTilingGenerationDB.__init__
+      ~ProfilingPULPClusterTilingGenerationDB.apply
+      ~ProfilingPULPClusterTilingGenerationDB.extractDynamicReferences
+      ~ProfilingPULPClusterTilingGenerationDB.generateAllTilingCode
+      ~ProfilingPULPClusterTilingGenerationDB.generateInnerCode
+      ~ProfilingPULPClusterTilingGenerationDB.generateLoopCode
+      ~ProfilingPULPClusterTilingGenerationDB.generateSetupAndTeardownCode
+      ~ProfilingPULPClusterTilingGenerationDB.generateTilingLoop
+      ~ProfilingPULPClusterTilingGenerationDB.isFinalMemoryLevel
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ProfilingPULPClusterTilingGenerationDB.parseTreeDict
+      ~ProfilingPULPClusterTilingGenerationDB.prefix
+   
+   

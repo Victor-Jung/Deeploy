@@ -1,0 +1,36 @@
+Deeploy.Targets.Generic.TypeCheckers.GatherChecker
+==================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: GatherChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~GatherChecker.__init__
+      ~GatherChecker.annotateDict
+      ~GatherChecker.checkOutputType
+      ~GatherChecker.typeCheck
+      ~GatherChecker.typeCheckNodeInputs
+      ~GatherChecker.typeInferGlobalCtxt
+      ~GatherChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GatherChecker.typeDict
+   
+   

@@ -1,0 +1,40 @@
+Deeploy.Targets.MemPool.Platform.MemPoolTransientBuffer
+=======================================================
+
+.. currentmodule:: Deeploy.Targets.MemPool.Platform
+
+.. autoclass:: MemPoolTransientBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MemPoolTransientBuffer.__init__
+      ~MemPoolTransientBuffer.alloc
+      ~MemPoolTransientBuffer.dealloc
+      ~MemPoolTransientBuffer.fromNode
+      ~MemPoolTransientBuffer.fromVariableBuffer
+      ~MemPoolTransientBuffer.init
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MemPoolTransientBuffer.allocTemplate
+      ~MemPoolTransientBuffer.deallocTemplate
+      ~MemPoolTransientBuffer.initTemplate
+      ~MemPoolTransientBuffer.size
+      ~MemPoolTransientBuffer.name
+      ~MemPoolTransientBuffer.shape
+   
+   

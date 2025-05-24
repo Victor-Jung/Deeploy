@@ -1,0 +1,28 @@
+Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes.ProfilingSingleBufferingTilingMixIn
+=====================================================================================================
+
+.. currentmodule:: Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes
+
+.. autoclass:: ProfilingSingleBufferingTilingMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~ProfilingSingleBufferingTilingMixIn.__init__
+      ~ProfilingSingleBufferingTilingMixIn.generateAllTilingCode
+      ~ProfilingSingleBufferingTilingMixIn.generateInnerCode
+      ~ProfilingSingleBufferingTilingMixIn.generateLoopCode
+      ~ProfilingSingleBufferingTilingMixIn.generateSetupAndTeardownCode
+   
+   
+
+   
+   
+   

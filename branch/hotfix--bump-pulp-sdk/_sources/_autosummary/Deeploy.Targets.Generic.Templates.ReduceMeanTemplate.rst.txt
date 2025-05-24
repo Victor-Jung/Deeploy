@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.ReduceMeanTemplate
+====================================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.ReduceMeanTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

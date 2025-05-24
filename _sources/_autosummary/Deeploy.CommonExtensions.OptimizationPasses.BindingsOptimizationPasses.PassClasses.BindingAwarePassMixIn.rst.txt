@@ -1,0 +1,26 @@
+Deeploy.CommonExtensions.OptimizationPasses.BindingsOptimizationPasses.PassClasses.BindingAwarePassMixIn
+========================================================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.OptimizationPasses.BindingsOptimizationPasses.PassClasses
+
+.. autoclass:: BindingAwarePassMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~BindingAwarePassMixIn.__init__
+      ~BindingAwarePassMixIn.apply
+      ~BindingAwarePassMixIn.retarget
+   
+   
+
+   
+   
+   

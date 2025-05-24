@@ -1,0 +1,37 @@
+Deeploy.Targets
+===============
+
+.. automodule:: Deeploy.Targets
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   CortexM
+   Generic
+   MemPool
+   Neureka
+   PULPOpen
+   Snitch
+

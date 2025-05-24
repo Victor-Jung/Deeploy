@@ -1,0 +1,35 @@
+Deeploy.CommonExtensions.OptimizationPasses
+===========================================
+
+.. automodule:: Deeploy.CommonExtensions.OptimizationPasses
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   BindingsOptimizationPasses
+   Matchers
+   PassClasses
+   TopologyOptimizationPasses
+

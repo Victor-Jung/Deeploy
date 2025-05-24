@@ -1,0 +1,55 @@
+Deeploy.Targets.PULPOpen.Deployer.PULPDeployer
+==============================================
+
+.. currentmodule:: Deeploy.Targets.PULPOpen.Deployer
+
+.. autoclass:: PULPDeployer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~PULPDeployer.__init__
+      ~PULPDeployer.backEnd
+      ~PULPDeployer.bind
+      ~PULPDeployer.codeTransform
+      ~PULPDeployer.exportDeeployState
+      ~PULPDeployer.frontEnd
+      ~PULPDeployer.generateBufferAllocationCode
+      ~PULPDeployer.generateBufferDeAllocationCode
+      ~PULPDeployer.generateBufferInitializationCode
+      ~PULPDeployer.generateEngineInitializationCode
+      ~PULPDeployer.generateFunction
+      ~PULPDeployer.generateGlobalDefinitionCode
+      ~PULPDeployer.generateIOBufferInitializationCode
+      ~PULPDeployer.generateIncludeString
+      ~PULPDeployer.generateInferenceCode
+      ~PULPDeployer.generateInferenceInitializationCode
+      ~PULPDeployer.getParameterSize
+      ~PULPDeployer.getTotalSize
+      ~PULPDeployer.importDeeployState
+      ~PULPDeployer.inputs
+      ~PULPDeployer.lower
+      ~PULPDeployer.midEnd
+      ~PULPDeployer.numberOfOps
+      ~PULPDeployer.outputs
+      ~PULPDeployer.parse
+      ~PULPDeployer.prepare
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PULPDeployer.worstCaseBufferSize
+   
+   

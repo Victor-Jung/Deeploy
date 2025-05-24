@@ -1,0 +1,34 @@
+Deeploy.TilingExtension.MemoryConstraints.MemoryConstraint
+==========================================================
+
+.. currentmodule:: Deeploy.TilingExtension.MemoryConstraints
+
+.. autoclass:: MemoryConstraint
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MemoryConstraint.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MemoryConstraint.memoryLevel
+      ~MemoryConstraint.size
+      ~MemoryConstraint.multiBufferCoefficient
+      ~MemoryConstraint.shape
+      ~MemoryConstraint.addrSpace
+   
+   

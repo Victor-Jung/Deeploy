@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.SliceTemplate
+===============================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.SliceTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

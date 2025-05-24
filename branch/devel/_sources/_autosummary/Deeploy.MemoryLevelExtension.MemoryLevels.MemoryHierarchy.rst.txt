@@ -1,0 +1,27 @@
+Deeploy.MemoryLevelExtension.MemoryLevels.MemoryHierarchy
+=========================================================
+
+.. currentmodule:: Deeploy.MemoryLevelExtension.MemoryLevels
+
+.. autoclass:: MemoryHierarchy
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MemoryHierarchy.__init__
+      ~MemoryHierarchy.bfs
+      ~MemoryHierarchy.getDefaultMemoryLevel
+      ~MemoryHierarchy.setDefaultMemoryLevel
+   
+   
+
+   
+   
+   

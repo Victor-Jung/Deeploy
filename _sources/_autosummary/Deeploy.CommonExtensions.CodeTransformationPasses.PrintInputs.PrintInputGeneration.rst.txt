@@ -1,0 +1,32 @@
+Deeploy.CommonExtensions.CodeTransformationPasses.PrintInputs.PrintInputGeneration
+==================================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.CodeTransformationPasses.PrintInputs
+
+.. autoclass:: PrintInputGeneration
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~PrintInputGeneration.__init__
+      ~PrintInputGeneration.apply
+      ~PrintInputGeneration.extractDynamicReferences
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PrintInputGeneration.parseTreeDict
+   
+   

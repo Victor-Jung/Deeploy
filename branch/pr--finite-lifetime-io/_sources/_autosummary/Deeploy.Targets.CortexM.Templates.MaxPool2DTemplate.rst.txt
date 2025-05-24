@@ -1,0 +1,23 @@
+Deeploy.Targets.CortexM.Templates.MaxPool2DTemplate
+===================================================
+
+.. automodule:: Deeploy.Targets.CortexM.Templates.MaxPool2DTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

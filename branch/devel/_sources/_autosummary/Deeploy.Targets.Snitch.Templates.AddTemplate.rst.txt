@@ -1,0 +1,23 @@
+Deeploy.Targets.Snitch.Templates.AddTemplate
+============================================
+
+.. automodule:: Deeploy.Targets.Snitch.Templates.AddTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

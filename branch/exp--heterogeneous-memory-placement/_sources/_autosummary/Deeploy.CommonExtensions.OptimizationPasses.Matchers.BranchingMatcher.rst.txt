@@ -1,0 +1,26 @@
+Deeploy.CommonExtensions.OptimizationPasses.Matchers.BranchingMatcher
+=====================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.OptimizationPasses.Matchers
+
+.. autoclass:: BranchingMatcher
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~BranchingMatcher.__init__
+      ~BranchingMatcher.is_op_match
+      ~BranchingMatcher.match
+   
+   
+
+   
+   
+   

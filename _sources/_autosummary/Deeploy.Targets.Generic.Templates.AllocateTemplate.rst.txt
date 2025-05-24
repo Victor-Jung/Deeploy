@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.AllocateTemplate
+==================================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.AllocateTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

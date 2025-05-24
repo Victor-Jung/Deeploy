@@ -1,0 +1,36 @@
+Deeploy.Targets.Generic.TypeCheckers.QuantChecker
+=================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: QuantChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~QuantChecker.__init__
+      ~QuantChecker.annotateDict
+      ~QuantChecker.checkOutputType
+      ~QuantChecker.typeCheck
+      ~QuantChecker.typeCheckNodeInputs
+      ~QuantChecker.typeInferGlobalCtxt
+      ~QuantChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~QuantChecker.typeDict
+   
+   

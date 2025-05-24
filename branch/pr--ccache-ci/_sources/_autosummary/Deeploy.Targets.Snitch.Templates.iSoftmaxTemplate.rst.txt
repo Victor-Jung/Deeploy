@@ -1,0 +1,23 @@
+Deeploy.Targets.Snitch.Templates.iSoftmaxTemplate
+=================================================
+
+.. automodule:: Deeploy.Targets.Snitch.Templates.iSoftmaxTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

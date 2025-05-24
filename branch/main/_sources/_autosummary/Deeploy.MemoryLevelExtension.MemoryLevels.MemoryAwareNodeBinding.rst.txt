@@ -1,0 +1,38 @@
+Deeploy.MemoryLevelExtension.MemoryLevels.MemoryAwareNodeBinding
+================================================================
+
+.. currentmodule:: Deeploy.MemoryLevelExtension.MemoryLevels
+
+.. autoclass:: MemoryAwareNodeBinding
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MemoryAwareNodeBinding.__init__
+      ~MemoryAwareNodeBinding.bind
+      ~MemoryAwareNodeBinding.codeTransform
+      ~MemoryAwareNodeBinding.earlyBinding
+      ~MemoryAwareNodeBinding.generate
+      ~MemoryAwareNodeBinding.typeCheck
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MemoryAwareNodeBinding.executionBlock
+      ~MemoryAwareNodeBinding.nodeName
+      ~MemoryAwareNodeBinding.typeChecker
+      ~MemoryAwareNodeBinding.template
+   
+   

@@ -1,0 +1,6 @@
+Deeploy.MemoryLevelExtension.MemoryLevels.memoryAwareNodeBindingExtension
+=========================================================================
+
+.. currentmodule:: Deeploy.MemoryLevelExtension.MemoryLevels
+
+.. autofunction:: memoryAwareNodeBindingExtension

@@ -1,0 +1,33 @@
+Deeploy.CommonExtensions.CodeTransformationPasses.Closure.ClosureGeneration
+===========================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.CodeTransformationPasses.Closure
+
+.. autoclass:: ClosureGeneration
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~ClosureGeneration.__init__
+      ~ClosureGeneration.apply
+      ~ClosureGeneration.extractDynamicReferences
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ClosureGeneration.parseTreeDict
+      ~ClosureGeneration.closureStructArgs
+   
+   
