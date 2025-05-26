@@ -13,7 +13,7 @@ Date: 27th May 2025
 
 ## Installation
 
-A Singularity container file (extension .sif) with Deeploy and its dependencies has been installed on your home directory; Build the sandbox container with `singularity build --sandbox /scratch/$USER/DeeployContainer/ ~/deeploy-container-socdaml.sif`
+A Singularity container file (extension .sif) with Deeploy and its dependencies has been installed on the system; Build the sandbox container with `singularity build --sandbox /scratch/$USER/DeeployContainer/ /home/soc_042fs25/deeploy-container-socdaml.sif`
 
 Then you can find Deeploy's source code in `/scratch/$USER/DeeployContainer/app/Deeploy`. To spawn a shell from the container, from your home, run `singularity shell --writable --cleanenv --contain /scratch/$USER/DeeployContainer/`. Then you can navigate to the `DeeployTest` folder with `cd /app/Deeploy/DeeployTest`.
 
@@ -68,7 +68,7 @@ Now, if you want to look at something a bit more complex, run `python testRunner
 
 > ✅ **Task:** Visualize the effect of passes on the ONNX graph for the Siracusa platform.
 
-Deeploy applies passes on the ONNX graph to transform its topology and optimize its execution. Let's visualize the effect of the passes used in the Siracusa Platform. First, let's execute our `miniMobileNetv2` on Siracusa with `python testRunner_siracusa.py  -t ./Tests/miniMobileNetv2`. You can find the original ONNX graph at `DeeployTest/Tests/miniMobileNetv2/network.c`, and the transformed ONNX graph at `DeeployTest/TEST_SIRACUSA/Tests/miniMobileNetv2/deeployStates/backend_post_binding.onnx`. Open both ONNX graphs side by side to compare them.
+Deeploy applies passes on the ONNX graph to transform its topology and optimize its execution. Let's visualize the effect of the passes used in the Siracusa Platform. First, let's execute our `miniMobileNetv2` on Siracusa with `python testRunner_siracusa.py  -t ./Tests/miniMobileNetv2`. You can find the original ONNX graph at `DeeployTest/Tests/miniMobileNetv2/network.onnx`, and the transformed ONNX graph at `DeeployTest/TEST_SIRACUSA/Tests/miniMobileNetv2/deeployStates/backend_post_binding.onnx`. Open both ONNX graphs side by side to compare them.
 
 You can notice the effect of two passes on the graph:
 - One pass fuses the `Conv` and `RequantShift` nodes. This is a common technique named [Operator Fusion](https://medium.com/data-science/how-pytorch-2-0-accelerates-deep-learning-with-operator-fusion-and-cpu-gpu-code-generation-35132a85bd26) and used in many DNN compilers.
@@ -104,7 +104,7 @@ Let's also quickly refresh our knowledge of the Siracusa platform to understand 
 
 In terms of memories, we have:
 - L3: An off-chip RAM (not shown on the block diagram) of 16MB capacity. The L3 has its own DMA that can transfer data to L2.
-- Weight Memory: An SRAM/MRAM-based *Weight Memory* to store constants with a direct link to the NPU.
+- Neural Memory Subsystem (NMS): An SRAM/MRAM-based *Weight Memory* to store constants with a direct link to the NPU.
 - L2: An on-chip SRAM-based L2 memory of 2MB.
 - L1: A TCDM memory of size 256KB.
 
