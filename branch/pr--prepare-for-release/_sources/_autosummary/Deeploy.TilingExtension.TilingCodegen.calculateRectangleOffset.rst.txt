@@ -1,0 +1,6 @@
+Deeploy.TilingExtension.TilingCodegen.calculateRectangleOffset
+==============================================================
+
+.. currentmodule:: Deeploy.TilingExtension.TilingCodegen
+
+.. autofunction:: calculateRectangleOffset

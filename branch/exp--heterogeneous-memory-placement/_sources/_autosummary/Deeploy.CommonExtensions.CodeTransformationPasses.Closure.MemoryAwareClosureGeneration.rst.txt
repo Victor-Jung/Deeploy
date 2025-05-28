@@ -1,0 +1,33 @@
+Deeploy.CommonExtensions.CodeTransformationPasses.Closure.MemoryAwareClosureGeneration
+======================================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.CodeTransformationPasses.Closure
+
+.. autoclass:: MemoryAwareClosureGeneration
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MemoryAwareClosureGeneration.__init__
+      ~MemoryAwareClosureGeneration.apply
+      ~MemoryAwareClosureGeneration.extractDynamicReferences
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MemoryAwareClosureGeneration.parseTreeDict
+      ~MemoryAwareClosureGeneration.closureStructArgs
+   
+   

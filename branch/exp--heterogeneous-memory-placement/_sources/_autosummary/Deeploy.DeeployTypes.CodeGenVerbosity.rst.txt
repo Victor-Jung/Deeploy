@@ -1,0 +1,31 @@
+Deeploy.DeeployTypes.CodeGenVerbosity
+=====================================
+
+.. currentmodule:: Deeploy.DeeployTypes
+
+.. autoclass:: CodeGenVerbosity
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~CodeGenVerbosity.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CodeGenVerbosity.tilingProfiling
+      ~CodeGenVerbosity.untiledProfiling
+   
+   

@@ -1,0 +1,23 @@
+Deeploy.Targets.CortexM.Templates.AddTemplate
+=============================================
+
+.. automodule:: Deeploy.Targets.CortexM.Templates.AddTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

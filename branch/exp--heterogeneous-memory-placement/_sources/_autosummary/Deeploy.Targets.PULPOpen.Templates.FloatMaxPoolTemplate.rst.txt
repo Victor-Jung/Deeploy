@@ -1,0 +1,23 @@
+Deeploy.Targets.PULPOpen.Templates.FloatMaxPoolTemplate
+=======================================================
+
+.. automodule:: Deeploy.Targets.PULPOpen.Templates.FloatMaxPoolTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

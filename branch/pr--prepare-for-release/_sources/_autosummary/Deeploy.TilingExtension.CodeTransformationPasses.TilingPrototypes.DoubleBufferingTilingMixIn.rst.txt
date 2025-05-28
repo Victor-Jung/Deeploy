@@ -1,0 +1,28 @@
+Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes.DoubleBufferingTilingMixIn
+============================================================================================
+
+.. currentmodule:: Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes
+
+.. autoclass:: DoubleBufferingTilingMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~DoubleBufferingTilingMixIn.__init__
+      ~DoubleBufferingTilingMixIn.generateAllTilingCode
+      ~DoubleBufferingTilingMixIn.generateInnerCode
+      ~DoubleBufferingTilingMixIn.generateLoopCode
+      ~DoubleBufferingTilingMixIn.generateSetupAndTeardownCode
+   
+   
+
+   
+   
+   

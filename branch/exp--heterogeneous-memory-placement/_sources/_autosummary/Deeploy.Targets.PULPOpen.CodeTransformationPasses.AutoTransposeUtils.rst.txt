@@ -1,0 +1,31 @@
+Deeploy.Targets.PULPOpen.CodeTransformationPasses.AutoTransposeUtils
+====================================================================
+
+.. automodule:: Deeploy.Targets.PULPOpen.CodeTransformationPasses.AutoTransposeUtils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      allNumTransfers
+      generateTransposedDMAStruct
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

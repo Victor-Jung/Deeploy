@@ -1,0 +1,32 @@
+Deeploy.EngineExtension.OptimizationPasses.TopologyOptimizationPasses
+=====================================================================
+
+.. automodule:: Deeploy.EngineExtension.OptimizationPasses.TopologyOptimizationPasses
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   EngineColoringPasses
+

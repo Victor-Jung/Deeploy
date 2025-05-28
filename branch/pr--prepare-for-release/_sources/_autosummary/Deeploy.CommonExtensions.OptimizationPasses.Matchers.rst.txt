@@ -1,0 +1,34 @@
+Deeploy.CommonExtensions.OptimizationPasses.Matchers
+====================================================
+
+.. automodule:: Deeploy.CommonExtensions.OptimizationPasses.Matchers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      BranchingMatcher
+      Match
+      NonBranchingMatcher
+      SubgraphMatcher
+   
+   
+
+   
+   
+   
+
+
+
