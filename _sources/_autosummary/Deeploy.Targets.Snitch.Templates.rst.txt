@@ -1,0 +1,40 @@
+Deeploy.Targets.Snitch.Templates
+================================
+
+.. automodule:: Deeploy.Targets.Snitch.Templates
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   AddTemplate
+   AllocateTemplate
+   FloatGemmTemplate
+   FloatSoftmaxTemplate
+   FreeTemplate
+   GemmTemplate
+   RQAddTemplate
+   RqGemmTemplate
+   iSoftmaxTemplate
+

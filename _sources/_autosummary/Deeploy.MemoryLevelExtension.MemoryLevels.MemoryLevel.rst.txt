@@ -1,0 +1,24 @@
+Deeploy.MemoryLevelExtension.MemoryLevels.MemoryLevel
+=====================================================
+
+.. currentmodule:: Deeploy.MemoryLevelExtension.MemoryLevels
+
+.. autoclass:: MemoryLevel
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MemoryLevel.__init__
+   
+   
+
+   
+   
+   

@@ -1,0 +1,27 @@
+Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes.ProfilingPrototypeMixIn
+=========================================================================================
+
+.. currentmodule:: Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes
+
+.. autoclass:: ProfilingPrototypeMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~ProfilingPrototypeMixIn.__init__
+      ~ProfilingPrototypeMixIn.injectPrintCycleDiff
+      ~ProfilingPrototypeMixIn.kernelProfilingWrap
+      ~ProfilingPrototypeMixIn.measurementArrayDeclaration
+   
+   
+
+   
+   
+   

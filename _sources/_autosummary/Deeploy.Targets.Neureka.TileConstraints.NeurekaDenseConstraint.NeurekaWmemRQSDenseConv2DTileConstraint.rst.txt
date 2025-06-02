@@ -1,0 +1,32 @@
+Deeploy.Targets.Neureka.TileConstraints.NeurekaDenseConstraint.NeurekaWmemRQSDenseConv2DTileConstraint
+======================================================================================================
+
+.. currentmodule:: Deeploy.Targets.Neureka.TileConstraints.NeurekaDenseConstraint
+
+.. autoclass:: NeurekaWmemRQSDenseConv2DTileConstraint
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.__init__
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.addGeometricalConstraint
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.addPolicyConstraint
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.constructSymbolicNodeRep
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.extractBaseAddr
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.getBaseAddr
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.sanitizeTilingSchedule
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.serializeTilingSolution
+      ~NeurekaWmemRQSDenseConv2DTileConstraint.wrapTilingSolution
+   
+   
+
+   
+   
+   

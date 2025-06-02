@@ -1,0 +1,33 @@
+Deeploy.TilingExtension.TilerModel
+==================================
+
+.. automodule:: Deeploy.TilingExtension.TilerModel
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      AddConstraintStrategy
+      PerformanceHint
+      TilerModel
+   
+   
+
+   
+   
+   
+
+
+

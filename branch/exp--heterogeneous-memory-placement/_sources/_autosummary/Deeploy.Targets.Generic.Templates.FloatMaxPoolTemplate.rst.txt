@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.FloatMaxPoolTemplate
+======================================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.FloatMaxPoolTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
