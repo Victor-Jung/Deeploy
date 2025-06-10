@@ -41,5 +41,7 @@ elseif(DEEPLOY_ARCH STREQUAL PULP)
   endif()
 elseif(DEEPLOY_ARCH STREQUAL SNITCH)
   add_subdirectory(Platforms/Snitch)
+elseif(DEEPLOY_ARCH STREQUAL CHIMERA)
+  add_subdirectory(Platforms/Chimera)
 
 endif()
