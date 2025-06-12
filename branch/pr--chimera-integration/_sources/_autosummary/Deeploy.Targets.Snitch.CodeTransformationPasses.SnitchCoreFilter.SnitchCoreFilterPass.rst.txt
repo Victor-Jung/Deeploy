@@ -1,0 +1,25 @@
+Deeploy.Targets.Snitch.CodeTransformationPasses.SnitchCoreFilter.SnitchCoreFilterPass
+=====================================================================================
+
+.. currentmodule:: Deeploy.Targets.Snitch.CodeTransformationPasses.SnitchCoreFilter
+
+.. autoclass:: SnitchCoreFilterPass
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~SnitchCoreFilterPass.__init__
+      ~SnitchCoreFilterPass.apply
+   
+   
+
+   
+   
+   

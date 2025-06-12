@@ -1,0 +1,28 @@
+Deeploy.CommonExtensions.OptimizationPasses.PassClasses.SequentialPass
+======================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.OptimizationPasses.PassClasses
+
+.. autoclass:: SequentialPass
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~SequentialPass.__init__
+      ~SequentialPass.named_subpasses
+      ~SequentialPass.register_subpass
+      ~SequentialPass.remove_subpass
+      ~SequentialPass.setup_passes
+   
+   
+
+   
+   
+   

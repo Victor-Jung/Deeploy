@@ -1,0 +1,30 @@
+Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes
+=========================================================
+
+.. automodule:: Deeploy.Targets.Generic.TopologyOptimizationPasses.Passes
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      merge_gemm_rq_fun
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

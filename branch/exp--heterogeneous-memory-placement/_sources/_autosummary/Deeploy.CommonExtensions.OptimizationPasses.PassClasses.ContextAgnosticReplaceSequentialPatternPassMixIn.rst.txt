@@ -1,0 +1,27 @@
+Deeploy.CommonExtensions.OptimizationPasses.PassClasses.ContextAgnosticReplaceSequentialPatternPassMixIn
+========================================================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.OptimizationPasses.PassClasses
+
+.. autoclass:: ContextAgnosticReplaceSequentialPatternPassMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~ContextAgnosticReplaceSequentialPatternPassMixIn.__init__
+      ~ContextAgnosticReplaceSequentialPatternPassMixIn.apply
+      ~ContextAgnosticReplaceSequentialPatternPassMixIn.retarget
+      ~ContextAgnosticReplaceSequentialPatternPassMixIn.run_pass
+   
+   
+
+   
+   
+   

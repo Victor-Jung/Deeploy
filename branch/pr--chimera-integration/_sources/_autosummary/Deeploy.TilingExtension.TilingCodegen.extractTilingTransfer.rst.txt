@@ -1,0 +1,6 @@
+Deeploy.TilingExtension.TilingCodegen.extractTilingTransfer
+===========================================================
+
+.. currentmodule:: Deeploy.TilingExtension.TilingCodegen
+
+.. autofunction:: extractTilingTransfer

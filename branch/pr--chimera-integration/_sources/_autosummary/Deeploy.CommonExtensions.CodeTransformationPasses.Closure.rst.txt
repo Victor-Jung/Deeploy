@@ -1,0 +1,33 @@
+Deeploy.CommonExtensions.CodeTransformationPasses.Closure
+=========================================================
+
+.. automodule:: Deeploy.CommonExtensions.CodeTransformationPasses.Closure
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      ClosureExecutionBlock
+      ClosureGeneration
+      MemoryAwareClosureGeneration
+   
+   
+
+   
+   
+   
+
+
+

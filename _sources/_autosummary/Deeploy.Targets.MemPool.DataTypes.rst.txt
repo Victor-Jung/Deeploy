@@ -1,0 +1,32 @@
+Deeploy.Targets.MemPool.DataTypes
+=================================
+
+.. automodule:: Deeploy.Targets.MemPool.DataTypes
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      MemPoolStructDataTypes
+      ita_quant_t
+   
+   
+
+   
+   
+   
+
+
+

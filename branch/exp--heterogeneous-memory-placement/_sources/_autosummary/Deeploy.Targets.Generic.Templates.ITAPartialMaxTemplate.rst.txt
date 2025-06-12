@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.ITAPartialMaxTemplate
+=======================================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.ITAPartialMaxTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

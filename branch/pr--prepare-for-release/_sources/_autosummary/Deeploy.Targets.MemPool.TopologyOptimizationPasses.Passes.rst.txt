@@ -1,0 +1,31 @@
+Deeploy.Targets.MemPool.TopologyOptimizationPasses.Passes
+=========================================================
+
+.. automodule:: Deeploy.Targets.MemPool.TopologyOptimizationPasses.Passes
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      merge_gemm_rq_fun
+      merge_matmul_rq_fun
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

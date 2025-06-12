@@ -1,0 +1,36 @@
+Deeploy.Targets.Generic.TypeCheckers.SGDChecker
+===============================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: SGDChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~SGDChecker.__init__
+      ~SGDChecker.annotateDict
+      ~SGDChecker.checkOutputType
+      ~SGDChecker.typeCheck
+      ~SGDChecker.typeCheckNodeInputs
+      ~SGDChecker.typeInferGlobalCtxt
+      ~SGDChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SGDChecker.typeDict
+   
+   

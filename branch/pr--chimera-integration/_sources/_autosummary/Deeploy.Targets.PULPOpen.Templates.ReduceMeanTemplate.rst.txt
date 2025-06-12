@@ -1,0 +1,23 @@
+Deeploy.Targets.PULPOpen.Templates.ReduceMeanTemplate
+=====================================================
+
+.. automodule:: Deeploy.Targets.PULPOpen.Templates.ReduceMeanTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

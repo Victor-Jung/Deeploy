@@ -1,0 +1,23 @@
+Deeploy.Targets.CortexM.TopologyOptimizationPasses.Passes
+=========================================================
+
+.. automodule:: Deeploy.Targets.CortexM.TopologyOptimizationPasses.Passes
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

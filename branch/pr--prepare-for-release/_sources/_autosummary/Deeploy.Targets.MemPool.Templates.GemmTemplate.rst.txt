@@ -1,0 +1,23 @@
+Deeploy.Targets.MemPool.Templates.GemmTemplate
+==============================================
+
+.. automodule:: Deeploy.Targets.MemPool.Templates.GemmTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

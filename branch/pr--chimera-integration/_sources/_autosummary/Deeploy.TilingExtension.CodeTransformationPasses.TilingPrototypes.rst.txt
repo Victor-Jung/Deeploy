@@ -1,0 +1,37 @@
+Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes
+=================================================================
+
+.. automodule:: Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      DoubleBufferingTilingMixIn
+      ProfilingDoubleBufferingTilingMixIn
+      ProfilingSingleBufferingTilingMixIn
+      PrototypeTilingMixIn
+      SingleBufferingTilingMixIn
+      TilingCodeGenMixin
+      TilingMetaInfo
+   
+   
+
+   
+   
+   
+
+
+

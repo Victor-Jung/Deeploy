@@ -1,0 +1,36 @@
+Deeploy.Targets.Generic.TypeCheckers.CLCAChecker
+================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: CLCAChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~CLCAChecker.__init__
+      ~CLCAChecker.annotateDict
+      ~CLCAChecker.checkOutputType
+      ~CLCAChecker.typeCheck
+      ~CLCAChecker.typeCheckNodeInputs
+      ~CLCAChecker.typeInferGlobalCtxt
+      ~CLCAChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CLCAChecker.typeDict
+   
+   

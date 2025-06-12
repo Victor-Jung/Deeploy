@@ -1,0 +1,30 @@
+Deeploy.Targets.Generic.Platform.GenericPlatform
+================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.Platform
+
+.. autoclass:: GenericPlatform
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~GenericPlatform.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GenericPlatform.engines
+   
+   

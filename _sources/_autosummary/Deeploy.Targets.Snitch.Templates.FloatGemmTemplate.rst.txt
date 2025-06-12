@@ -1,0 +1,23 @@
+Deeploy.Targets.Snitch.Templates.FloatGemmTemplate
+==================================================
+
+.. automodule:: Deeploy.Targets.Snitch.Templates.FloatGemmTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

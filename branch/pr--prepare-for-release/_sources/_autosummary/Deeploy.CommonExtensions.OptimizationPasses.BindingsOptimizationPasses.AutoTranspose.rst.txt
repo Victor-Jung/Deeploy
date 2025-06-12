@@ -1,0 +1,23 @@
+Deeploy.CommonExtensions.OptimizationPasses.BindingsOptimizationPasses.AutoTranspose
+====================================================================================
+
+.. automodule:: Deeploy.CommonExtensions.OptimizationPasses.BindingsOptimizationPasses.AutoTranspose
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

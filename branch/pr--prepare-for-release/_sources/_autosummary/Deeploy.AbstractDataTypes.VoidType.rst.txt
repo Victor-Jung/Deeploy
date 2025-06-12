@@ -1,0 +1,34 @@
+Deeploy.AbstractDataTypes.VoidType
+==================================
+
+.. currentmodule:: Deeploy.AbstractDataTypes
+
+.. autoclass:: VoidType
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~VoidType.__init__
+      ~VoidType.checkPromotion
+      ~VoidType.checkValue
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~VoidType.typeName
+      ~VoidType.typeWidth
+      ~VoidType.value
+   
+   

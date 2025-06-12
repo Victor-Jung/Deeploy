@@ -1,0 +1,31 @@
+Deeploy.Targets.CortexM.Templates.CMSISUtils
+============================================
+
+.. automodule:: Deeploy.Targets.CortexM.Templates.CMSISUtils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      bindConvParams
+      bindFCParams
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

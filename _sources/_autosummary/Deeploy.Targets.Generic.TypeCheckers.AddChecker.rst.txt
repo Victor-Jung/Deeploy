@@ -1,0 +1,36 @@
+Deeploy.Targets.Generic.TypeCheckers.AddChecker
+===============================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: AddChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~AddChecker.__init__
+      ~AddChecker.annotateDict
+      ~AddChecker.checkOutputType
+      ~AddChecker.typeCheck
+      ~AddChecker.typeCheckNodeInputs
+      ~AddChecker.typeInferGlobalCtxt
+      ~AddChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AddChecker.typeDict
+   
+   

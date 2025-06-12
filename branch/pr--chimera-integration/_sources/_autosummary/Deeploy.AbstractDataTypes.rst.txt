@@ -1,0 +1,45 @@
+Deeploy.AbstractDataTypes
+=========================
+
+.. automodule:: Deeploy.AbstractDataTypes
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      PointerClass
+      StructClass
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      BaseType
+      FloatImmediate
+      Immediate
+      IntegerImmediate
+      Pointer
+      Struct
+      VoidType
+   
+   
+
+   
+   
+   
+
+
+

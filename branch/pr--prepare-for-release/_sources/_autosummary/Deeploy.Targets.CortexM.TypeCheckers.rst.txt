@@ -1,0 +1,34 @@
+Deeploy.Targets.CortexM.TypeCheckers
+====================================
+
+.. automodule:: Deeploy.Targets.CortexM.TypeCheckers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      CMSISConvChecker
+      CMSISLinearChecker
+      CMSISMaxPoolChecker
+      CMSISSaturatingAddChecker
+   
+   
+
+   
+   
+   
+
+
+

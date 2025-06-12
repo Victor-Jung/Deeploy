@@ -1,0 +1,23 @@
+Deeploy.Targets.MemPool.Templates.FreeTemplate
+==============================================
+
+.. automodule:: Deeploy.Targets.MemPool.Templates.FreeTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

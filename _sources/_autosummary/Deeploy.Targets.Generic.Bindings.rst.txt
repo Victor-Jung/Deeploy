@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Bindings
+================================
+
+.. automodule:: Deeploy.Targets.Generic.Bindings
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

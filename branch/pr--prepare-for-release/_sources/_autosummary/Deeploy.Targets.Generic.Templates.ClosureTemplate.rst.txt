@@ -1,0 +1,31 @@
+Deeploy.Targets.Generic.Templates.ClosureTemplate
+=================================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.ClosureTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      ClosureTemplate
+   
+   
+
+   
+   
+   
+
+
+

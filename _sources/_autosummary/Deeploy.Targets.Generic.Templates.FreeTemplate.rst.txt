@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.FreeTemplate
+==============================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.FreeTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

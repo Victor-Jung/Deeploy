@@ -1,0 +1,27 @@
+Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes.PrototypeTilingMixIn
+======================================================================================
+
+.. currentmodule:: Deeploy.TilingExtension.CodeTransformationPasses.TilingPrototypes
+
+.. autoclass:: PrototypeTilingMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~PrototypeTilingMixIn.__init__
+      ~PrototypeTilingMixIn.generateAllTilingCode
+      ~PrototypeTilingMixIn.generateLoopCode
+      ~PrototypeTilingMixIn.generateSetupAndTeardownCode
+   
+   
+
+   
+   
+   

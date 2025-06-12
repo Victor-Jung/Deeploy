@@ -1,0 +1,23 @@
+Deeploy.Targets.MemPool.Templates.RQMatMulTemplate
+==================================================
+
+.. automodule:: Deeploy.Targets.MemPool.Templates.RQMatMulTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

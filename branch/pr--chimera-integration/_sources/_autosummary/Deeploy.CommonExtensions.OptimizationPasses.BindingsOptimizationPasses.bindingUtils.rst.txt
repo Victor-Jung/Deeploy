@@ -1,0 +1,31 @@
+Deeploy.CommonExtensions.OptimizationPasses.BindingsOptimizationPasses.bindingUtils
+===================================================================================
+
+.. automodule:: Deeploy.CommonExtensions.OptimizationPasses.BindingsOptimizationPasses.bindingUtils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      bypassNode
+      editAttribute
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,34 @@
+Deeploy.AbstractDataTypes.BaseType
+==================================
+
+.. currentmodule:: Deeploy.AbstractDataTypes
+
+.. autoclass:: BaseType
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~BaseType.__init__
+      ~BaseType.checkPromotion
+      ~BaseType.checkValue
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BaseType.value
+      ~BaseType.typeName
+      ~BaseType.typeWidth
+   
+   

@@ -1,0 +1,36 @@
+Deeploy.Targets.Generic.TypeCheckers.MulChecker
+===============================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: MulChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MulChecker.__init__
+      ~MulChecker.annotateDict
+      ~MulChecker.checkOutputType
+      ~MulChecker.typeCheck
+      ~MulChecker.typeCheckNodeInputs
+      ~MulChecker.typeInferGlobalCtxt
+      ~MulChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MulChecker.typeDict
+   
+   

@@ -1,0 +1,23 @@
+Deeploy.Targets.Snitch.Templates.RQAddTemplate
+==============================================
+
+.. automodule:: Deeploy.Targets.Snitch.Templates.RQAddTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

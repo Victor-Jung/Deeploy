@@ -1,0 +1,32 @@
+Deeploy.Targets.CortexM.TopologyOptimizationPasses
+==================================================
+
+.. automodule:: Deeploy.Targets.CortexM.TopologyOptimizationPasses
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   Passes
+

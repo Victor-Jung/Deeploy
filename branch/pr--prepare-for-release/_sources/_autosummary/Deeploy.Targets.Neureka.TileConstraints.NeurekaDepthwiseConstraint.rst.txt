@@ -1,0 +1,34 @@
+Deeploy.Targets.Neureka.TileConstraints.NeurekaDepthwiseConstraint
+==================================================================
+
+.. automodule:: Deeploy.Targets.Neureka.TileConstraints.NeurekaDepthwiseConstraint
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      NeurekaDWConv2DTileConstraint
+      NeurekaRQSDWConv2DTileConstraint
+      NeurekaWmemDWConv2DTileConstraint
+      NeurekaWmemRQSDWConv2DTileConstraint
+   
+   
+
+   
+   
+   
+
+
+

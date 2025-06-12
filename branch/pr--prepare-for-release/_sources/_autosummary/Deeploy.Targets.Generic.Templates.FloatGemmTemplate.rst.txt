@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.FloatGemmTemplate
+===================================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.FloatGemmTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

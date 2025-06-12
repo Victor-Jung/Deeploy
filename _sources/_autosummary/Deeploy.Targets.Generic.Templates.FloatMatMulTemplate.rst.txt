@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.FloatMatMulTemplate
+=====================================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.FloatMatMulTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

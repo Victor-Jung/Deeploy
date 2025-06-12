@@ -1,0 +1,36 @@
+Deeploy.Targets.Generic.TypeCheckers.MHSAChecker
+================================================
+
+.. currentmodule:: Deeploy.Targets.Generic.TypeCheckers
+
+.. autoclass:: MHSAChecker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MHSAChecker.__init__
+      ~MHSAChecker.annotateDict
+      ~MHSAChecker.checkOutputType
+      ~MHSAChecker.typeCheck
+      ~MHSAChecker.typeCheckNodeInputs
+      ~MHSAChecker.typeInferGlobalCtxt
+      ~MHSAChecker.typeInferOutput
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MHSAChecker.typeDict
+   
+   

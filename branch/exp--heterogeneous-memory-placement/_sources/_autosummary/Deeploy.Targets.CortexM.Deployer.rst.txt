@@ -1,0 +1,31 @@
+Deeploy.Targets.CortexM.Deployer
+================================
+
+.. automodule:: Deeploy.Targets.CortexM.Deployer
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      CMSISDeployer
+   
+   
+
+   
+   
+   
+
+
+

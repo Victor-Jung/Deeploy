@@ -1,0 +1,70 @@
+Deeploy.Targets.Generic.Layers
+==============================
+
+.. automodule:: Deeploy.Targets.Generic.Layers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      AddLayer
+      CLCALayer
+      ConcatLayer
+      ConvLayer
+      DebugPrintLayer
+      DequantLayer
+      DivLayer
+      GELULayer
+      GEMMLayer
+      GatherLayer
+      ITAMaxLayer
+      LayerNormLayer
+      LinearAttentionLayer
+      MHSALayer
+      MatMulLayer
+      MaxPoolLayer
+      MulLayer
+      PadLayer
+      QuantLayer
+      RQGEMMLayer
+      RQIntegerDivLayer
+      RQMatMulLayer
+      RQSConvLayer
+      RQSiGELULayer
+      RQSiHardswishLayer
+      ReduceMeanLayer
+      ReduceSumLayer
+      ReluLayer
+      RequantShiftLayer
+      ReshapeLayer
+      SGDLayer
+      SliceLayer
+      SoftmaxCrossEntropyLossGradLayer
+      SoftmaxCrossEntropyLossLayer
+      SoftmaxGradLayer
+      SoftmaxLayer
+      TransposeLayer
+      iHardswishLayer
+      iNoNormLayer
+      iRMSNormLayer
+   
+   
+
+   
+   
+   
+
+
+

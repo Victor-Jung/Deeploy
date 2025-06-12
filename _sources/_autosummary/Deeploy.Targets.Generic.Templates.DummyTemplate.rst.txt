@@ -1,0 +1,23 @@
+Deeploy.Targets.Generic.Templates.DummyTemplate
+===============================================
+
+.. automodule:: Deeploy.Targets.Generic.Templates.DummyTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

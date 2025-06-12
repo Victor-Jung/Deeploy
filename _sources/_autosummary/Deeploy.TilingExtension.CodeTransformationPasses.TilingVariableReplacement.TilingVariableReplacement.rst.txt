@@ -1,0 +1,33 @@
+Deeploy.TilingExtension.CodeTransformationPasses.TilingVariableReplacement.TilingVariableReplacement
+====================================================================================================
+
+.. currentmodule:: Deeploy.TilingExtension.CodeTransformationPasses.TilingVariableReplacement
+
+.. autoclass:: TilingVariableReplacement
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~TilingVariableReplacement.__init__
+      ~TilingVariableReplacement.apply
+      ~TilingVariableReplacement.extractDynamicReferences
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TilingVariableReplacement.parseTreeDict
+      ~TilingVariableReplacement.prefix
+   
+   

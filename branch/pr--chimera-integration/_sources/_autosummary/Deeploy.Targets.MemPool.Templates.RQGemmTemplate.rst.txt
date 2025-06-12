@@ -1,0 +1,23 @@
+Deeploy.Targets.MemPool.Templates.RQGemmTemplate
+================================================
+
+.. automodule:: Deeploy.Targets.MemPool.Templates.RQGemmTemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,23 @@
+Deeploy.Targets.MemPool.Templates.ITATemplate
+=============================================
+
+.. automodule:: Deeploy.Targets.MemPool.Templates.ITATemplate
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

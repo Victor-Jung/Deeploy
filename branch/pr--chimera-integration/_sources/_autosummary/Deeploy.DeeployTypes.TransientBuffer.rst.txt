@@ -1,0 +1,40 @@
+Deeploy.DeeployTypes.TransientBuffer
+====================================
+
+.. currentmodule:: Deeploy.DeeployTypes
+
+.. autoclass:: TransientBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~TransientBuffer.__init__
+      ~TransientBuffer.alloc
+      ~TransientBuffer.dealloc
+      ~TransientBuffer.fromNode
+      ~TransientBuffer.fromVariableBuffer
+      ~TransientBuffer.init
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TransientBuffer.size
+      ~TransientBuffer.initTemplate
+      ~TransientBuffer.allocTemplate
+      ~TransientBuffer.deallocTemplate
+      ~TransientBuffer.name
+      ~TransientBuffer.shape
+   
+   

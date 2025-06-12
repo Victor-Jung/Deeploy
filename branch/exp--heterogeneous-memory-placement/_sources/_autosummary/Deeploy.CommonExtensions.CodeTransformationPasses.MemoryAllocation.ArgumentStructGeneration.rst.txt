@@ -1,0 +1,32 @@
+Deeploy.CommonExtensions.CodeTransformationPasses.MemoryAllocation.ArgumentStructGeneration
+===========================================================================================
+
+.. currentmodule:: Deeploy.CommonExtensions.CodeTransformationPasses.MemoryAllocation
+
+.. autoclass:: ArgumentStructGeneration
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~ArgumentStructGeneration.__init__
+      ~ArgumentStructGeneration.apply
+      ~ArgumentStructGeneration.extractDynamicReferences
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ArgumentStructGeneration.parseTreeDict
+   
+   

@@ -1,0 +1,93 @@
+Deeploy.Targets.Generic.Parsers
+===============================
+
+.. automodule:: Deeploy.Targets.Generic.Parsers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      AddParser
+      CLCAParser
+      ConcatParser
+      Conv1DParser
+      Conv2DParser
+      ConvParser
+      DebugParser
+      DequantParser
+      DivParser
+      DummyParser
+      FlattenParser
+      GELUParser
+      GEMMParser
+      GatherParser
+      GenericConv1DParser
+      GenericConv2DParser
+      GenericDWConv1DParser
+      GenericDWConv2DParser
+      GenericGEMMParser
+      GenericMaxPool2DParser
+      ITAMaxParser
+      ITAPartialMaxParser
+      IntegerDivParser
+      LayerNormParser
+      LinearAttentionParser
+      MHSAParser
+      MatMulParser
+      MaxPool2DParser
+      MaxPoolParser
+      MulParser
+      Pad1DParser
+      Pad2DParser
+      PadParser
+      QuantParser
+      RQAddParser
+      RQGEMMParser
+      RQIntegerDivParser
+      RQMatMulParser
+      RQSConv1DParser
+      RQSConv2DParser
+      RQSParserInterface
+      RQSiGELUParser
+      RQSiHardswishParser
+      ReduceMeanParser
+      ReduceParser
+      ReduceSumParser
+      ReluParser
+      RequantShiftParser
+      ReshapeParser
+      SGDParser
+      SliceParser
+      SoftmaxCrossEntropyLossGradParser
+      SoftmaxCrossEntropyLossParser
+      SoftmaxGradParser
+      SoftmaxParser
+      TransposeParser
+      UniformRequantShiftParser
+      UnsqueezeParser
+      iHardswishParser
+      iLayerNormParser
+      iNoNormParser
+      iRMSNormParser
+      iSoftmaxParser
+   
+   
+
+   
+   
+   
+
+
+

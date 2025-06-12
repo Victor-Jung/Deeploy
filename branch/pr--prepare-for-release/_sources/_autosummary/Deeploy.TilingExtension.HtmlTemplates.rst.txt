@@ -1,0 +1,31 @@
+Deeploy.TilingExtension.HtmlTemplates
+=====================================
+
+.. automodule:: Deeploy.TilingExtension.HtmlTemplates
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      getHtmlMemoryAllocationVisualisation
+      getSubplotHtml
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
