@@ -14,37 +14,6 @@ from Deeploy.Logging import DEFAULT_LOGGER as log
 
 from .config import DeeployTestConfig
 from .output_parser import TestResult, parse_test_output
-import threading
-
-
-def _augment_path(env: dict) -> dict:
-    """Prepend gvsoc/llvm bin dirs to PATH based on installed env vars.
-
-    The install dirs are already set as env vars (GVSOC_INSTALL_DIR,
-    LLVM_INSTALL_DIR) but their bin/ subdirectories may not be in PATH.
-    """
-    extra = []
-    for var in ('GVSOC_INSTALL_DIR', 'LLVM_INSTALL_DIR'):
-        install_dir = env.get(var, '')
-        if install_dir:
-            bin_dir = str(Path(install_dir) / 'bin')
-            current = env.get('PATH', '').split(':')
-            if bin_dir not in current:
-                extra.append(bin_dir)
-    if extra:
-        env['PATH'] = ':'.join(extra) + ':' + env.get('PATH', '')
-    return env
-
-
-def _resolve_optimizer_dir(config: DeeployTestConfig) -> str:
-    """Return the optimizer ONNX directory for this config.
-
-    Falls back to <test_dir>/../simplemlp_optimizer if not explicitly set.
-    """
-    if config.optimizer_dir:
-        return config.optimizer_dir
-    test_parent = Path(config.test_dir).parent
-    return str(test_parent / "tinytransformer_optimizer")
 
 
 def generate_network(config: DeeployTestConfig, skip: bool = False) -> None:
