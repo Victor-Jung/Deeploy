@@ -208,9 +208,8 @@ def generateNetworkXDNA2(args):
         deployer.traceBufferSize = traceBufferSize
         log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize})")
 
-    # frontEnd() parses the graph; bind() triggers tiling via wrappers
     deployer.frontEnd()
-    deployer.bind()
+    deployer.midEnd()
     deployer.prepared = True
     log.info("[XDNA2] Tiling completed, proceeding with MLIR generation")
 

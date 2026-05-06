@@ -3120,6 +3120,8 @@ class NetworkContainer():
                 tensor.doc_string += f"Biased: {lObject._signed}, "
                 tensor.doc_string += f"nLevels: {lObject.nLevels}, "
                 tensor.doc_string += f"Deeploy: {lObject._deploy}, "
+                if hasattr(lObject, "_memoryLevel"):
+                    tensor.doc_string += f"MemoryLevel: {lObject._memoryLevel}, "
                 if not isinstance(lObject, ConstantBuffer) and hasattr(lObject, "_type"):
                     tensor.doc_string += f"Type: {lObject._type.typeName}, "
                     if hasattr(lObject._type, "referencedType"):
@@ -3129,6 +3131,8 @@ class NetworkContainer():
                 tensor.doc_string += f"Biased: {gObject._signed}, "
                 tensor.doc_string += f"nLevels: {gObject.nLevels}, "
                 tensor.doc_string += f"Deeploy: {gObject._deploy}, "
+                if hasattr(gObject, "_memoryLevel"):
+                    tensor.doc_string += f"MemoryLevel: {gObject._memoryLevel}, "
                 if not isinstance(gObject, ConstantBuffer) and hasattr(gObject, "_type"):
                     tensor.doc_string += f"Type: {gObject._type.typeName}, "
                     if hasattr(gObject._type, "referencedType"):
