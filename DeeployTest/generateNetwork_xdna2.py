@@ -22,10 +22,13 @@ from testUtils.testRunner import TestGeneratorArgumentParser
 
 from Deeploy.AbstractDataTypes import PointerClass
 from Deeploy.CommonExtensions.DataTypes import bfloat16_t
+from Deeploy.DeeployTypes import TopologyOptimizer
+from Deeploy.EngineExtension.NetworkDeployers.EngineColoringDeployer import EngineColoringDeployerWrapper
 from Deeploy.Logging import DEFAULT_LOGGER as log
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLevel
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryDeployerWrapper
-from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, XDNA2AIECoreEngine, XDNA2Mapping
+from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, XDNA2AIECoreEngine, XDNA2Mapping, XDNA2ShimEngine
+from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.SpatialSplitPass import XDNA2SpatialSplitPass
 from Deeploy.TilingExtension.TilerExtension import TilerDeployerWrapper
 
 
@@ -146,27 +149,50 @@ def generateNetworkXDNA2(args):
     # Define memory hierarchy: L1 (AIE core local) and L3 (shared)
     l1_size = int(getattr(args, 'l1', None) or 64000)  # 64KB default
     l3_size = int(getattr(args, 'l3', None) or 128 * 1024 * 1024)  # 128MB default
+    num_cores = int(getattr(args, 'num_cores', None) or 1)
+    aie_row = int(getattr(args, 'aie_row', None) or 2)
 
-    log.info(f"[XDNA2] Using MemoryXDNA2Platform with L1={l1_size}, L3={l3_size}")
+    log.info(f"[XDNA2] Using MemoryXDNA2Platform with L1={l1_size}, L3={l3_size}, "
+             f"num_cores={num_cores}, row={aie_row}")
 
     l1_level = MemoryLevel("L1", neighbourNames = ["L3"], size = l1_size)
     l3_level = MemoryLevel("L3", neighbourNames = ["L1"], size = l3_size)
     memory_hierarchy = MemoryHierarchy([l1_level, l3_level])
     memory_hierarchy.setDefaultMemoryLevel("L3")  # Tensors default to L3
 
-    # Create memory-aware platform with AIE core engines
+    # One AIE core engine per column, plus one shim engine per occupied
+    # column. Shim engines are first-class citizens: every memory transition
+    # (L3 <-> L1) is colored to one.
+    coreEngines = [XDNA2AIECoreEngine(col = i, row = aie_row) for i in range(num_cores)]
+    shimEngines = [XDNA2ShimEngine(col = i) for i in range(num_cores)]
+    engines = coreEngines + shimEngines
+
     mem_platform = MemoryXDNA2Platform(
         memoryHierarchy = memory_hierarchy,
         defaultTargetMemoryLevel = l1_level,
-        engines = [XDNA2AIECoreEngine(Mapping = XDNA2Mapping, preferredMemoryLevel = "L1")])
+        engines = engines,
+    )
 
-    # Create base deployer with memory platform
+    # Lowering optimizer: the spatial split pass derives the AIE core count
+    # from the platform's engine list at apply time (it's @engineaware).
+    # It's a no-op when fewer than 2 AIE cores are present.
+    loweringOptimizer = TopologyOptimizer([
+        XDNA2SpatialSplitPass(axis = 0),
+    ])
+
     deployer = mapDeployer(mem_platform,
                            graph,
                            inputTypes,
+                           loweringOptimizer = loweringOptimizer,
                            scheduler = _tilingScheduler,
                            deeployStateDir = _DEEPLOYSTATEDIR,
                            inputOffsets = inputOffsets)
+
+    # Always wrap so the engine-aware setter fires and binding goes through
+    # the engine-coloring _selectEngine path. With a single AIE engine
+    # everything trivially colors to that one engine, matching the
+    # pre-refactor single-core behavior.
+    deployer = EngineColoringDeployerWrapper(deployer)
 
     # Wrap with MemoryDeployerWrapper (adds memory level annotation)
     deployer = MemoryDeployerWrapper(deployer)
@@ -231,6 +257,14 @@ if __name__ == '__main__':
                         type = int,
                         default = 8192,
                         help = 'Trace buffer size in bytes (default: 8192)')
+    parser.add_argument('--num-cores',
+                        type = int,
+                        default = 1,
+                        help = 'Number of AIE compute cores to spatially split across (default: 1)')
+    parser.add_argument('--aie-row',
+                        type = int,
+                        default = 2,
+                        help = 'AIE row index for the compute cores (default: 2)')
     args, _ = parser.parse_known_args()
 
     if args.platform != 'XDNA2':

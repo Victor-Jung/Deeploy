@@ -9,6 +9,7 @@ import onnx_graphsurgeon as gs
 from Deeploy.AbstractDataTypes import Pointer
 from Deeploy.CommonExtensions.NetworkDeployers.NetworkDeployerWrapper import NetworkDeployerWrapper
 from Deeploy.DeeployTypes import DeploymentEngine, DeploymentPlatform, NetworkDeployer, Schedule, TopologyOptimizer
+from Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass import EngineAwarePassMixIn
 from Deeploy.EngineExtension.OptimizationPasses.TopologyOptimizationPasses.EngineColoringPasses import \
     EngineColoringPass, EngineMapper
 
@@ -35,6 +36,11 @@ class EngineColoringDeployer(NetworkDeployer):
         engineColoringPass = EngineColoringPass(engineMapper)
         loweringPasses = [engineColoringPass]
         for _pass in self.loweringOptimizer.passes:
+            # Engine-aware passes (e.g. spatial split) need the platform's
+            # engine list to assign nodes to specific cores. Inject before
+            # the pass runs.
+            if isinstance(_pass, EngineAwarePassMixIn):
+                _pass.setEngines(list(self.Platform.engines))
             loweringPasses.append(_pass)
             loweringPasses.append(engineColoringPass)
         self.loweringOptimizer.passes = loweringPasses

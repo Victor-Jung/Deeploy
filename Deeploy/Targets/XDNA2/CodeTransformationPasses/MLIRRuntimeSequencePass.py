@@ -41,35 +41,50 @@ class MLIRRuntimeSequencePass(MLIRCodeTransformationPass):
         inputTensorKeys = template.INPUT_KEYS
         outputTensorKeys = template.OUTPUT_KEYS
 
+        # For a multi-core spatial split, every sub-Add reads/writes a
+        # contiguous chunk of the (still single) graph-level tensor. The
+        # deployer fills ``mlirBlock.argIndexMap`` with the runtime-sequence
+        # arg index per tensor key and ``mlirBlock.argOffsets`` with the
+        # per-key element offset into that arg. ``mlirBlock.transferLengths``
+        # gives the number of elements transferred per key (defaults to
+        # numElements for non-split nodes).
         numElements = mlirBlock.numElements
         seqArgs = mlirBlock.runtimeSequenceArgs
-
-        dims = [
-            aie_d.bd_dim_layout(size = 1, stride = 0),
-            aie_d.bd_dim_layout(size = 1, stride = 0),
-            aie_d.bd_dim_layout(size = 1, stride = 0),
-            aie_d.bd_dim_layout(size = numElements, stride = 1),
-        ]
-
-        # Build ordered list of (fifoName, seqArg, isOutput)
-        transfers = []
-        allKeys = inputTensorKeys + outputTensorKeys
-        for idx, key in enumerate(allKeys):
-            fifoName = mlirBlock.fifoMap[key]
-            isOutput = key in outputTensorKeys
-            transfers.append((fifoName, seqArgs[idx], isOutput))
+        argIndexMap = getattr(mlirBlock, "argIndexMap", None)
+        argOffsets = getattr(mlirBlock, "argOffsets", {})
+        transferLengths = getattr(mlirBlock, "transferLengths", {})
 
         inputTasks = []
         outputTasks = []
 
-        for fifoName, seqArg, isOutput in transfers:
+        allKeys = list(inputTensorKeys) + list(outputTensorKeys)
+        for idx, key in enumerate(allKeys):
+            fifoName = mlirBlock.fifoMap[key]
+            isOutput = key in outputTensorKeys
+
+            if argIndexMap is not None:
+                seqArg = seqArgs[argIndexMap[key]]
+            else:
+                # Backwards compatible single-node path: positional mapping.
+                seqArg = seqArgs[idx]
+
+            offset = int(argOffsets.get(key, 0))
+            length = int(transferLengths.get(key, numElements))
+
+            dims = [
+                aie_d.bd_dim_layout(size = 1, stride = 0),
+                aie_d.bd_dim_layout(size = 1, stride = 0),
+                aie_d.bd_dim_layout(size = 1, stride = 0),
+                aie_d.bd_dim_layout(size = length, stride = 1),
+            ]
+
             if isOutput:
                 task = aiex_d.dma_configure_task_for(fifoName, issue_token = True)
             else:
                 task = aiex_d.dma_configure_task_for(fifoName)
             block = task.body.blocks.append()
             with ir.InsertionPoint(block):
-                aie_d.dma_bd(seqArg, offset = 0, len = numElements, dimensions = dims, burst_length = 0)
+                aie_d.dma_bd(seqArg, offset = offset, len = length, dimensions = dims, burst_length = 0)
                 aie_d.end()
             aiex_d.dma_start_task(task)
 

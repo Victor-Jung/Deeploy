@@ -27,6 +27,10 @@ def _add_xdna2_args(parser):
                         type = int,
                         default = 8192,
                         help = 'Trace buffer size in bytes (default: 8192)')
+    parser.add_argument('--num-cores',
+                        type = int,
+                        default = 1,
+                        help = 'Number of AIE compute cores to spatially split across (default: 1)')
 
 
 def _add_xdna2_gen_args(args, gen_args_list):
@@ -36,6 +40,9 @@ def _add_xdna2_gen_args(args, gen_args_list):
         trace_buffer_size = getattr(args, 'trace_buffer_size', 8192)
         if trace_buffer_size != 8192:
             gen_args_list.append(f'--trace-buffer-size={trace_buffer_size}')
+    num_cores = int(getattr(args, 'num_cores', 1) or 1)
+    if num_cores > 1:
+        gen_args_list.append(f'--num-cores={num_cores}')
 
 
 def _xdna2_post_sim(config, result, args):

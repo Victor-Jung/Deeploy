@@ -105,22 +105,33 @@ class MLIRObjectFifoPass(MLIRCodeTransformationPass):
         computeTile = mlirBlock.computeTile
         shimTile = mlirBlock.shimTile
 
+        # Per-node FIFO name prefix so multiple compute cores can coexist in
+        # the same @aie_d.device block without name collisions. ``name`` here
+        # is the deployer-supplied node name.
+        prefix = name.replace(".", "_").replace("/", "_")
+
         # Create input ObjectFifos (shim → compute)
         for idx, key in enumerate(inputTensorKeys):
-            fifoName = f"in{idx + 1}_0"
+            fifoName = f"{prefix}_in{idx + 1}"
             aie_d.object_fifo(fifoName, shimTile, [computeTile], self.fifoDepth, tileTy)
             mlirBlock.fifoMap[key] = fifoName
             mlirBlock.fifoTypes[key] = tileTy
 
         # Create output ObjectFifos (compute → shim)
         for idx, key in enumerate(outputTensorKeys):
-            fifoName = f"out_{idx}"
+            fifoName = f"{prefix}_out{idx}"
             aie_d.object_fifo(fifoName, computeTile, [shimTile], self.fifoDepth, tileTy)
             mlirBlock.fifoMap[key] = fifoName
             mlirBlock.fifoTypes[key] = tileTy
 
-        # Declare external kernel
+        # Declare external kernel — once per (kernel, device). The deployer
+        # threads a shared set of already-declared kernel names so multiple
+        # compute cores in the same device block don't redefine the symbol.
         argTypes = template.kernelArgTypes(tileTy)
-        aie_d.external_func(template.KERNEL_FN, argTypes, link_with = template.KERNEL_OBJ)
+        declared = getattr(mlirBlock, "declaredKernels", None)
+        if declared is None or template.KERNEL_FN not in declared:
+            aie_d.external_func(template.KERNEL_FN, argTypes, link_with = template.KERNEL_OBJ)
+            if declared is not None:
+                declared.add(template.KERNEL_FN)
 
         return ctxt, mlirBlock
