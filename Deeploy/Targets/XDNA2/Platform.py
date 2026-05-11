@@ -8,20 +8,29 @@ from Deeploy.DeeployTypes import ConstantBuffer, DataMoverEngine, DeploymentEngi
     StructBuffer, TopologyOptimizer, TransientBuffer, VariableBuffer
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLevel
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryPlatform
-from Deeploy.Targets.Generic.Layers import AddLayer, LayerNormLayer, SiLULayer
-from Deeploy.Targets.Generic.Parsers import AddParser, LayerNormParser, SiLUParser
+from Deeploy.Targets.Generic.Layers import AddLayer, GELULayer, LayerNormLayer, MulLayer, ReluLayer, SiLULayer, \
+    TanhLayer
+from Deeploy.Targets.Generic.Parsers import AddParser, GELUParser, LayerNormParser, ReluParser, SiLUParser, TanhParser
 from Deeploy.Targets.Generic.Templates import AllocateTemplate, FreeTemplate
-from Deeploy.Targets.XDNA2.Tiler import XDNA2AddTilingReadyBindings, XDNA2LayerNormTilingReadyBindings, \
-    XDNA2SiLUTilingReadyBindings
+from Deeploy.Targets.XDNA2.Tiler import XDNA2AddTilingReadyBindings, XDNA2GeluTilingReadyBindings, \
+    XDNA2LayerNormTilingReadyBindings, XDNA2MulTilingReadyBindings, XDNA2ReluTilingReadyBindings, \
+    XDNA2SiLUTilingReadyBindings, XDNA2TanhTilingReadyBindings
 
-# XDNA2 always requires tiling (ObjectFifo streaming).
 XDNA2AddMapper = NodeMapper(AddParser(), XDNA2AddTilingReadyBindings)
+XDNA2MulMapper = NodeMapper(AddParser(), XDNA2MulTilingReadyBindings)
+XDNA2GeluMapper = NodeMapper(GELUParser(), XDNA2GeluTilingReadyBindings)
+XDNA2ReluMapper = NodeMapper(ReluParser(), XDNA2ReluTilingReadyBindings)
 XDNA2SiLUMapper = NodeMapper(SiLUParser(), XDNA2SiLUTilingReadyBindings)
+XDNA2TanhMapper = NodeMapper(TanhParser(), XDNA2TanhTilingReadyBindings)
 XDNA2LayerNormMapper = NodeMapper(LayerNormParser(), XDNA2LayerNormTilingReadyBindings)
 
 XDNA2Mapping = {
     'Add': AddLayer([XDNA2AddMapper]),
+    'Mul': MulLayer([XDNA2MulMapper]),
+    'Gelu': GELULayer([XDNA2GeluMapper]),
+    'Relu': ReluLayer([XDNA2ReluMapper]),
     'Silu': SiLULayer([XDNA2SiLUMapper]),
+    'Tanh': TanhLayer([XDNA2TanhMapper]),
     'LayerNormalization': LayerNormLayer([XDNA2LayerNormMapper]),
 }
 

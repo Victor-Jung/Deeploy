@@ -458,6 +458,15 @@ class ReluLayer(ONNXLayer):
         return self.mapper.parser.operatorRepresentation['size']
 
 
+class TanhLayer(ONNXLayer):
+
+    def __init__(self, maps: List[NodeMapper]):
+        super().__init__(maps)
+
+    def computeOps(self):
+        return self.mapper.parser.operatorRepresentation['size']
+
+
 class LayerNormLayer(ONNXLayer):
 
     def __init__(self, maps: List[NodeMapper]):

@@ -1130,6 +1130,10 @@ class ReluParser(NodeParser):
         return ctxt, True
 
 
+class TanhParser(ReluParser):
+    pass
+
+
 class ReshapeParser(NodeParser):
 
     def parseNode(self, node: gs.Node) -> (bool):

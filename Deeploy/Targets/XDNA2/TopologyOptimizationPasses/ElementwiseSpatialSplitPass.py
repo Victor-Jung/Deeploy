@@ -19,7 +19,7 @@ from Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass import engineawa
 from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreDataMover, XDNA2AIECoreEngine, XDNA2ShimTileDataMover
 
 
-_ELEMENTWISE_OPS = frozenset({"Add", "Silu"})
+_ELEMENTWISE_OPS = frozenset({"Add", "Gelu", "Mul", "Relu", "Silu", "Tanh"})
 
 
 @engineaware

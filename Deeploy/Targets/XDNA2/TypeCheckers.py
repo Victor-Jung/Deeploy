@@ -29,8 +29,80 @@ class XDNA2AddChecker(SignPropTypeChecker):
         return [True]
 
 
+class XDNA2MulChecker(SignPropTypeChecker):
+    """Type checker for BF16 elementwise Mul on XDNA2.
+
+    Both inputs and the output are bfloat16_t pointers.
+    """
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> Optional[List[int]]:
+        return [1]
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
+        return [True]
+
+
 class XDNA2SiLUChecker(SignPropTypeChecker):
     """Type checker for BF16 SiLU on XDNA2.
+
+    Single input and output, both bfloat16_t pointers.
+    """
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> Optional[List[int]]:
+        return [1]
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
+        return [True]
+
+
+class XDNA2ReluChecker(SignPropTypeChecker):
+    """Type checker for BF16 ReLU on XDNA2.
+
+    Single input and output, both bfloat16_t pointers.
+    """
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> Optional[List[int]]:
+        return [1]
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
+        return [True]
+
+
+class XDNA2GeluChecker(SignPropTypeChecker):
+    """Type checker for BF16 GELU on XDNA2.
+
+    Single input and output, both bfloat16_t pointers.
+    """
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> Optional[List[int]]:
+        return [1]
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
+        return [True]
+
+
+class XDNA2TanhChecker(SignPropTypeChecker):
+    """Type checker for BF16 Tanh on XDNA2.
 
     Single input and output, both bfloat16_t pointers.
     """

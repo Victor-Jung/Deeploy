@@ -9,8 +9,10 @@ from Deeploy.MLIRDataTypes import MLIRCodeTransformation
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRComputeCorePass import MLIRComputeCorePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRObjectFifoPass import MLIRObjectFifoPass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRRuntimeSequencePass import MLIRRuntimeSequencePass
-from Deeploy.Targets.XDNA2.Templates import AddTemplate, LayerNormTemplate, SiLUTemplate
-from Deeploy.Targets.XDNA2.TypeCheckers import XDNA2AddChecker, XDNA2LayerNormChecker, XDNA2SiLUChecker
+from Deeploy.Targets.XDNA2.Templates import AddTemplate, GeluTemplate, LayerNormTemplate, MulTemplate, ReluTemplate, \
+    SiLUTemplate, TanhTemplate
+from Deeploy.Targets.XDNA2.TypeCheckers import XDNA2AddChecker, XDNA2GeluChecker, XDNA2LayerNormChecker, \
+    XDNA2MulChecker, XDNA2ReluChecker, XDNA2SiLUChecker, XDNA2TanhChecker
 
 XDNA2Transformer = MLIRCodeTransformation(
     devicePasses = [
@@ -30,10 +32,42 @@ XDNA2AddBindings = [
     )
 ]
 
+XDNA2MulBindings = [
+    NodeBinding(
+        XDNA2MulChecker([PointerClass(bfloat16_t), PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
+        MulTemplate.referenceTemplate,
+        XDNA2Transformer,
+    )
+]
+
 XDNA2SiLUBindings = [
     NodeBinding(
         XDNA2SiLUChecker([PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
         SiLUTemplate.referenceTemplate,
+        XDNA2Transformer,
+    )
+]
+
+XDNA2GeluBindings = [
+    NodeBinding(
+        XDNA2GeluChecker([PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
+        GeluTemplate.referenceTemplate,
+        XDNA2Transformer,
+    )
+]
+
+XDNA2ReluBindings = [
+    NodeBinding(
+        XDNA2ReluChecker([PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
+        ReluTemplate.referenceTemplate,
+        XDNA2Transformer,
+    )
+]
+
+XDNA2TanhBindings = [
+    NodeBinding(
+        XDNA2TanhChecker([PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
+        TanhTemplate.referenceTemplate,
         XDNA2Transformer,
     )
 ]
