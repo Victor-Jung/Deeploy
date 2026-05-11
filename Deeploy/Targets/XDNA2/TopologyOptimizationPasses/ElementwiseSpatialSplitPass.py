@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Spatial mapping pass for XDNA2.
 
-Split ``Add`` node and annotate it's IOs with data movers.
+Split eligible elementwise nodes (e.g. ``Add``, ``Silu``) across compute
+cores and annotate the resulting per-chunk tensors with their data movers.
 """
 
 from __future__ import annotations
@@ -17,12 +18,13 @@ from Deeploy.DeeployTypes import TopologyOptimizationPass
 from Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass import engineaware
 from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreDataMover, XDNA2AIECoreEngine, XDNA2ShimTileDataMover
 
-_SPLITTABLE_OPS = frozenset({"Add"})
+
+_ELEMENTWISE_OPS = frozenset({"Add", "Silu"})
 
 
 @engineaware
-class XDNA2SpatialSplitPass(TopologyOptimizationPass):
-    """Annotate graph IO with data movers; split eligible Add nodes across cores.
+class XDNA2ElementwiseSpatialSplitPass(TopologyOptimizationPass):
+    """Annotate graph IO with data movers; split eligible elementwise nodes across cores.
 
     Parameters
     ----------
@@ -39,23 +41,23 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
         assert coreEngines, "No XDNA2AIECoreEngine on the platform — cannot map compute nodes."
         assert shims, "No XDNA2ShimTileDataMover on the platform — cannot move data to/from L3."
 
-        # Try to spatially split eligible compute nodes (Add only). The
-        # chunks introduced here are annotated with their per-column shim;
-        # original tensors that get replaced by chunks lose their default
-        # annotation along with them. Tensors not touched by a split keep
-        # the default mover that XDNA2DefaultDataMoverPass installed.
+        # Try to spatially split eligible compute nodes. The chunks introduced
+        # here are annotated with their per-column shim; original tensors that
+        # get replaced by chunks lose their default annotation along with
+        # them. Tensors not touched by a split keep the default mover that
+        # XDNA2DefaultDataMoverPass installed.
         if len(coreEngines) >= 2:
             for node in list(graph.nodes):
-                if node.op not in _SPLITTABLE_OPS:
+                if node.op not in _ELEMENTWISE_OPS:
                     continue
                 if not self._splittable(node, len(coreEngines)):
                     continue
-                self._splitAdd(graph, node, coreEngines, shims)
+                self._splitElementwise(graph, node, coreEngines, shims)
             graph.cleanup().toposort()
 
         # Color compute nodes that aren't already colored. The split pass
-        # handles its own sub-Adds; this picks up the SiLU / LayerNorm /
-        # un-split-Add case.
+        # handles its own sub-ops; this picks up the LayerNorm / un-split
+        # elementwise case.
         for node in graph.nodes:
             if "engine" not in node.attrs:
                 node.attrs["engine"] = coreEngines[0].name
@@ -66,10 +68,10 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
                                          Dict[Tuple[int, int], XDNA2AIECoreDataMover]]:
         engines = getattr(self, "engines", None)
         assert engines is not None, (
-            "XDNA2SpatialSplitPass.apply called before EngineColoringDeployer "
+            "XDNA2ElementwiseSpatialSplitPass.apply called before EngineColoringDeployer "
             "injected the engine list — wrap the deployer with "
             "EngineColoringDeployerWrapper.")
-        
+
         coreEngines = sorted([e for e in engines if isinstance(e, XDNA2AIECoreEngine)],
                              key = lambda e: (e.col, e.row))
         # Data movers come in via the platform's separate dataMoverEngines list.
@@ -103,16 +105,17 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
         chunked[self.axis] = chunked[self.axis] // num_chunks
         return tuple(chunked)
 
-    def _splitAdd(self, graph: gs.Graph, node: gs.Node, coreEngines: List[XDNA2AIECoreEngine],
-                  shims: List[XDNA2ShimTileDataMover]) -> None:
-        """Replace ``node`` (an Add) with ``len(coreEngines)`` sub-Adds.
+    def _splitElementwise(self, graph: gs.Graph, node: gs.Node, coreEngines: List[XDNA2AIECoreEngine],
+                          shims: List[XDNA2ShimTileDataMover]) -> None:
+        """Replace ``node`` (an elementwise op) with ``len(coreEngines)`` sub-ops.
 
-        Each sub-Add lives on its own AIE compute tile. Inputs/outputs are
+        Each sub-op lives on its own AIE compute tile. Inputs/outputs are
         split into per-chunk graph IO tensors so the IR stays
         single-producer / single-consumer (the tiler rejects multi-producer).
         """
         num_cores = len(coreEngines)
-        baseName = node.name or f"Add_{id(node):x}"
+        op = node.op
+        baseName = node.name or f"{op}_{id(node):x}"
 
         # Lookup table: column → its shim data mover.
         shim_by_col = {dm.col: dm for dm in shims}
@@ -122,7 +125,7 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
         out_chunk_shape = self._chunkShape(original_output.shape, num_cores)
         in_chunk_shapes = [self._chunkShape(inp.shape, num_cores) for inp in original_inputs]
 
-        # Detach the Add from the graph; replacement nodes go in place.
+        # Detach the node from the graph; replacement nodes go in place.
         node.inputs.clear()
         node.outputs.clear()
         graph.nodes.remove(node)
@@ -164,10 +167,10 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
             out_chunks.append(chunk)
         self._replaceInGraphOutputs(graph, original_output, out_chunks)
 
-        # Emit the N sub-Adds, colored to their respective AIE cores.
+        # Emit the N sub-ops, colored to their respective AIE cores.
         for i in range(num_cores):
             sub = gs.Node(
-                op = "Add",
+                op = op,
                 name = f"{baseName}_core{i}",
                 inputs = [per_input_chunks[inp_idx][i] for inp_idx in range(len(original_inputs))],
                 outputs = [out_chunks[i]],
@@ -179,7 +182,7 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
     def _replaceInGraphInputs(graph: gs.Graph, original: gs.Variable, replacements: List[gs.Variable]) -> None:
         if original not in graph.inputs:
             raise NotImplementedError(
-                "XDNA2SpatialSplitPass currently only splits Add inputs that are graph inputs. "
+                "XDNA2ElementwiseSpatialSplitPass currently only splits inputs that are graph inputs. "
                 f"Tensor '{original.name}' is an intermediate.")
         idx = graph.inputs.index(original)
         graph.inputs[idx:idx + 1] = replacements
@@ -188,7 +191,7 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
     def _replaceInGraphOutputs(graph: gs.Graph, original: gs.Variable, replacements: List[gs.Variable]) -> None:
         if original not in graph.outputs:
             raise NotImplementedError(
-                "XDNA2SpatialSplitPass currently only splits Add outputs that are graph outputs. "
+                "XDNA2ElementwiseSpatialSplitPass currently only splits outputs that are graph outputs. "
                 f"Tensor '{original.name}' is an intermediate.")
         idx = graph.outputs.index(original)
         graph.outputs[idx:idx + 1] = replacements

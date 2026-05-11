@@ -43,7 +43,6 @@ from test_softhier_config import DEFAULT_NUM_CLUSTERS as SOFTHIER_DEFAULT_NUM_CL
 from test_softhier_config import KERNEL_TESTS as SOFTHIER_KERNEL_TESTS
 from test_softhier_config import MODEL_TESTS as SOFTHIER_MODEL_TESTS
 from test_xdna2_config import KERNEL_TESTS as XDNA2_KERNEL_TESTS
-from test_xdna2_config import SPATIAL_KERNEL_TESTS as XDNA2_SPATIAL_KERNEL_TESTS
 from testUtils.pytestRunner import create_test_config, run_and_assert_test
 
 
@@ -996,32 +995,13 @@ def test_gap9_tiled_models_l3_doublebuffer(test_params, deeploy_test_dir, toolch
     run_and_assert_test(test_name, config, skipgen, skipsim)
 
 
-@pytest.mark.xdna2
-@pytest.mark.kernels
-@pytest.mark.parametrize("test_name", XDNA2_KERNEL_TESTS, ids = XDNA2_KERNEL_TESTS)
-def test_xdna2_kernels(test_name, deeploy_test_dir, toolchain, toolchain_dir, cmake_args, skipgen, skipsim) -> None:
-    platform_config = PLATFORM_CONFIGS["xdna2"]
-    config = create_test_config(
-        test_name = test_name,
-        platform = platform_config["platform"],
-        simulator = platform_config["simulator"],
-        deeploy_test_dir = deeploy_test_dir,
-        toolchain = toolchain,
-        toolchain_dir = toolchain_dir,
-        cmake_args = cmake_args,
-        tiling = False,
-    )
-    run_and_assert_test(test_name, config, skipgen, skipsim)
-
-
 def _xdna2_spatial_param_id(param):
     test_name, gen_args = param
     return f"{test_name}[{','.join(gen_args)}]"
 
-
 @pytest.mark.xdna2
 @pytest.mark.kernels
-@pytest.mark.parametrize("test_param", XDNA2_SPATIAL_KERNEL_TESTS, ids = _xdna2_spatial_param_id)
+@pytest.mark.parametrize("test_param", XDNA2_KERNEL_TESTS, ids = _xdna2_spatial_param_id)
 def test_xdna2_spatial_kernels(test_param, deeploy_test_dir, toolchain, toolchain_dir, cmake_args, skipgen,
                                skipsim) -> None:
     """Reuse a kernel test directory and exercise the spatial split pass via --num-cores."""

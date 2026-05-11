@@ -34,7 +34,8 @@ from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultConstantDataMoveAnn
     XDNA2DefaultConstantDataMoveAnnotationPass
 from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultInputDataMoveAnnotationPass import \
     XDNA2DefaultIODataMoveAnnotationPass
-from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.SpatialSplitPass import XDNA2SpatialSplitPass
+from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.ElementwiseSpatialSplitPass import \
+    XDNA2ElementwiseSpatialSplitPass
 from Deeploy.TilingExtension.TilerExtension import TilerDeployerWrapper
 
 
@@ -221,7 +222,7 @@ def generateNetworkXDNA2(args):
     loweringOptimizer = TopologyOptimizer([
         XDNA2DefaultIODataMoveAnnotationPass(),
         XDNA2DefaultConstantDataMoveAnnotationPass(),
-        XDNA2SpatialSplitPass(axis = 0),
+        XDNA2ElementwiseSpatialSplitPass(axis = 0),
     ])
 
     deployer = mapDeployer(mem_platform,

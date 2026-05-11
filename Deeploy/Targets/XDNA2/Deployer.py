@@ -347,7 +347,7 @@ class XDNA2Deployer(SignPropDeployer):
             engineName = getattr(buf, "_dataMoverEngine", None)
             assert engineName is not None, (
                 f"Tensor '{tensorName}' (port '{key}' of '{gsNode.name}') has no _dataMoverEngine "
-                f"annotation. XDNA2SpatialSplitPass + XDNA2AnnotateDataMoverPass should have set it.")
+                f"annotation. XDNA2ElementwiseSpatialSplitPass + XDNA2AnnotateDataMoverPass should have set it.")
             mover = self.Platform.getDataMoverEngine(engineName)
             assert isinstance(mover, XDNA2ShimTileDataMover), (
                 f"Tensor '{tensorName}' is annotated with data mover '{engineName}', which is not a "
