@@ -2374,6 +2374,18 @@ class DeploymentEngine():
         return f"{self.__class__.__name__}(name='{self.name}', mappings={list(self.Mapping.keys())})"
 
 
+class DataMoverEngine():
+    """Deeploy abstraction for a hardware unit that moves data between memory levels.
+    
+    """
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name='{self.name}')"
+
+
 class DeploymentPlatform():
     """Deeploy abstraction for a complete system, including at least a host core capable of memory allocation
 
@@ -3122,6 +3134,8 @@ class NetworkContainer():
                 tensor.doc_string += f"Deeploy: {lObject._deploy}, "
                 if hasattr(lObject, "_memoryLevel"):
                     tensor.doc_string += f"MemoryLevel: {lObject._memoryLevel}, "
+                if getattr(lObject, "_dataMoverEngine", None) is not None:
+                    tensor.doc_string += f"DataMoverEngine: {lObject._dataMoverEngine}, "
                 if not isinstance(lObject, ConstantBuffer) and hasattr(lObject, "_type"):
                     tensor.doc_string += f"Type: {lObject._type.typeName}, "
                     if hasattr(lObject._type, "referencedType"):
@@ -3133,6 +3147,8 @@ class NetworkContainer():
                 tensor.doc_string += f"Deeploy: {gObject._deploy}, "
                 if hasattr(gObject, "_memoryLevel"):
                     tensor.doc_string += f"MemoryLevel: {gObject._memoryLevel}, "
+                if getattr(gObject, "_dataMoverEngine", None) is not None:
+                    tensor.doc_string += f"DataMoverEngine: {gObject._dataMoverEngine}, "
                 if not isinstance(gObject, ConstantBuffer) and hasattr(gObject, "_type"):
                     tensor.doc_string += f"Type: {gObject._type.typeName}, "
                     if hasattr(gObject._type, "referencedType"):

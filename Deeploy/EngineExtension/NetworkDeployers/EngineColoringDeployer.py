@@ -31,36 +31,45 @@ class EngineColoringDeployer(NetworkDeployer):
         self._initEngineColoringDeployer(engineMapperCls)
 
     def _initEngineColoringDeployer(self, engineMapperCls: Type[EngineMapper]):
+        
         self.engineDict = {engine.name: engine for engine in self.Platform.engines}
         engineMapper = engineMapperCls(self.engineDict)
         engineColoringPass = EngineColoringPass(engineMapper)
         loweringPasses = [engineColoringPass]
+        platformDataMovers = getattr(self.Platform, "dataMoverEngines", [])
+        
         for _pass in self.loweringOptimizer.passes:
-            # Engine-aware passes (e.g. spatial split) need the platform's
-            # engine list to assign nodes to specific cores. Inject before
-            # the pass runs.
             if isinstance(_pass, EngineAwarePassMixIn):
                 _pass.setEngines(list(self.Platform.engines))
+                _pass.setDataMoverEngines(list(platformDataMovers))
             loweringPasses.append(_pass)
             loweringPasses.append(engineColoringPass)
+        
         self.loweringOptimizer.passes = loweringPasses
 
     def lower(self, graph: gs.Graph) -> gs.Graph:
+        
         graph = super().lower(graph)
         uncoloredNodes = [node for node in graph.nodes if "engine" not in node.attrs]
         uncoloredOperations = set(node.op for node in uncoloredNodes)
+        
         assert len(
             uncoloredNodes
         ) == 0, f"Missing engine color for nodes {[node.name for node in uncoloredNodes]} with operations {uncoloredOperations}"
+        
         return graph
 
     def _selectEngine(self, node: gs.Node) -> DeploymentEngine:
+        
         assert "engine" in node.attrs, f"Node {node.name} doesn't have an engine color."
         engineName = node.attrs["engine"]
+        
         assert isinstance(engineName, str) and engineName in self.engineDict, \
             f"Node {node.name} has an invalid engine {engineName} assigned."
+        
         engine = self.engineDict[engineName]
         assert node.op in engine.Mapping, f"No mapping found for {node.op} in engine {engine.name}"
+        
         return engine
 
 

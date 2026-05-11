@@ -49,6 +49,9 @@ class NetworkDeployerWrapper(NetworkDeployer):
     def _createIOBindings(self, ctxt: NetworkContext, graph: gs.Graph):
         return self._innerObject._createIOBindings(ctxt, graph)
 
+    def frontEnd(self):
+        return self._innerObject.frontEnd()
+
     # MemoryAwareDeployer, TilerAwareDeployer, and PULPDeployer augments
     def bind(self) -> bool:
         return self._innerObject.bind()

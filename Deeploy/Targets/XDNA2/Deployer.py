@@ -14,12 +14,13 @@ MLIR generation is split into two phases orchestrated by
    node, run ``devicePasses`` (ObjectFifo creation, external-kernel
    declaration) then call ``template.emit()`` (compute core only).
 2. **Runtime-sequence phase** — inside ``@aiex_d.runtime_sequence``:
-   for each compute node, run ``runtimeSequencePasses`` (DMA configuration).
+   for each compute node, run ``runtimeSequencePasses`` (Shim DMA configurations).
 """
 
 from __future__ import annotations
 
 import copy
+import re
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import aie.ir as ir
@@ -37,7 +38,17 @@ from Deeploy.MLIRDataTypes import MLIRCodeTransformation, MLIRExecutionBlock, ML
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRCoreTracePass import MLIRCoreTracePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRMemTracePass import MLIRMemTracePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRTraceRuntimePass import MLIRTraceRuntimePass
-from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreEngine, XDNA2ShimEngine
+from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreEngine, XDNA2ShimTileDataMover
+
+_SHIM_TILE_ROW = 0
+
+# Chunk-tensor naming convention left by XDNA2SpatialSplitPass:
+# ``<logical_parent>_c{chunk_index}``. The deployer recovers the original
+# logical I/O grouping so the runtime_sequence keeps the kernel ABI lean
+# (the host harness sees one bo per logical I/O, regardless of how many
+# spatial chunks the IR shows).
+_CHUNK_RE = re.compile(r"^(.+)_c(\d+)$")
+
 
 class XDNA2Deployer(SignPropDeployer):
     """Deployer for the XDNA2 (AIE2p) platform."""
@@ -69,6 +80,44 @@ class XDNA2Deployer(SignPropDeployer):
         self.traceBufferSize = traceBufferSize
 
     # ------------------------------------------------------------------
+    # frontEnd extension: add data-mover extraction and invariant checks
+    # ------------------------------------------------------------------
+
+    def frontEnd(self):
+        """Extend the standard frontEnd with a data-mover extraction step."""
+        super().frontEnd()
+        self._extractDataMoverToContext()
+        self._checkDataMoverInvariants()
+
+    def _extractDataMoverToContext(self) -> None:
+        """Copy every ``gs.Variable._dataMoverEngine`` hint into its buffer."""
+        for tensor in self.graph.tensors().values():
+            engineName = getattr(tensor, "_dataMoverEngine", None)
+            if engineName is None:
+                continue
+            buf = (self.ctxt.localObjects.get(tensor.name)
+                   or self.ctxt.globalObjects.get(tensor.name))
+            assert buf is not None, (
+                f"Tensor '{tensor.name}' carries a _dataMoverEngine hint "
+                f"({engineName!r}) but has no buffer in the network context.")
+            buf._dataMoverEngine = engineName
+
+    def _checkDataMoverInvariants(self) -> None:
+        """Every tensor in the graph must declare a data mover after frontEnd.
+
+        Constants, graph IO, and intermediate tensors all need to be coloured by a DataMoverEngine.
+        """
+        for tensor in self.graph.tensors().values():
+            buf = (self.ctxt.globalObjects.get(tensor.name)
+                   or self.ctxt.localObjects.get(tensor.name))
+            assert buf is not None, (
+                f"Graph tensor '{tensor.name}' has no buffer in the network context.")
+            assert getattr(buf, "_dataMoverEngine", None) is not None, (
+                f"Graph tensor '{tensor.name}' has no _dataMoverEngine. Every tensor must "
+                f"declare a data mover; either XDNA2DefaultDataMoverPass missed it or a "
+                f"downstream pass needs to set one.")
+
+    # ------------------------------------------------------------------
     # MLIR generation
     # ------------------------------------------------------------------
 
@@ -76,50 +125,42 @@ class XDNA2Deployer(SignPropDeployer):
         assert self.prepared, "XDNA2Deployer.generateMLIR() called before prepare()"
 
         nodes = self._collectNodes()
-        if not any(n["isCompute"] for n in nodes):
+        if not nodes:
             raise RuntimeError("No compute nodes found — cannot generate MLIR.")
 
-        # The runtime_sequence args are the original graph inputs + outputs
-        # in declaration order; the host harness writes them in the same
-        # order from testinputs.h / testoutputs.h.
-        graphArgNames = [t.name for t in self.graph.inputs] + [t.name for t in self.graph.outputs]
-        graphArgIndex = {name: i for i, name in enumerate(graphArgNames)}
+        # Recover logical I/O grouping from chunk names. The runtime sequence
+        # is keyed off LOGICAL parents (one arg per logical input/output),
+        # not chunks — keeps the kernel ABI to a small, fixed slot count.
+        logicalNames, logicalLengths, chunkToArg = self._buildLogicalGrouping()
 
-        # For every compute node, walk one hop to its surrounding ShimRead /
-        # ShimWrite to gather DMA params. This is the only place the shim
-        # nodes' ``offset`` / ``length`` attrs are consumed.
+        # Resolve per-(compute node, port) DMA params: argIndex into the
+        # logical-arg list, offset within that arg, transfer length.
         for node in nodes:
-            if not node["isCompute"]:
-                continue
-            self._resolveArgMapping(node, graphArgIndex)
+            self._resolveDmaPlacement(node, chunkToArg)
 
         with mlir_mod_ctx() as ctx:
 
             @aie_d.device(aie_d.AIEDevice.npu2)
             def _device():
                 tileMap = self._buildTileMap()
-                shimMap = self._buildShimMap(tileMap)
+                shimTiles = self._buildShimTileMap()
 
-                # === Device phase ===
                 # Track external_func declarations so multiple compute cores
                 # don't redefine the same kernel symbol in this device block.
                 declaredKernels = set()
 
                 computeBlocks = []
                 for node in nodes:
-                    if not node["isCompute"]:
-                        log.info(f"[XDNA2] Skipping shim node '{node['nodeName']}' ({node['op']})")
-                        continue
-
                     engineName = node["engineName"]
-                    assert engineName is not None, (
-                        f"Node '{node['nodeName']}' has no engine color — wrap the deployer with "
-                        f"EngineColoringDeployerWrapper.")
                     assert engineName in tileMap, (
                         f"Node '{node['nodeName']}' is colored '{engineName}' but no XDNA2AIECoreEngine "
                         f"with that name is registered on the platform.")
                     computeTile = tileMap[engineName]
-                    shimTile = shimMap[engineName]
+                    # Pick the shim of the column the compute lives in. The
+                    # data mover annotation has already established that this
+                    # is the right shim for each port; we still need ONE
+                    # representative shim tile for the FIFO declaration.
+                    shimTile = shimTiles[node["shimColPerKey"]["__representative__"]]
                     eb = MLIRExecutionBlock(computeTile = computeTile, shimTile = shimTile)
                     eb.operatorRepresentation = node["opRepr"]
                     eb.patternMemoryConstraint = node["tilingConstraint"]
@@ -133,16 +174,13 @@ class XDNA2Deployer(SignPropDeployer):
                     self.ctxt, eb = node["codeTransformer"].applyDevicePasses(self.ctxt, eb, node["nodeName"])
                     computeBlocks.append((node, eb))
 
-                if not computeBlocks:
-                    raise RuntimeError("Device phase produced no compute cores.")
-
                 # === Runtime-sequence phase ===
-                seqArgTypes = []
-                for name in graphArgNames:
-                    buf = self.ctxt.lookup(name)
-                    elemTy = self._mlirElemType(buf)
-                    n = int(np.prod(buf.shape))
-                    seqArgTypes.append(ir.MemRefType.get((n,), elemTy))
+                # Args are LOGICAL parents — one memref per logical I/O. The
+                # spatial chunk count is hidden from the kernel ABI; the npu
+                # instruction stream encodes the per-chunk DMA descriptors
+                # against these logical buffers at the appropriate offsets.
+                elemTy = ir.BF16Type.get()
+                seqArgTypes = [ir.MemRefType.get((logicalLengths[name],), elemTy) for name in logicalNames]
 
                 @aiex_d.runtime_sequence(*seqArgTypes)
                 def _seq(*args):
@@ -152,7 +190,7 @@ class XDNA2Deployer(SignPropDeployer):
                         eb.argOffsets = node["argOffsets"]
                         eb.transferLengths = node["transferLengths"]
                         log.info(f"[XDNA2] Runtime-sequence phase for '{node['nodeName']}' "
-                                 f"(offsets={node['argOffsets']})")
+                                 f"(args={node['argIndexMap']}, lengths={node['transferLengths']})")
                         self.ctxt, eb = node["codeTransformer"].applyRuntimeSequencePasses(
                             self.ctxt, eb, node["nodeName"])
 
@@ -164,17 +202,12 @@ class XDNA2Deployer(SignPropDeployer):
         return mlirStr
 
     # ------------------------------------------------------------------
-    # node collection / engine-kind dispatch
+    # node collection
     # ------------------------------------------------------------------
 
     def _collectNodes(self) -> List[Dict[str, Any]]:
-        """Collect bound layers and classify them by engine kind.
-
-        ``isCompute`` is determined by the colored engine, not by a
-        per-template flag: shim-engine-colored nodes (``ShimRead`` /
-        ``ShimWrite``) are skipped in MLIR emission; everything else is a
-        compute node.
-        """
+        """Collect bound compute layers. Every node is a compute node now —
+        data movement is annotation, not graph nodes."""
         engineByName = {e.name: e for e in self.Platform.engines}
         nodes = []
         for nodeName, layer in self.layerBinding.items():
@@ -187,16 +220,16 @@ class XDNA2Deployer(SignPropDeployer):
 
             if not isinstance(template, MLIRNodeTemplate):
                 raise RuntimeError(f"Node '{nodeName}' has no MLIRNodeTemplate — got {type(template).__name__}.")
-
-            engineName = layer.node.attrs.get("engine")
-            engine = engineByName.get(engineName) if engineName else None
-            isCompute = isinstance(engine, XDNA2AIECoreEngine)
-
-            if isCompute and not isinstance(codeTransformer, MLIRCodeTransformation):
+            if not isinstance(codeTransformer, MLIRCodeTransformation):
                 raise RuntimeError(
                     f"Node '{nodeName}' uses a non-MLIR CodeTransformation — got {type(codeTransformer).__name__}.")
 
-            if isCompute and self.enableTrace:
+            engineName = layer.node.attrs.get("engine")
+            engine = engineByName.get(engineName) if engineName else None
+            assert isinstance(engine, XDNA2AIECoreEngine), (
+                f"Node '{nodeName}' is colored '{engineName}' which is not an XDNA2AIECoreEngine.")
+
+            if self.enableTrace:
                 codeTransformer = copy.copy(codeTransformer)
                 codeTransformer.devicePasses = list(codeTransformer.devicePasses) + [
                     MLIRCoreTracePass(),
@@ -213,8 +246,8 @@ class XDNA2Deployer(SignPropDeployer):
                 "opRepr": opRepr,
                 "codeTransformer": codeTransformer,
                 "tilingConstraint": tilingConstraint,
-                "isCompute": isCompute,
                 "engineName": engineName,
+                "engine": engine,
             })
         return nodes
 
@@ -225,28 +258,12 @@ class XDNA2Deployer(SignPropDeployer):
                          "for MLIR generation.")
         return {engine.name: aie_d.tile(engine.col, engine.row) for engine in engines}
 
-    def _buildShimMap(self, tileMap: Dict[str, Any]) -> Dict[str, Any]:
-        """One ``aie_d.tile`` shim per occupied compute column.
-
-        NPU2 has one shim per column with limited DMA channels — funnelling
-        several compute cores through a single shim trips the resource
-        allocator. Pairing each compute column with its own shim avoids the
-        saturation. We materialize the shim tile from the matching
-        :class:`XDNA2ShimEngine` registered on the platform.
-        """
-        coreEngines = {e.name: e for e in self.Platform.engines if isinstance(e, XDNA2AIECoreEngine)}
-        shimByCol = {e.col: e for e in self.Platform.engines if isinstance(e, XDNA2ShimEngine)}
-        shimTiles: Dict[int, Any] = {}
-        result: Dict[str, Any] = {}
-        for engineName in tileMap:
-            col = coreEngines[engineName].col
-            assert col in shimByCol, (
-                f"No XDNA2ShimEngine for column {col}; the platform must expose one shim engine per "
-                f"AIE core column.")
-            if col not in shimTiles:
-                shimTiles[col] = aie_d.tile(col, shimByCol[col].row)
-            result[engineName] = shimTiles[col]
-        return result
+    def _buildShimTileMap(self) -> Dict[int, Any]:
+        """One ``aie_d.tile`` per shim column referenced on the platform."""
+        shimDataMovers = [dm for dm in getattr(self.Platform, "dataMoverEngines", [])
+                          if isinstance(dm, XDNA2ShimTileDataMover)]
+        assert shimDataMovers, "XDNA2 platform exposes no XDNA2ShimTileDataMover."
+        return {dm.col: aie_d.tile(dm.col, _SHIM_TILE_ROW) for dm in shimDataMovers}
 
     @staticmethod
     def _mlirElemType(buf) -> Any:
@@ -255,16 +272,79 @@ class XDNA2Deployer(SignPropDeployer):
         return ir.BF16Type.get()
 
     # ------------------------------------------------------------------
-    # Shim-anchored arg resolution
+    # logical I/O grouping (chunk → logical-arg, offset, length)
     # ------------------------------------------------------------------
 
-    def _resolveArgMapping(self, node: Dict[str, Any], graphArgIndex: Dict[str, int]) -> None:
-        """Populate ``argIndexMap`` / ``argOffsets`` / ``transferLengths`` for one compute node.
+    def _buildLogicalGrouping(self) -> Tuple[List[str], Dict[str, int], Dict[str, Tuple[int, int, int]]]:
+        """Recover logical I/O grouping from chunked graph inputs/outputs.
 
-        Walks one hop in the graph: every input edge of a compute node has
-        a ``ShimRead`` producer; every output edge has a ``ShimWrite``
-        consumer. The shim node's ``(offset, length)`` attributes plus its
-        partner L3 tensor's runtime-arg index give the DMA descriptor.
+        XDNA2SpatialSplitPass replaces a logical input ``input_0`` with N
+        per-core chunk tensors named ``input_0_c0`` ... ``input_0_c{N-1}``
+        in ``graph.inputs``. This pass walks those names, regroups by the
+        logical parent (everything before the trailing ``_c{i}``), and
+        returns:
+
+        * ``logicalNames``: ordered list of logical-arg names (inputs first,
+          then outputs). One entry per logical I/O — what the
+          runtime_sequence's argument list will look like.
+        * ``logicalLengths``: ``{logical_name -> total_element_count}``,
+          summed over all chunks of that logical arg.
+        * ``chunkToArg``: ``{chunk_name -> (logical_arg_index, offset, length)}``
+          — what each compute node's DMA descriptors need.
+        """
+        input_groups = self._logicalGroups([t.name for t in self.graph.inputs])
+        output_groups = self._logicalGroups([t.name for t in self.graph.outputs])
+
+        # Logical args appear in declaration order: inputs first, then outputs.
+        logicalNames = list(input_groups.keys()) + list(output_groups.keys())
+        all_groups = {**input_groups, **output_groups}
+
+        chunkToArg: Dict[str, Tuple[int, int, int]] = {}
+        logicalLengths: Dict[str, int] = {}
+        for argIdx, parent in enumerate(logicalNames):
+            offset = 0
+            for _, chunkName in all_groups[parent]:
+                buf = self.ctxt.lookup(chunkName)
+                length = int(np.prod(_safe_shape(buf)))
+                chunkToArg[chunkName] = (argIdx, offset, length)
+                offset += length
+            logicalLengths[parent] = offset
+
+        return logicalNames, logicalLengths, chunkToArg
+
+    @staticmethod
+    def _logicalGroups(names: List[str]) -> Dict[str, List[Tuple[int, str]]]:
+        """Group ``names`` by their logical parent recovered from ``_c{i}`` suffix.
+
+        Each group's list is sorted by chunk index. Tensors without a
+        ``_c{i}`` suffix are their own logical parent (a one-entry group).
+        """
+        groups: Dict[str, List[Tuple[int, str]]] = {}
+        for n in names:
+            m = _CHUNK_RE.match(n)
+            if m:
+                parent = m.group(1)
+                idx = int(m.group(2))
+                groups.setdefault(parent, []).append((idx, n))
+            else:
+                groups[n] = [(0, n)]
+        for parent in groups:
+            groups[parent].sort(key = lambda p: p[0])
+        return groups
+
+    # ------------------------------------------------------------------
+    # buffer-anchored DMA placement
+    # ------------------------------------------------------------------
+
+    def _resolveDmaPlacement(self, node: Dict[str, Any],
+                             chunkToArg: Dict[str, Tuple[int, int, int]]) -> None:
+        """Populate per-key DMA params from buffers' ``_dataMoverEngine`` and
+        the chunk → (logical arg, offset, length) map.
+
+        Each template port (INPUT_KEYS / OUTPUT_KEYS) maps via opRepr to a
+        tensor that is, after spatial split, a chunk graph input/output. We
+        look its row up in ``chunkToArg`` to learn which runtime_sequence
+        arg it lives in and at what offset.
         """
         gsNode: gs.Node = node["node"]
         template = node["template"]
@@ -273,67 +353,43 @@ class XDNA2Deployer(SignPropDeployer):
         argIndexMap: Dict[str, int] = {}
         argOffsets: Dict[str, int] = {}
         transferLengths: Dict[str, int] = {}
+        shimColPerKey: Dict[str, int] = {}
 
-        # Inputs: producer must be a ShimRead.
-        for key, inp in zip(template.INPUT_KEYS, gsNode.inputs):
-            shim = self._uniqueProducer(inp.name)
-            assert shim is not None and shim.op == "ShimRead", (
-                f"Compute node '{gsNode.name}' input '{inp.name}' is not produced by a ShimRead "
-                f"(got {shim.op if shim else 'None'}). Every memory transition must be a shim node.")
-            l3Name = shim.inputs[0].name
-            assert l3Name in graphArgIndex, (
-                f"ShimRead '{shim.name}' reads from '{l3Name}' which is not a graph input.")
-            argIndexMap[key] = graphArgIndex[l3Name]
-            argOffsets[key] = int(shim.attrs["offset"])
-            transferLengths[key] = int(shim.attrs["length"])
+        for key in list(template.INPUT_KEYS) + list(template.OUTPUT_KEYS):
+            tensorName = opRepr[key]
+            assert tensorName in chunkToArg, (
+                f"Node '{gsNode.name}' references tensor '{tensorName}' (port '{key}') which is "
+                f"not in the logical-arg map — the spatial split pass should have promoted all "
+                f"compute IO to graph IO.")
+            argIdx, offset, length = chunkToArg[tensorName]
+            argIndexMap[key] = argIdx
+            argOffsets[key] = offset
+            transferLengths[key] = length
 
-        # Outputs: consumer (for THIS specific compute node) must be a ShimWrite.
-        # Two graph shapes are valid:
-        #   * num_chunks == 1: ShimWrite output IS the graph output tensor.
-        #   * num_chunks  > 1: ShimWrite outputs a per-chunk intermediate; a
-        #     downstream Concat marker reconstructs the graph output.
-        for key, out in zip(template.OUTPUT_KEYS, gsNode.outputs):
-            shim = self._uniqueConsumer(out.name)
-            assert shim is not None and shim.op == "ShimWrite", (
-                f"Compute node '{gsNode.name}' output '{out.name}' is not consumed by a ShimWrite "
-                f"(got {shim.op if shim else 'None'}). Every memory transition must be a shim node.")
-            shimOutName = shim.outputs[0].name
-            if shimOutName in graphArgIndex:
-                l3Name = shimOutName
-            else:
-                concat = self._uniqueConsumer(shimOutName)
-                assert concat is not None and concat.op == "Concat", (
-                    f"ShimWrite '{shim.name}' writes to '{shimOutName}', which is neither a graph "
-                    f"output nor consumed by a Concat marker.")
-                l3Name = concat.outputs[0].name
-                assert l3Name in graphArgIndex, (
-                    f"Concat '{concat.name}' output '{l3Name}' is not a graph output.")
-            argIndexMap[key] = graphArgIndex[l3Name]
-            argOffsets[key] = int(shim.attrs["offset"])
-            transferLengths[key] = int(shim.attrs["length"])
+            buf = self.ctxt.lookup(tensorName)
+            engineName = getattr(buf, "_dataMoverEngine", None)
+            assert engineName is not None, (
+                f"Tensor '{tensorName}' (port '{key}' of '{gsNode.name}') has no _dataMoverEngine "
+                f"annotation. XDNA2SpatialSplitPass + XDNA2AnnotateDataMoverPass should have set it.")
+            mover = self.Platform.getDataMoverEngine(engineName)
+            assert isinstance(mover, XDNA2ShimTileDataMover), (
+                f"Tensor '{tensorName}' is annotated with data mover '{engineName}', which is not a "
+                f"XDNA2ShimTileDataMover.")
+            shimColPerKey[key] = mover.col
+
+        # Pick a representative shim column for the compute node's FIFO
+        # declaration — same column as the compute core.
+        shimColPerKey["__representative__"] = node["engine"].col
 
         node["argIndexMap"] = argIndexMap
         node["argOffsets"] = argOffsets
         node["transferLengths"] = transferLengths
+        node["shimColPerKey"] = shimColPerKey
 
-    def _uniqueProducer(self, tensorName: str) -> Optional[gs.Node]:
-        """Return the single producer node of ``tensorName`` (None if none)."""
-        producers = [n for n in self.graph.nodes if any(o.name == tensorName for o in n.outputs)]
-        if not producers:
-            return None
-        assert len(producers) == 1, f"Tensor '{tensorName}' has multiple producers: {[p.name for p in producers]}"
-        return producers[0]
 
-    def _uniqueConsumer(self, tensorName: str) -> Optional[gs.Node]:
-        """Return the single consumer of ``tensorName``.
-
-        Compute-node output tensors flow into exactly one ``ShimWrite``
-        (each compute node has its own dedicated ShimWrite even when several
-        ShimWrites share a graph-output tensor downstream — the multi-producer
-        case is on the graph-output side, not the compute-output side).
-        """
-        consumers = [n for n in self.graph.nodes if any(i.name == tensorName for i in n.inputs)]
-        if not consumers:
-            return None
-        assert len(consumers) == 1, f"Tensor '{tensorName}' has multiple consumers: {[c.name for c in consumers]}"
-        return consumers[0]
+def _safe_shape(buf) -> tuple:
+    """Tolerate buffers whose shape is stored as either int or sequence."""
+    shape = buf.shape
+    if isinstance(shape, int):
+        return (shape,)
+    return tuple(shape)

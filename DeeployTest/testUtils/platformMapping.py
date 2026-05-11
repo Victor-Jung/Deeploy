@@ -77,8 +77,7 @@ def mapPlatform(platformName: str) -> Tuple[DeploymentPlatform, bool]:
         Platform = ChimeraPlatform()
 
     elif platformName == "XDNA2":
-        from Deeploy.Targets.XDNA2.Platform import XDNA2Platform
-        Platform = XDNA2Platform()
+        raise RuntimeError("XDNA2 does not support mapPlatform; use generateNetwork_xdna2.py.")
 
     else:
         raise RuntimeError(f"Deployment platform {platformName} is not implemented")
@@ -281,12 +280,11 @@ def mapDeployer(platform: DeploymentPlatform,
         # Lazy-import XDNA2 to avoid requiring mlir-aie on non-XDNA2 platforms
         try:
             from Deeploy.Targets.XDNA2.Deployer import XDNA2Deployer
-            from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, MemoryXDNA2PlatformWrapper, \
-                XDNA2Optimizer, XDNA2Platform
+            from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, XDNA2Optimizer
         except ImportError:
             raise RuntimeError(f"Deployer for platform {platform} is not implemented")
 
-        if not isinstance(platform, (XDNA2Platform, MemoryXDNA2Platform, MemoryXDNA2PlatformWrapper)):
+        if not isinstance(platform, MemoryXDNA2Platform):
             raise RuntimeError(f"Deployer for platform {platform} is not implemented")
 
         if loweringOptimizer is None:

@@ -1,25 +1,9 @@
 # SPDX-FileCopyrightText: 2026 ETH Zurich and University of Bologna
 #
 # SPDX-License-Identifier: Apache-2.0
-"""Spatial mapping pass for XDNA2: wrap every memory transition in a shim node.
+"""Spatial mapping pass for XDNA2.
 
-Two responsibilities:
-
-1. **Always wrap graph IO with shim nodes.** Every input edge entering a
-   compute node from L3 (graph inputs) becomes ``ShimRead(L3) -> L1_chunk``,
-   and every output edge from a compute node to L3 (graph outputs) becomes
-   ``ShimWrite(L1_chunk) -> L3``. This holds even with no spatial split —
-   single-core mode also gets shim nodes. The principle is "every
-   memory-level transition is a node".
-
-2. **Spatially split eligible compute nodes across AIE cores.** When the
-   platform exposes N >= 2 ``XDNA2AIECoreEngine`` instances, an eligible
-   ``Add`` is replaced by N sub-``Add``s (one per core). Non-Add ops are
-   wrapped without splitting (chunk count = 1, mapped to the first core).
-
-Each shim node is colored to a ``XDNA2ShimEngine`` in the column of its
-associated compute core; each compute (sub-)node is colored to its
-``XDNA2AIECoreEngine``.
+Split ``Add`` node and annotate it's IOs with data movers.
 """
 
 from __future__ import annotations
@@ -30,71 +14,76 @@ import onnx_graphsurgeon as gs
 
 from Deeploy.DeeployTypes import TopologyOptimizationPass
 from Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass import engineaware
-from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreEngine, XDNA2ShimEngine
-
-# Compute op kinds we know how to wrap. Ops not in this set are passed
-# through unchanged — we'll need to extend this as more kernels land.
-_COMPUTE_OPS = frozenset({"Add", "Silu", "LayerNormalization"})
+from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreDataMover, XDNA2AIECoreEngine, XDNA2ShimTileDataMover
 
 _SPLITTABLE_OPS = frozenset({"Add"})
 
 
 @engineaware
 class XDNA2SpatialSplitPass(TopologyOptimizationPass):
-    """Wrap compute ops in shim nodes; split eligible ones across AIE cores.
+    """Annotate graph IO with data movers; split eligible Add nodes across cores.
 
     Parameters
     ----------
     axis : int
-        Tensor axis along which to split. Default 0.
+        Tensor axis along which to split splittable ops. Default 0.
     """
 
     def __init__(self, axis: int = 0) -> None:
         super().__init__()
         self.axis = int(axis)
 
-    # ------------------------------------------------------------------
-    # entry point
-    # ------------------------------------------------------------------
-
     def apply(self, graph: gs.Graph) -> Tuple[gs.Graph]:
-        coreEngines, shimByCol = self._partitionEngines()
+        coreEngines, shims, _coreDataMovers = self._partitionEngines()
         assert coreEngines, "No XDNA2AIECoreEngine on the platform — cannot map compute nodes."
+        assert shims, "No XDNA2ShimTileDataMover on the platform — cannot move data to/from L3."
 
-        for node in list(graph.nodes):
-            if node.op not in _COMPUTE_OPS:
-                continue
-            num_chunks = len(coreEngines) if node.op in _SPLITTABLE_OPS and self._splittable(node, len(coreEngines)) \
-                else 1
-            self._wrapAndSplit(graph, node, coreEngines, shimByCol, num_chunks)
+        # Try to spatially split eligible compute nodes (Add only). The
+        # chunks introduced here are annotated with their per-column shim;
+        # original tensors that get replaced by chunks lose their default
+        # annotation along with them. Tensors not touched by a split keep
+        # the default mover that XDNA2DefaultDataMoverPass installed.
+        if len(coreEngines) >= 2:
+            for node in list(graph.nodes):
+                if node.op not in _SPLITTABLE_OPS:
+                    continue
+                if not self._splittable(node, len(coreEngines)):
+                    continue
+                self._splitAdd(graph, node, coreEngines, shims)
+            graph.cleanup().toposort()
 
-        graph.cleanup().toposort()
+        # Color compute nodes that aren't already colored. The split pass
+        # handles its own sub-Adds; this picks up the SiLU / LayerNorm /
+        # un-split-Add case.
+        for node in graph.nodes:
+            if "engine" not in node.attrs:
+                node.attrs["engine"] = coreEngines[0].name
+
         return graph
 
-    # ------------------------------------------------------------------
-    # engine bookkeeping
-    # ------------------------------------------------------------------
-
-    def _partitionEngines(self) -> Tuple[List[XDNA2AIECoreEngine], Dict[int, XDNA2ShimEngine]]:
+    def _partitionEngines(self) -> Tuple[List[XDNA2AIECoreEngine], List[XDNA2ShimTileDataMover],
+                                         Dict[Tuple[int, int], XDNA2AIECoreDataMover]]:
         engines = getattr(self, "engines", None)
         assert engines is not None, (
             "XDNA2SpatialSplitPass.apply called before EngineColoringDeployer "
             "injected the engine list — wrap the deployer with "
             "EngineColoringDeployerWrapper.")
-        coreEngines = [e for e in engines if isinstance(e, XDNA2AIECoreEngine)]
-        shimByCol = {e.col: e for e in engines if isinstance(e, XDNA2ShimEngine)}
-        for core in coreEngines:
-            assert core.col in shimByCol, (
-                f"No XDNA2ShimEngine for column {core.col}; the platform must expose "
-                f"one shim engine per AIE core column.")
-        return coreEngines, shimByCol
-
-    # ------------------------------------------------------------------
-    # eligibility
-    # ------------------------------------------------------------------
+        coreEngines = sorted([e for e in engines if isinstance(e, XDNA2AIECoreEngine)], key = lambda e: e.col)
+        # Data movers come in via the platform's separate dataMoverEngines list.
+        # The engineaware mixin only injects the compute engine list, so we
+        # recover data movers from the platform attribute (set on the bound
+        # pass instance by the deployer).
+        platformDataMovers = getattr(self, "dataMoverEngines", [])
+        shims = sorted([dm for dm in platformDataMovers if isinstance(dm, XDNA2ShimTileDataMover)],
+                       key = lambda dm: dm.col)
+        coreDataMovers = {(dm.col, dm.row): dm
+                          for dm in platformDataMovers
+                          if isinstance(dm, XDNA2AIECoreDataMover)}
+        return coreEngines, shims, coreDataMovers
 
     def _splittable(self, node: gs.Node, num_cores: int) -> bool:
-        """Whether this Add can be evenly split into ``num_cores`` chunks along ``axis``."""
+        if len(node.outputs) != 1:
+            return False
         out = node.outputs[0]
         if out.shape is None or len(out.shape) <= self.axis:
             return False
@@ -106,117 +95,85 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
                 return False
         return True
 
-    # ------------------------------------------------------------------
-    # rewrite
-    # ------------------------------------------------------------------
-
     def _chunkShape(self, shape: Tuple[int, ...], num_chunks: int) -> Tuple[int, ...]:
-        if num_chunks == 1:
-            return tuple(shape)
         chunked = list(shape)
         chunked[self.axis] = chunked[self.axis] // num_chunks
         return tuple(chunked)
 
-    def _wrapAndSplit(self, graph: gs.Graph, node: gs.Node, coreEngines: List[XDNA2AIECoreEngine],
-                      shimByCol: Dict[int, XDNA2ShimEngine], num_chunks: int) -> None:
-        """Replace ``node`` with ``num_chunks`` shim-wrapped copies."""
-        baseName = node.name or f"{node.op}_{id(node):x}"
-        inputs = list(node.inputs)
-        output = node.outputs[0]
-        out_chunk_shape = self._chunkShape(output.shape, num_chunks)
-        in_chunk_shapes = [self._chunkShape(inp.shape, num_chunks) for inp in inputs]
-        # Element count per chunk (used as DMA length and offset multiplier).
-        out_chunk_elems = 1
-        for d in out_chunk_shape:
-            out_chunk_elems *= int(d)
-        in_chunk_elems = []
-        for shp in in_chunk_shapes:
-            n = 1
-            for d in shp:
-                n *= int(d)
-            in_chunk_elems.append(n)
+    def _splitAdd(self, graph: gs.Graph, node: gs.Node, coreEngines: List[XDNA2AIECoreEngine],
+                  shims: List[XDNA2ShimTileDataMover]) -> None:
+        """Replace ``node`` (an Add) with ``len(coreEngines)`` sub-Adds.
 
-        new_nodes: List[gs.Node] = []
-        shim_write_outs: List[gs.Variable] = []
+        Each sub-Add lives on its own AIE core column. Inputs/outputs are
+        split into per-chunk graph IO tensors so the IR stays
+        single-producer / single-consumer (the tiler rejects multi-producer).
+        """
+        num_cores = len(coreEngines)
+        baseName = node.name or f"Add_{id(node):x}"
 
-        for i in range(num_chunks):
-            core = coreEngines[i] if num_chunks > 1 else coreEngines[0]
-            shim = shimByCol[core.col]
+        original_inputs = list(node.inputs)
+        original_output = node.outputs[0]
+        out_chunk_shape = self._chunkShape(original_output.shape, num_cores)
+        in_chunk_shapes = [self._chunkShape(inp.shape, num_cores) for inp in original_inputs]
 
-            # Per-input ShimRead — one per (input, chunk) combination.
-            in_chunks = []
-            for inp_idx, (inp, shp, elems) in enumerate(zip(inputs, in_chunk_shapes, in_chunk_elems)):
-                in_chunk = gs.Variable(name = f"{baseName}_in{inp_idx}_c{i}", dtype = inp.dtype, shape = shp)
-                shim_read = gs.Node(
-                    op = "ShimRead",
-                    name = f"{baseName}_ShimRead_in{inp_idx}_c{i}",
-                    inputs = [inp],
-                    outputs = [in_chunk],
-                    attrs = {
-                        "engine": shim.name,
-                        "axis": self.axis,
-                        "offset": i * elems,
-                        "length": elems,
-                    },
-                )
-                in_chunks.append(in_chunk)
-                new_nodes.append(shim_read)
-
-            # The compute (sub-)node, colored to its AIE core.
-            out_chunk = gs.Variable(name = f"{baseName}_out_c{i}", dtype = output.dtype, shape = out_chunk_shape)
-            sub_node = gs.Node(
-                op = node.op,
-                name = f"{baseName}_core{i}" if num_chunks > 1 else baseName,
-                inputs = in_chunks,
-                outputs = [out_chunk],
-                # Preserve any non-engine attrs from the original node (e.g. epsilon for LayerNorm).
-                attrs = {**{k: v for k, v in node.attrs.items() if k != "engine"}, "engine": core.name},
-            )
-            new_nodes.append(sub_node)
-
-            # ShimWrite drains the L1 chunk back to L3.
-            #  * num_chunks == 1: writes the graph output tensor directly.
-            #  * num_chunks  > 1: writes a per-chunk intermediate; a Concat
-            #    marker (added below) reconstructs the graph output. This
-            #    avoids the multi-producer assertion in the tiler.
-            if num_chunks == 1:
-                shim_write_dst = output
-            else:
-                shim_write_dst = gs.Variable(
-                    name = f"{baseName}_out_l3_c{i}",
-                    dtype = output.dtype,
-                    shape = out_chunk_shape,
-                )
-            shim_write = gs.Node(
-                op = "ShimWrite",
-                name = f"{baseName}_ShimWrite_c{i}",
-                inputs = [out_chunk],
-                outputs = [shim_write_dst],
-                attrs = {
-                    "engine": shim.name,
-                    "axis": self.axis,
-                    "offset": i * out_chunk_elems,
-                    "length": out_chunk_elems,
-                },
-            )
-            new_nodes.append(shim_write)
-            shim_write_outs.append(shim_write_dst)
-
-        # Concat marker — only for num_chunks > 1. Colored to the first
-        # shim engine; emits no MLIR, exists purely to keep the graph
-        # single-producer.
-        if num_chunks > 1:
-            concat_shim = shimByCol[coreEngines[0].col]
-            concat = gs.Node(
-                op = "Concat",
-                name = f"{baseName}_Concat",
-                inputs = shim_write_outs,
-                outputs = [output],
-                attrs = {"engine": concat_shim.name, "axis": self.axis},
-            )
-            new_nodes.append(concat)
-
+        # Detach the Add from the graph; replacement nodes go in place.
         node.inputs.clear()
         node.outputs.clear()
         graph.nodes.remove(node)
-        graph.nodes.extend(new_nodes)
+
+        # For each input that was a graph input, split it into N chunks.
+        # Each chunk REPLACES the original in graph.inputs.
+        per_input_chunks: List[List[gs.Variable]] = []
+        for inp_idx, inp in enumerate(original_inputs):
+            chunks: List[gs.Variable] = []
+            for i in range(num_cores):
+                chunk = gs.Variable(
+                    name = f"{inp.name}_c{i}",
+                    dtype = inp.dtype,
+                    shape = in_chunk_shapes[inp_idx],
+                )
+                chunk._dataMoverEngine = shims[i].name
+                chunks.append(chunk)
+            per_input_chunks.append(chunks)
+            self._replaceInGraphInputs(graph, inp, chunks)
+
+        # Same for the output.
+        out_chunks: List[gs.Variable] = []
+        for i in range(num_cores):
+            chunk = gs.Variable(
+                name = f"{original_output.name}_c{i}",
+                dtype = original_output.dtype,
+                shape = out_chunk_shape,
+            )
+            chunk._dataMoverEngine = shims[i].name
+            out_chunks.append(chunk)
+        self._replaceInGraphOutputs(graph, original_output, out_chunks)
+
+        # Emit the N sub-Adds, colored to their respective AIE cores.
+        for i in range(num_cores):
+            sub = gs.Node(
+                op = "Add",
+                name = f"{baseName}_core{i}",
+                inputs = [per_input_chunks[inp_idx][i] for inp_idx in range(len(original_inputs))],
+                outputs = [out_chunks[i]],
+                attrs = {**{k: v for k, v in node.attrs.items() if k != "engine"}, "engine": coreEngines[i].name},
+            )
+            graph.nodes.append(sub)
+
+    @staticmethod
+    def _replaceInGraphInputs(graph: gs.Graph, original: gs.Variable, replacements: List[gs.Variable]) -> None:
+        if original not in graph.inputs:
+            raise NotImplementedError(
+                "XDNA2SpatialSplitPass currently only splits Add inputs that are graph inputs. "
+                f"Tensor '{original.name}' is an intermediate.")
+        idx = graph.inputs.index(original)
+        graph.inputs[idx:idx + 1] = replacements
+
+    @staticmethod
+    def _replaceInGraphOutputs(graph: gs.Graph, original: gs.Variable, replacements: List[gs.Variable]) -> None:
+        if original not in graph.outputs:
+            raise NotImplementedError(
+                "XDNA2SpatialSplitPass currently only splits Add outputs that are graph outputs. "
+                f"Tensor '{original.name}' is an intermediate.")
+        idx = graph.outputs.index(original)
+        graph.outputs[idx:idx + 1] = replacements

@@ -14,19 +14,23 @@ from __future__ import annotations
 
 from typing import List
 
-from Deeploy.DeeployTypes import DeploymentEngine
+from Deeploy.DeeployTypes import DataMoverEngine, DeploymentEngine
 
 
 class EngineAwarePassMixIn:
-    """Marks a pass as needing the platform's engine list.
+    """Marks a pass as needing the platform's engine + data-mover lists.
 
     The orchestrator (typically :class:`EngineColoringDeployer`) calls
-    :meth:`setEngines` before invoking ``apply``. The pass then reads
-    ``self.engines`` from inside ``apply``.
+    :meth:`setEngines` (compute engines) and :meth:`setDataMoverEngines`
+    (data-mover engines) before invoking ``apply``. The pass then reads
+    ``self.engines`` / ``self.dataMoverEngines`` from inside ``apply``.
     """
 
     def setEngines(self, engines: List[DeploymentEngine]) -> None:
         self.engines = list(engines)
+
+    def setDataMoverEngines(self, dataMoverEngines: List[DataMoverEngine]) -> None:
+        self.dataMoverEngines = list(dataMoverEngines)
 
 
 def engineaware(cls):
