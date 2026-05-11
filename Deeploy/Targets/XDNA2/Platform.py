@@ -60,6 +60,15 @@ class XDNA2StructBuffer(StructBuffer):
 
 XDNA2Optimizer = TopologyOptimizer([], name = "XDNA2Optimizer")
 
+# ---------------------------------------------------------------------------
+# XDNA2 hardware shape
+# ---------------------------------------------------------------------------
+NPU2_NUM_COLS = 8                 # total columns in the AIE array
+NPU2_NUM_AIE_ROWS = 4             # AIE compute cores per column (rows 2..5)
+NPU2_AIE_ROW_OFFSET = 2           # first AIE row index
+NPU2_MEM_TILE_ROW = 1             # mem tile row
+NPU2_SHIM_TILE_ROW = 0            # shim tile row
+
 
 class XDNA2AIECoreEngine(DeploymentEngine):
     """One AIE compute core, identified by its physical (col, row) placement.
@@ -72,12 +81,12 @@ class XDNA2AIECoreEngine(DeploymentEngine):
 
     def __init__(self,
                  col: int = 0,
-                 row: int = 2,
+                 row: int = NPU2_AIE_ROW_OFFSET,
                  name: Optional[str] = None,
                  Mapping = None,
                  initCode: str = "",
                  includeList = None,
-                 preferredMemoryLevel: str = "L1") -> None:
+                 preferredMemoryLevel: Optional[str] = None) -> None:
         if name is None:
             name = f"AIE_c{col}r{row}"
         if Mapping is None:
@@ -87,7 +96,9 @@ class XDNA2AIECoreEngine(DeploymentEngine):
         super().__init__(name, Mapping, initCode, includeList)
         self.col = col
         self.row = row
-        self.preferredMemoryLevel = preferredMemoryLevel
+        # Default to this tile's own L1 — every AIE compute tile has its
+        # own local memory in the full hardware hierarchy.
+        self.preferredMemoryLevel = preferredMemoryLevel or f"L1_c{col}r{row}"
 
 
 class XDNA2ShimTileDataMover(DataMoverEngine):
@@ -111,6 +122,17 @@ class XDNA2AIECoreDataMover(DataMoverEngine):
         self.row = row
 
 
+class XDNA2MemTileDataMover(DataMoverEngine):
+    """A mem-tile DMA engine, identified by its column (row=1 implied)."""
+
+    def __init__(self, col: int, name: Optional[str] = None) -> None:
+        if name is None:
+            name = f"mem_c{col}"
+        super().__init__(name)
+        self.col = col
+        self.row = NPU2_MEM_TILE_ROW
+
+
 class MemoryXDNA2Platform(MemoryPlatform):
     """XDNA2 platform with memory hierarchy + data-mover engine support."""
 
@@ -127,6 +149,16 @@ class MemoryXDNA2Platform(MemoryPlatform):
                          structBuffer, transientBuffer)
         self.dataMoverEngines: List[DataMoverEngine] = list(dataMoverEngines or [])
         self._dataMoverByName = {dm.name: dm for dm in self.dataMoverEngines}
+        self._engineByName = {e.name: e for e in engines}
 
     def getDataMoverEngine(self, name: str) -> Optional[DataMoverEngine]:
         return self._dataMoverByName.get(name)
+
+    def getTargetMemoryLevel(self, node, tensorName: str, ctxt) -> str:
+        """Per-(node, tensor) target memory level for the tiler."""
+        engineName = node.attrs.get("engine")
+        if engineName is not None:
+            engine = self._engineByName.get(engineName)
+            if isinstance(engine, XDNA2AIECoreEngine):
+                return engine.preferredMemoryLevel
+        return self.defaultTargetMemoryLevel.name

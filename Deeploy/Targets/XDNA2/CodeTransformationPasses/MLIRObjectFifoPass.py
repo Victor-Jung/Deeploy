@@ -37,22 +37,21 @@ MAX_TILE_SIZE = 1024
 
 
 def _deriveTileShape(numElements: int, patternMemoryConstraint) -> Tuple[int, ...]:
-    """Extract the N-D tile shape from the tiling solution.
-
-    Returns the solver's ``l1Constraint.shape`` directly.
-    """
+    """Extract the N-D tile shape from the tiling solution."""
 
     nodeConstraint = patternMemoryConstraint.nodeConstraints[0]
     outputConstraints = nodeConstraint.outputTensorMemoryConstraints
     if outputConstraints:
         firstOutputName = list(outputConstraints.keys())[0]
         tensorConstraint = outputConstraints[firstOutputName]
-        if "L1" in tensorConstraint.memoryConstraints:
-            l1Constraint = tensorConstraint.memoryConstraints["L1"]
-            if l1Constraint.shape is not None:
-                return tuple(int(d) for d in l1Constraint.shape)
+        for levelName, levelConstraint in tensorConstraint.memoryConstraints.items():
+            if levelName.startswith("L1") and levelConstraint.shape is not None:
+                return tuple(int(d) for d in levelConstraint.shape)
 
-    raise ValueError
+    # Debug aid before failing.
+    debug_keys = list(tensorConstraint.memoryConstraints.keys()) if outputConstraints else []
+    raise ValueError(f"_deriveTileShape: no L1* memory constraint found. Available levels for "
+                     f"'{firstOutputName if outputConstraints else None}': {debug_keys}")
 
 
 class MLIRObjectFifoPass(MLIRCodeTransformationPass):

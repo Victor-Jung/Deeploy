@@ -11,5 +11,5 @@ KERNEL_TESTS = [
 ]
 
 SPATIAL_KERNEL_TESTS = [
-    ("Kernels/BF16/Add/Regular", ["--num-cores=2"]),
+    ("Kernels/BF16/Add/Regular", ["--num-col=2"]),
 ]

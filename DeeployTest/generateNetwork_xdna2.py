@@ -27,8 +27,9 @@ from Deeploy.EngineExtension.NetworkDeployers.EngineColoringDeployer import Engi
 from Deeploy.Logging import DEFAULT_LOGGER as log
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLevel
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryDeployerWrapper
-from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, XDNA2AIECoreDataMover, XDNA2AIECoreEngine, \
-    XDNA2Mapping, XDNA2ShimTileDataMover
+from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, NPU2_AIE_ROW_OFFSET, NPU2_NUM_AIE_ROWS, \
+    NPU2_NUM_COLS, XDNA2AIECoreDataMover, XDNA2AIECoreEngine, XDNA2MemTileDataMover, \
+    XDNA2ShimTileDataMover
 from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultConstantDataMoveAnnotationPass import \
     XDNA2DefaultConstantDataMoveAnnotationPass
 from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultInputDataMoveAnnotationPass import \
@@ -145,9 +146,13 @@ def generateNetworkXDNA2(args):
     inputTypes = {}
     inputOffsets = {}
 
-    # Number of cores is needed early to register types for the per-chunk
-    # graph inputs that XDNA2SpatialSplitPass will create.
-    _num_cores_for_types = int(getattr(args, 'num_cores', None) or 1)
+    # NPU array shape: how much of the AIE array we activate this run.
+    num_col = int(getattr(args, 'num_col', None) or 1)
+    num_aie_row = int(getattr(args, 'num_aie_row', None) or 1)
+    assert 1 <= num_col <= NPU2_NUM_COLS, f"--num-col must be in [1, {NPU2_NUM_COLS}], got {num_col}"
+    assert 1 <= num_aie_row <= NPU2_NUM_AIE_ROWS, (
+        f"--num-aie-row must be in [1, {NPU2_NUM_AIE_ROWS}], got {num_aie_row}")
+    total_chunks = num_col * num_aie_row
 
     for index, (name, values) in enumerate(zip(inputs_npz.files, test_inputs)):
         if np.prod(values.shape) == 0:
@@ -158,39 +163,57 @@ def generateNetworkXDNA2(args):
         # JUNGVI: TODO: Align minimalFloatType to properly handle bf16 and don't force types.
         inputTypes[f"input_{index}"] = PointerClass(bfloat16_t)
         inputOffsets[f"input_{index}"] = 0
-        # Register chunk variants as well so _createIOBindings can resolve
-        # them after XDNA2SpatialSplitPass has renamed graph.inputs.
-        if _num_cores_for_types >= 2:
-            for chunk in range(_num_cores_for_types):
+        # Register chunk variants for parse()
+        if total_chunks >= 2:
+            for chunk in range(total_chunks):
                 inputTypes[f"input_{index}_c{chunk}"] = PointerClass(bfloat16_t)
                 inputOffsets[f"input_{index}_c{chunk}"] = 0
 
     _DEEPLOYSTATEDIR = os.path.join(args.dumpdir, "deeployStates")
 
-    # JUNGVI: TODO: Extend with the whole NPU array
-    # Define memory hierarchy: L1 (AIE core local) and L3 (shared)
-    l1_size = int(getattr(args, 'l1', None) or 64000)  # 64KB default
-    l3_size = int(getattr(args, 'l3', None) or 128 * 1024 * 1024)  # 128MB default
-    num_cores = int(getattr(args, 'num_cores', None) or 1)
-    aie_row = int(getattr(args, 'aie_row', None) or 2)
+    # Memory sizes (per tile / per shared region).
+    l1_size = int(getattr(args, 'l1', None) or 64000)               # 64 KB per AIE tile
+    l2_size = int(getattr(args, 'l2', None) or 512 * 1024)          # 512 KB per mem tile
+    l3_size = int(getattr(args, 'l3', None) or 1000 * 1024 * 1024)  # 1 GB DRAM
 
-    log.info(f"[XDNA2] Using MemoryXDNA2Platform with L1={l1_size}, L3={l3_size}, "
-             f"num_cores={num_cores}, row={aie_row}")
+    log.info(f"[XDNA2] Array config: num_col={num_col}, num_aie_row={num_aie_row} "
+             f"(total {total_chunks} AIE compute tiles); L1={l1_size}, L2={l2_size}, L3={l3_size}")
 
-    l1_level = MemoryLevel("L1", neighbourNames = ["L3"], size = l1_size)
-    l3_level = MemoryLevel("L3", neighbourNames = ["L1"], size = l3_size)
-    memory_hierarchy = MemoryHierarchy([l1_level, l3_level])
-    memory_hierarchy.setDefaultMemoryLevel("L3")  # Tensors default to L3
+    # ---- Memory hierarchy: model the FULL XDNA2 NPU. ----
+    # 1 L3 + NPU2_NUM_COLS L2 + NPU2_NUM_COLS×NPU2_NUM_AIE_ROWS L1.
+    levels = []
+    aie_rows = list(range(NPU2_AIE_ROW_OFFSET, NPU2_AIE_ROW_OFFSET + NPU2_NUM_AIE_ROWS))
+    all_l2_names = [f"L2_c{c}" for c in range(NPU2_NUM_COLS)]
+    all_l1_names = [f"L1_c{c}r{r}" for c in range(NPU2_NUM_COLS) for r in aie_rows]
+    levels.append(MemoryLevel("L3", neighbourNames = all_l2_names + all_l1_names, size = l3_size))
+    for c in range(NPU2_NUM_COLS):
+        col_l1_names = [f"L1_c{c}r{r}" for r in aie_rows]
+        levels.append(MemoryLevel(f"L2_c{c}", neighbourNames = ["L3"] + col_l1_names, size = l2_size))
+    for c in range(NPU2_NUM_COLS):
+        for r in aie_rows:
+            levels.append(MemoryLevel(f"L1_c{c}r{r}", neighbourNames = ["L3", f"L2_c{c}"], size = l1_size))
+    memory_hierarchy = MemoryHierarchy(levels)
+    memory_hierarchy.setDefaultMemoryLevel("L3")
+    l3_level = memory_hierarchy.memoryLevels["L3"]
 
-    coreEngines = [XDNA2AIECoreEngine(col = i, row = aie_row) for i in range(num_cores)]
+    # ---- Compute engines ----
+    used_aie_rows = list(range(NPU2_AIE_ROW_OFFSET, NPU2_AIE_ROW_OFFSET + num_aie_row))
+    coreEngines = [
+        XDNA2AIECoreEngine(col = c, row = r) for c in range(num_col) for r in used_aie_rows
+    ]
 
-    # One data mover per shim tile and one per AIE core
-    dataMoverEngines = [XDNA2ShimTileDataMover(col = i) for i in range(num_cores)] + \
-                       [XDNA2AIECoreDataMover(col = i, row = aie_row) for i in range(num_cores)]
+    # ---- Data mover engines ----
+    dataMoverEngines: list = []
+    for c in range(num_col):
+        dataMoverEngines.append(XDNA2ShimTileDataMover(col = c))
+        dataMoverEngines.append(XDNA2MemTileDataMover(col = c))
+    for c in range(num_col):
+        for r in used_aie_rows:
+            dataMoverEngines.append(XDNA2AIECoreDataMover(col = c, row = r))
 
     mem_platform = MemoryXDNA2Platform(
         memoryHierarchy = memory_hierarchy,
-        defaultTargetMemoryLevel = l1_level,
+        defaultTargetMemoryLevel = l3_level,
         engines = coreEngines,
         dataMoverEngines = dataMoverEngines,
     )
@@ -279,14 +302,15 @@ if __name__ == '__main__':
                         type = int,
                         default = 8192,
                         help = 'Trace buffer size in bytes (default: 8192)')
-    parser.add_argument('--num-cores',
+    parser.add_argument('--num-col',
                         type = int,
                         default = 1,
-                        help = 'Number of AIE compute cores to spatially split across (default: 1)')
-    parser.add_argument('--aie-row',
+                        help = f'Number of AIE columns to use (1..{NPU2_NUM_COLS}, default: 1).')
+    parser.add_argument('--num-aie-row',
                         type = int,
-                        default = 2,
-                        help = 'AIE row index for the compute cores (default: 2)')
+                        default = 1,
+                        help = f'Number of AIE compute rows per column to use (1..{NPU2_NUM_AIE_ROWS}, '
+                        f'default: 1). Total active AIE compute tiles = num-col * num-aie-row.')
     args, _ = parser.parse_known_args()
 
     if args.platform != 'XDNA2':

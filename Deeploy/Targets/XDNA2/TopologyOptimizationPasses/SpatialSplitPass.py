@@ -68,7 +68,9 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
             "XDNA2SpatialSplitPass.apply called before EngineColoringDeployer "
             "injected the engine list — wrap the deployer with "
             "EngineColoringDeployerWrapper.")
-        coreEngines = sorted([e for e in engines if isinstance(e, XDNA2AIECoreEngine)], key = lambda e: e.col)
+        
+        coreEngines = sorted([e for e in engines if isinstance(e, XDNA2AIECoreEngine)],
+                             key = lambda e: (e.col, e.row))
         # Data movers come in via the platform's separate dataMoverEngines list.
         # The engineaware mixin only injects the compute engine list, so we
         # recover data movers from the platform attribute (set on the bound
@@ -104,12 +106,15 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
                   shims: List[XDNA2ShimTileDataMover]) -> None:
         """Replace ``node`` (an Add) with ``len(coreEngines)`` sub-Adds.
 
-        Each sub-Add lives on its own AIE core column. Inputs/outputs are
+        Each sub-Add lives on its own AIE compute tile. Inputs/outputs are
         split into per-chunk graph IO tensors so the IR stays
         single-producer / single-consumer (the tiler rejects multi-producer).
         """
         num_cores = len(coreEngines)
         baseName = node.name or f"Add_{id(node):x}"
+
+        # Lookup table: column → its shim data mover.
+        shim_by_col = {dm.col: dm for dm in shims}
 
         original_inputs = list(node.inputs)
         original_output = node.outputs[0]
@@ -132,7 +137,7 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
                     dtype = inp.dtype,
                     shape = in_chunk_shapes[inp_idx],
                 )
-                chunk._dataMoverEngine = shims[i].name
+                chunk._dataMoverEngine = shim_by_col[coreEngines[i].col].name
                 chunks.append(chunk)
             per_input_chunks.append(chunks)
             self._replaceInGraphInputs(graph, inp, chunks)
@@ -145,7 +150,7 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
                 dtype = original_output.dtype,
                 shape = out_chunk_shape,
             )
-            chunk._dataMoverEngine = shims[i].name
+            chunk._dataMoverEngine = shim_by_col[coreEngines[i].col].name
             out_chunks.append(chunk)
         self._replaceInGraphOutputs(graph, original_output, out_chunks)
 
