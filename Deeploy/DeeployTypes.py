@@ -3136,6 +3136,9 @@ class NetworkContainer():
                     tensor.doc_string += f"MemoryLevel: {lObject._memoryLevel}, "
                 if getattr(lObject, "_dataMoverEngine", None) is not None:
                     tensor.doc_string += f"DataMoverEngine: {lObject._dataMoverEngine}, "
+                if getattr(lObject, "_logicalParent", None) is not None:
+                    tensor.doc_string += f"LogicalParent: {lObject._logicalParent}, "
+                    tensor.doc_string += f"ChunkOffset: {getattr(lObject, '_chunkOffset', 0)}, "
                 if not isinstance(lObject, ConstantBuffer) and hasattr(lObject, "_type"):
                     tensor.doc_string += f"Type: {lObject._type.typeName}, "
                     if hasattr(lObject._type, "referencedType"):
@@ -3149,6 +3152,9 @@ class NetworkContainer():
                     tensor.doc_string += f"MemoryLevel: {gObject._memoryLevel}, "
                 if getattr(gObject, "_dataMoverEngine", None) is not None:
                     tensor.doc_string += f"DataMoverEngine: {gObject._dataMoverEngine}, "
+                if getattr(gObject, "_logicalParent", None) is not None:
+                    tensor.doc_string += f"LogicalParent: {gObject._logicalParent}, "
+                    tensor.doc_string += f"ChunkOffset: {getattr(gObject, '_chunkOffset', 0)}, "
                 if not isinstance(gObject, ConstantBuffer) and hasattr(gObject, "_type"):
                     tensor.doc_string += f"Type: {gObject._type.typeName}, "
                     if hasattr(gObject._type, "referencedType"):

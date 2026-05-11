@@ -37,6 +37,16 @@ class XDNA2VariableBuffer(VariableBuffer):
     # None means "no transfer" (e.g. transient buffers that never cross a memory level).
     _dataMoverEngine: Optional[str] = None
 
+    # Chunk-of-logical-parent metadata, set by XDNA2SpatialSplitPass on the
+    # per-core chunk buffers. The logical parent is the L3-resident tensor
+    # that the host actually allocates an XRT bo for; each chunk's DMA
+    # descriptor accesses that bo at ``_chunkOffset`` element offset for
+    # ``self.shape.numel()`` elements.
+    #
+    # ``_logicalParent = None`` means "this buffer IS the logical parent"
+    _logicalParent: Optional[str] = None
+    _chunkOffset: int = 0
+
 
 class XDNA2TransientBuffer(TransientBuffer):
     initTemplate = AllocateTemplate.referenceInitTemplate

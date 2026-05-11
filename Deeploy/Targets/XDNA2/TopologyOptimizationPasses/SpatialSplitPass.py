@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Tuple
 
+import numpy as np
 import onnx_graphsurgeon as gs
 
 from Deeploy.DeeployTypes import TopologyOptimizationPass
@@ -126,6 +127,11 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
         node.outputs.clear()
         graph.nodes.remove(node)
 
+        # Per-input chunk element count (chunks for one logical input all
+        # have the same shape, so one count per input is enough).
+        in_chunk_elems = [int(np.prod(s)) for s in in_chunk_shapes]
+        out_chunk_elems = int(np.prod(out_chunk_shape))
+
         # For each input that was a graph input, split it into N chunks.
         # Each chunk REPLACES the original in graph.inputs.
         per_input_chunks: List[List[gs.Variable]] = []
@@ -138,6 +144,8 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
                     shape = in_chunk_shapes[inp_idx],
                 )
                 chunk._dataMoverEngine = shim_by_col[coreEngines[i].col].name
+                chunk._logicalParent = inp.name
+                chunk._chunkOffset = i * in_chunk_elems[inp_idx]
                 chunks.append(chunk)
             per_input_chunks.append(chunks)
             self._replaceInGraphInputs(graph, inp, chunks)
@@ -151,6 +159,8 @@ class XDNA2SpatialSplitPass(TopologyOptimizationPass):
                 shape = out_chunk_shape,
             )
             chunk._dataMoverEngine = shim_by_col[coreEngines[i].col].name
+            chunk._logicalParent = original_output.name
+            chunk._chunkOffset = i * out_chunk_elems
             out_chunks.append(chunk)
         self._replaceInGraphOutputs(graph, original_output, out_chunks)
 

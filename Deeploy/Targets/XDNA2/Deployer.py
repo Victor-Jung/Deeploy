@@ -20,7 +20,6 @@ MLIR generation is split into two phases orchestrated by
 from __future__ import annotations
 
 import copy
-import re
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import aie.ir as ir
@@ -41,13 +40,6 @@ from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRTraceRuntimePass import 
 from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreEngine, XDNA2ShimTileDataMover
 
 _SHIM_TILE_ROW = 0
-
-# Chunk-tensor naming convention left by XDNA2SpatialSplitPass:
-# ``<logical_parent>_c{chunk_index}``. The deployer recovers the original
-# logical I/O grouping so the runtime_sequence keeps the kernel ABI lean
-# (the host harness sees one bo per logical I/O, regardless of how many
-# spatial chunks the IR shows).
-_CHUNK_RE = re.compile(r"^(.+)_c(\d+)$")
 
 
 class XDNA2Deployer(SignPropDeployer):
@@ -84,9 +76,10 @@ class XDNA2Deployer(SignPropDeployer):
     # ------------------------------------------------------------------
 
     def frontEnd(self):
-        """Extend the standard frontEnd with a data-mover extraction step."""
+        """Extend the standard frontEnd with post-parse extraction steps."""
         super().frontEnd()
         self._extractDataMoverToContext()
+        self._extractChunkMetadataToContext()
         self._checkDataMoverInvariants()
 
     def _extractDataMoverToContext(self) -> None:
@@ -95,12 +88,17 @@ class XDNA2Deployer(SignPropDeployer):
             engineName = getattr(tensor, "_dataMoverEngine", None)
             if engineName is None:
                 continue
-            buf = (self.ctxt.localObjects.get(tensor.name)
-                   or self.ctxt.globalObjects.get(tensor.name))
-            assert buf is not None, (
-                f"Tensor '{tensor.name}' carries a _dataMoverEngine hint "
-                f"({engineName!r}) but has no buffer in the network context.")
-            buf._dataMoverEngine = engineName
+            self.ctxt.lookup(tensor.name)._dataMoverEngine = engineName
+
+    def _extractChunkMetadataToContext(self) -> None:
+        """Copy ``gs.Variable._logicalParent`` / ``_chunkOffset`` into buffers."""
+        for tensor in self.graph.tensors().values():
+            parent = getattr(tensor, "_logicalParent", None)
+            if parent is None:
+                continue
+            buf = self.ctxt.lookup(tensor.name)
+            buf._logicalParent = parent
+            buf._chunkOffset = int(getattr(tensor, "_chunkOffset", 0))
 
     def _checkDataMoverInvariants(self) -> None:
         """Every tensor in the graph must declare a data mover after frontEnd.
@@ -108,10 +106,7 @@ class XDNA2Deployer(SignPropDeployer):
         Constants, graph IO, and intermediate tensors all need to be coloured by a DataMoverEngine.
         """
         for tensor in self.graph.tensors().values():
-            buf = (self.ctxt.globalObjects.get(tensor.name)
-                   or self.ctxt.localObjects.get(tensor.name))
-            assert buf is not None, (
-                f"Graph tensor '{tensor.name}' has no buffer in the network context.")
+            buf = self.ctxt.lookup(tensor.name)  # raises KeyError if missing
             assert getattr(buf, "_dataMoverEngine", None) is not None, (
                 f"Graph tensor '{tensor.name}' has no _dataMoverEngine. Every tensor must "
                 f"declare a data mover; either XDNA2DefaultDataMoverPass missed it or a "
@@ -276,22 +271,7 @@ class XDNA2Deployer(SignPropDeployer):
     # ------------------------------------------------------------------
 
     def _buildLogicalGrouping(self) -> Tuple[List[str], Dict[str, int], Dict[str, Tuple[int, int, int]]]:
-        """Recover logical I/O grouping from chunked graph inputs/outputs.
-
-        XDNA2SpatialSplitPass replaces a logical input ``input_0`` with N
-        per-core chunk tensors named ``input_0_c0`` ... ``input_0_c{N-1}``
-        in ``graph.inputs``. This pass walks those names, regroups by the
-        logical parent (everything before the trailing ``_c{i}``), and
-        returns:
-
-        * ``logicalNames``: ordered list of logical-arg names (inputs first,
-          then outputs). One entry per logical I/O — what the
-          runtime_sequence's argument list will look like.
-        * ``logicalLengths``: ``{logical_name -> total_element_count}``,
-          summed over all chunks of that logical arg.
-        * ``chunkToArg``: ``{chunk_name -> (logical_arg_index, offset, length)}``
-          — what each compute node's DMA descriptors need.
-        """
+        """Recover logical I/O grouping from chunked graph inputs/outputs."""
         input_groups = self._logicalGroups([t.name for t in self.graph.inputs])
         output_groups = self._logicalGroups([t.name for t in self.graph.outputs])
 
@@ -302,32 +282,29 @@ class XDNA2Deployer(SignPropDeployer):
         chunkToArg: Dict[str, Tuple[int, int, int]] = {}
         logicalLengths: Dict[str, int] = {}
         for argIdx, parent in enumerate(logicalNames):
-            offset = 0
-            for _, chunkName in all_groups[parent]:
+            total = 0
+            for offset, chunkName in all_groups[parent]:
                 buf = self.ctxt.lookup(chunkName)
                 length = int(np.prod(_safe_shape(buf)))
                 chunkToArg[chunkName] = (argIdx, offset, length)
-                offset += length
-            logicalLengths[parent] = offset
+                total = max(total, offset + length)
+            logicalLengths[parent] = total
 
         return logicalNames, logicalLengths, chunkToArg
 
-    @staticmethod
-    def _logicalGroups(names: List[str]) -> Dict[str, List[Tuple[int, str]]]:
-        """Group ``names`` by their logical parent recovered from ``_c{i}`` suffix.
+    def _logicalGroups(self, names: List[str]) -> Dict[str, List[Tuple[int, str]]]:
+        """Group ``names`` by their buffer-side ``_logicalParent`` field.
 
-        Each group's list is sorted by chunk index. Tensors without a
-        ``_c{i}`` suffix are their own logical parent (a one-entry group).
+        Returns ``{parent_name: [(offset, chunk_name), ...]}`` with each
+        group sorted by offset. Buffers whose ``_logicalParent`` is None
+        are their own one-entry group at offset 0.
         """
         groups: Dict[str, List[Tuple[int, str]]] = {}
         for n in names:
-            m = _CHUNK_RE.match(n)
-            if m:
-                parent = m.group(1)
-                idx = int(m.group(2))
-                groups.setdefault(parent, []).append((idx, n))
-            else:
-                groups[n] = [(0, n)]
+            buf = self.ctxt.lookup(n)
+            parent = getattr(buf, "_logicalParent", None) or n
+            offset = int(getattr(buf, "_chunkOffset", 0))
+            groups.setdefault(parent, []).append((offset, n))
         for parent in groups:
             groups[parent].sort(key = lambda p: p[0])
         return groups
