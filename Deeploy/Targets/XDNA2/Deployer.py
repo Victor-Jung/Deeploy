@@ -179,6 +179,12 @@ class XDNA2Deployer(SignPropDeployer):
 
                 @aiex_d.runtime_sequence(*seqArgTypes)
                 def _seq(*args):
+                    # Phase 1: configure + start every node's DMAs back-to-back.
+                    # The runtime-sequence passes append task SSA values to
+                    # eb.issuedInputTasks / eb.issuedOutputTasks but do NOT
+                    # emit awaits or frees themselves — that's deferred so all
+                    # columns can run concurrently rather than the host blocking
+                    # on each node's output before issuing the next node's input.
                     for node, eb in computeBlocks:
                         eb.runtimeSequenceArgs = list(args)
                         eb.argIndexMap = node["argIndexMap"]
@@ -188,6 +194,16 @@ class XDNA2Deployer(SignPropDeployer):
                                  f"(args={node['argIndexMap']}, lengths={node['transferLengths']})")
                         self.ctxt, eb = node["codeTransformer"].applyRuntimeSequencePasses(
                             self.ctxt, eb, node["nodeName"])
+
+                    # Phase 2: await every output task across all nodes.
+                    for _, eb in computeBlocks:
+                        for task in getattr(eb, "issuedOutputTasks", []):
+                            aiex_d.dma_await_task(task)
+
+                    # Phase 3: free every input task across all nodes.
+                    for _, eb in computeBlocks:
+                        for task in getattr(eb, "issuedInputTasks", []):
+                            aiex_d.dma_free_task(task)
 
             module = ctx.module
             assert module.operation.verify(), "[XDNA2] Generated MLIR module failed verification"

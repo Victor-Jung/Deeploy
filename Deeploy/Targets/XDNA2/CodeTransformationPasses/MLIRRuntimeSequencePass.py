@@ -5,9 +5,14 @@
 
 Given an :class:`MLIRExecutionBlock` whose device-phase passes have already
 populated ``fifoMap``, ``numElements``, and ``runtimeSequenceArgs``, this
-pass emits ``aiex_d.dma_configure_task_for`` / ``dma_start_task`` /
-``dma_await_task`` / ``dma_free_task`` operations directly into the current
-``@aiex_d.runtime_sequence`` insertion point.
+pass emits ``aiex_d.dma_configure_task_for`` and ``dma_start_task``
+operations into the current ``@aiex_d.runtime_sequence`` insertion point,
+and appends the task SSA values to ``mlirBlock.issuedInputTasks`` /
+``mlirBlock.issuedOutputTasks``.
+
+This pass intentionally does NOT emit ``dma_await_task`` / ``dma_free_task``.
+The deployer is responsible for emitting those for all nodes at the end of
+the runtime sequence.
 
 The pass is operator-agnostic — it iterates over the FIFO map and
 runtime-sequence arguments to configure DMA for every input and output
@@ -46,16 +51,20 @@ class MLIRRuntimeSequencePass(MLIRCodeTransformationPass):
         # deployer fills ``mlirBlock.argIndexMap`` with the runtime-sequence
         # arg index per tensor key and ``mlirBlock.argOffsets`` with the
         # per-key element offset into that arg. ``mlirBlock.transferLengths``
-        # gives the number of elements transferred per key (defaults to
-        # numElements for non-split nodes).
+        # gives the number of elements transferred per key
         numElements = mlirBlock.numElements
         seqArgs = mlirBlock.runtimeSequenceArgs
         argIndexMap = getattr(mlirBlock, "argIndexMap", None)
         argOffsets = getattr(mlirBlock, "argOffsets", {})
         transferLengths = getattr(mlirBlock, "transferLengths", {})
 
-        inputTasks = []
-        outputTasks = []
+        # Collected task SSA values are exposed to the deployer so it can
+        # emit one batched await/free phase across all nodes at the end of
+        # the runtime sequence.
+        if not hasattr(mlirBlock, "issuedInputTasks"):
+            mlirBlock.issuedInputTasks = []
+        if not hasattr(mlirBlock, "issuedOutputTasks"):
+            mlirBlock.issuedOutputTasks = []
 
         allKeys = list(inputTensorKeys) + list(outputTensorKeys)
         for idx, key in enumerate(allKeys):
@@ -89,14 +98,9 @@ class MLIRRuntimeSequencePass(MLIRCodeTransformationPass):
             aiex_d.dma_start_task(task)
 
             if isOutput:
-                outputTasks.append(task)
+                mlirBlock.issuedOutputTasks.append(task)
             else:
-                inputTasks.append(task)
+                mlirBlock.issuedInputTasks.append(task)
 
-        # Await output tasks, then free input tasks
-        for task in outputTasks:
-            aiex_d.dma_await_task(task)
-        for task in inputTasks:
-            aiex_d.dma_free_task(task)
-
+        # Awaits and frees are deferred to the deployer's batched phase.
         return ctxt, mlirBlock

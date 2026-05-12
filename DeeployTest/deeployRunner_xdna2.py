@@ -36,6 +36,11 @@ def _add_xdna2_args(parser):
                         default = 1,
                         help = 'Number of AIE compute rows per column to use (1 to 4, default: 1). '
                         'Total active AIE compute tiles = num-col * num-aie-row.')
+    parser.add_argument('--data-mode',
+                        choices = ['auto', 'embed', 'file'],
+                        default = 'auto',
+                        help = 'Where test inputs/outputs live: embed in header, .bin sidecars, '
+                        'or auto-pick by size (default: auto).')
 
 
 def _add_xdna2_gen_args(args, gen_args_list):
@@ -51,6 +56,9 @@ def _add_xdna2_gen_args(args, gen_args_list):
         gen_args_list.append(f'--num-col={num_col}')
     if num_aie_row > 1:
         gen_args_list.append(f'--num-aie-row={num_aie_row}')
+    data_mode = getattr(args, 'data_mode', 'auto')
+    if data_mode != 'auto':
+        gen_args_list.append(f'--data-mode={data_mode}')
 
 
 def _xdna2_post_sim(config, result, args):

@@ -137,8 +137,6 @@ target_link_libraries("${TESTNAME}" PRIVATE
 
 target_compile_features("${TESTNAME}" PRIVATE cxx_std_17)
 
-# The xclbin and npu_insts must be available at runtime in the same directory
-# as the binary.  Add a post-build step to copy them.
 add_custom_command(TARGET "${TESTNAME}" POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${XCLBIN}" "$<TARGET_FILE_DIR:${TESTNAME}>/network.xclbin"
@@ -146,5 +144,17 @@ add_custom_command(TARGET "${TESTNAME}" POST_BUILD
             "${NPU_INSTS}" "$<TARGET_FILE_DIR:${TESTNAME}>/npu_insts.bin"
     COMMENT "[XDNA2] Copying xclbin and npu_insts to binary directory"
 )
+
+# Copy any golden value binary (input{i}.bin / output{i}.bin) produced when the
+# generator is in file mode.
+file(GLOB XDNA2_DATA_BINS "${GENERATED_SOURCE}/input*.bin" "${GENERATED_SOURCE}/output*.bin")
+foreach(_bin IN LISTS XDNA2_DATA_BINS)
+    get_filename_component(_bin_name "${_bin}" NAME)
+    add_custom_command(TARGET "${TESTNAME}" POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${_bin}" "$<TARGET_FILE_DIR:${TESTNAME}>/${_bin_name}"
+        COMMENT "[XDNA2] Copying data sidecar ${_bin_name} to binary directory"
+    )
+endforeach()
 
 add_dependencies("${TESTNAME}" xdna2_xclbin)

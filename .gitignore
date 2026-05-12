@@ -48,6 +48,7 @@ DeeployTest/testUtils/graphDebug.py
 DeeployTest/Tests/**/pactIntegerizationProto
 DeeployTest/Tests/**/quantlib
 DeeployTest/Tests/**/*.py
+!DeeployTest/Tests/**/regenerate_io.py
 DeeployTest/Tests/**/*.json
 DeeployTest/Tests/**/generateTest.py
 DeeployTest/out.txt
