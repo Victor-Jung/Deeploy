@@ -38,7 +38,8 @@ class MLIRTraceRuntimePass(MLIRCodeTransformationPass):
         if not mlirBlock.traceConfigs:
             return ctxt, mlirBlock
 
-        trace_host_config(buffer_size = mlirBlock.traceBufferSize)
+        trace_arg_idx = len(mlirBlock.runtimeSequenceArgs) + 1 # JUNGVI: Always the last argument
+        trace_host_config(buffer_size = mlirBlock.traceBufferSize, arg_idx = trace_arg_idx)
 
         for configName in mlirBlock.traceConfigs:
             trace_start_config(configName)

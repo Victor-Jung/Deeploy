@@ -20,7 +20,7 @@ MLIR generation is split into two phases orchestrated by
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 
 import aie.ir as ir
 import numpy as np
@@ -56,7 +56,8 @@ class XDNA2Deployer(SignPropDeployer):
                  deeployStateDir: str = "DeeployStateDir",
                  inputOffsets: Optional[Dict[str, int]] = None,
                  enableTrace: bool = False,
-                 traceBufferSize: int = 8192):
+                 traceBufferSize: int = 8192,
+                 tracedEngines: Optional[Set[str]] = None):
         super().__init__(
             graph,
             deploymentPlatform,
@@ -70,6 +71,7 @@ class XDNA2Deployer(SignPropDeployer):
         )
         self.enableTrace = enableTrace
         self.traceBufferSize = traceBufferSize
+        self.tracedEngines = tracedEngines
 
     # ------------------------------------------------------------------
     # frontEnd extension: add data-mover extraction and invariant checks
@@ -240,11 +242,13 @@ class XDNA2Deployer(SignPropDeployer):
             assert isinstance(engine, XDNA2AIECoreEngine), (
                 f"Node '{nodeName}' is colored '{engineName}' which is not an XDNA2AIECoreEngine.")
 
-            if self.enableTrace:
+            traceThis = self.enableTrace and (
+                not self.tracedEngines or engineName in self.tracedEngines)
+            if traceThis:
                 codeTransformer = copy.copy(codeTransformer)
                 codeTransformer.devicePasses = list(codeTransformer.devicePasses) + [
                     MLIRCoreTracePass(),
-                    MLIRMemTracePass(),
+                    # MLIRMemTracePass(),
                 ]
                 codeTransformer.runtimeSequencePasses = [MLIRTraceRuntimePass()] + list(
                     codeTransformer.runtimeSequencePasses)

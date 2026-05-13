@@ -149,7 +149,7 @@ def _generate_xdna2_inputs_header(input_arrays: list, dump_dir: str, mode: Liter
 def _generate_xdna2_outputs_header(output_arrays: list,
                                    dump_dir: str,
                                    tolerance_ulps: int = 1,
-                                   mode: Liter = "auto") -> str:
+                                   mode:  Literal["auto", "embed", "file"] = "auto") -> str:
     """Generate testoutputs.h with one entry per logical output."""
     use_file = _should_use_file_mode(output_arrays, mode)
     n_outputs = len(output_arrays)
@@ -316,13 +316,28 @@ def generateNetworkXDNA2(args):
     # Wrap with TilerDeployerWrapper (adds tiling)
     deployer = TilerDeployerWrapper(deployer, workDir = _DEEPLOYSTATEDIR)
 
-    # Enable tracing if requested
+    # --trace alone traces every active engine
+    # --trace-tiles c0r2,c1r2 narrows to a subset 
     enableTrace = getattr(args, 'trace', False)
     if enableTrace:
         traceBufferSize = int(getattr(args, 'trace_buffer_size', None) or 8192)
         deployer.enableTrace = True
         deployer.traceBufferSize = traceBufferSize
-        log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize})")
+        traceTiles = getattr(args, 'trace_tiles', None)
+        if traceTiles:
+            knownEngines = {e.name for e in coreEngines}
+            requested = {f"AIE_{tok.strip()}" for tok in traceTiles.split(',') if tok.strip()}
+            unknown = requested - knownEngines
+            if unknown:
+                raise SystemExit(
+                    f"--trace-tiles names tiles not active in this run: {sorted(unknown)}. "
+                    f"Active engines for num-col={num_col} num-aie-row={num_aie_row}: "
+                    f"{sorted(knownEngines)}.")
+            deployer.tracedEngines = requested
+            log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize}, "
+                     f"tiles={sorted(requested)})")
+        else:
+            log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize}, tiles=all)")
 
     deployer.frontEnd()
     deployer.midEnd()
@@ -376,6 +391,11 @@ if __name__ == '__main__':
                         type = int,
                         default = 8192,
                         help = 'Trace buffer size in bytes (default: 8192)')
+    parser.add_argument('--trace-tiles',
+                        type = str,
+                        default = None,
+                        help = 'Comma-separated tile selector for tracing, e.g. "c0r2,c1r2". '
+                        'Only meaningful with --trace. If omitted, every active core is traced.')
     parser.add_argument('--num-col',
                         type = int,
                         default = 1,
