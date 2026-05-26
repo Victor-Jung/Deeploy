@@ -16,6 +16,13 @@ class ConcatLayer(ONNXLayer):
         super().__init__(maps)
 
 
+class SplitLayer(ONNXLayer):
+    """Inverse of ConcatLayer: 1 input, N outputs along an axis."""
+
+    def __init__(self, maps: List[NodeMapper]):
+        super().__init__(maps)
+
+
 class iRMSNormLayer(ONNXLayer):
 
     def __init__(self, maps: List[NodeMapper]):

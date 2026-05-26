@@ -119,6 +119,42 @@ class XDNA2TanhChecker(SignPropTypeChecker):
         return [True]
 
 
+class XDNA2SplitChecker(SignPropTypeChecker):
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def typeInferOutput(self, ctxt, node, operatorRepresentation):
+        outputType = self.output_types[0]
+        for out in node.outputs:
+            ctxt.annotateType(out.name, outputType)
+        return ctxt
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> Optional[List[int]]:
+        n = len([k for k in operatorRepresentation if k.startswith("data_out_")])
+        return [1] * n
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
+        n = len([k for k in operatorRepresentation if k.startswith("data_out_")])
+        return [True] * n
+
+
+class XDNA2ConcatChecker(SignPropTypeChecker):
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> Optional[List[int]]:
+        return [1]
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
+        return [True]
+
+
 class XDNA2LayerNormChecker(SignPropTypeChecker):
     """Type checker for BF16 LayerNorm on XDNA2.
 

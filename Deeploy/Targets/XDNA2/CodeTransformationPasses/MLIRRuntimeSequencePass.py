@@ -68,6 +68,13 @@ class MLIRRuntimeSequencePass(MLIRCodeTransformationPass):
 
         allKeys = list(inputTensorKeys) + list(outputTensorKeys)
         for idx, key in enumerate(allKeys):
+            # If the deployer marked this port as having no arg-index, the
+            # tensor is a chunk intermediate produced by an upstream Split
+            # or consumed by a downstream Concat, its data movement is
+            # owned by the link op, not the shim. Skip emission.
+            if argIndexMap is not None and argIndexMap.get(key) is None:
+                continue
+
             fifoName = mlirBlock.fifoMap[key]
             isOutput = key in outputTensorKeys
 

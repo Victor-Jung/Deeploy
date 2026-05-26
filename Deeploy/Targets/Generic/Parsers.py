@@ -41,6 +41,38 @@ class ConcatParser(NodeParser):
         return ctxt, True
 
 
+class SplitParser(NodeParser):
+    """One input fanned into N outputs along ``axis``.
+
+    For now we accept only the equal-split case (no ``split`` attribute /
+    input). Each output's shape on the split axis must equal
+    ``input_shape[axis] / N``.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def parseNode(self, node: gs.Node) -> bool:
+        if not all(['axis' in node.attrs, len(node.inputs) == 1, len(node.outputs) >= 2]):
+            return False
+        self.operatorRepresentation['axis'] = node.attrs['axis']
+        return True
+
+    def parseNodeCtxt(self,
+                      ctxt: NetworkContext,
+                      node: gs.Node,
+                      channels_first: bool = True) -> Tuple[NetworkContext, bool]:
+
+        data_in = ctxt.lookup(node.inputs[0].name)
+        self.operatorRepresentation['data_in'] = data_in.name
+
+        for idx, out in enumerate(node.outputs):
+            data_out = ctxt.lookup(out.name)
+            self.operatorRepresentation[f'data_out_{idx}'] = data_out.name
+
+        return ctxt, True
+
+
 class iRMSNormParser(NodeParser):
 
     def __init__(self):

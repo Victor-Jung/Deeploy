@@ -93,6 +93,18 @@ class MLIRExecutionBlock:
         self.traceConfigs: List[str] = []
         self.traceBufferSize: int = 0
 
+        # Shared FIFO registry across all MLIRExecutionBlocks of one
+        # @aie_d.device(...) block, used by mem-tile-engine spatial
+        # split. The deployer sets this to a single dict instance shared
+        # by every block in the device. Distribute/Join passes (running
+        # on Split/Concat memtile-engine nodes) populate it with small
+        # mem-tile↔core ObjectFifo names keyed by
+        # ``(logical_parent_tensor_name, col, row)``. The compute-node
+        # MLIRObjectFifoPass consults it and reuses the registered FIFO
+        # name instead of creating a fresh shim↔core FIFO when a port
+        # has a hit.
+        self.fifoRegistry: Dict[Tuple[str, int, int], str] = {}
+
 
 # ======================================================================
 # MLIRCodeTransformationPass / MLIRCodeTransformation

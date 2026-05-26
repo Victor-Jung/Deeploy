@@ -37,7 +37,8 @@ from Deeploy.MLIRDataTypes import MLIRCodeTransformation, MLIRExecutionBlock, ML
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRCoreTracePass import MLIRCoreTracePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRMemTracePass import MLIRMemTracePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRTraceRuntimePass import MLIRTraceRuntimePass
-from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreEngine, XDNA2ShimTileDataMover
+from Deeploy.Targets.XDNA2.Platform import NPU2_MEM_TILE_ROW, XDNA2AIECoreEngine, XDNA2MemTileDataMover, \
+    XDNA2MemTileExecutionEngine, XDNA2ShimTileDataMover
 
 _SHIM_TILE_ROW = 0
 
@@ -82,6 +83,7 @@ class XDNA2Deployer(SignPropDeployer):
         super().frontEnd()
         self._extractDataMoverToContext()
         self._extractChunkMetadataToContext()
+        self._extractTargetCoreEngineToContext()
         self._checkDataMoverInvariants()
 
     def _extractDataMoverToContext(self) -> None:
@@ -101,6 +103,19 @@ class XDNA2Deployer(SignPropDeployer):
             buf = self.ctxt.lookup(tensor.name)
             buf._logicalParent = parent
             buf._chunkOffset = int(getattr(tensor, "_chunkOffset", 0))
+
+    def _extractTargetCoreEngineToContext(self) -> None:
+        """Copy ``gs.Variable._targetCoreEngine`` into buffers.
+
+        Set by :class:`XDNA2HybridElementwiseSpatialSplitPass` on chunk
+        intermediates so the Distribute / Join codegen passes know which
+        AIE compute tile each small mem-tile↔core FIFO connects to.
+        """
+        for tensor in self.graph.tensors().values():
+            tgt = getattr(tensor, "_targetCoreEngine", None)
+            if tgt is None:
+                continue
+            self.ctxt.lookup(tensor.name)._targetCoreEngine = tgt
 
     def _checkDataMoverInvariants(self) -> None:
         """Every tensor in the graph must declare a data mover after frontEnd.
@@ -135,38 +150,78 @@ class XDNA2Deployer(SignPropDeployer):
         for node in nodes:
             self._resolveDmaPlacement(node, chunkToArg)
 
+        # Per-chunk per-tile size, derived from the consuming/producing
+        # core node's tiling solution. The Distribute / Join passes need
+        # this to size their small memtile↔core ObjectFifo elements
+        # (== one kernel-acquire object), independently of how big the
+        # full chunk is. Without this lookup, the small FIFO would carry
+        # the entire chunk per object and the consuming core's
+        # `objectfifo.acquire` (sized to one tile) would fail MLIR
+        # verification with "ObjectFifo element and ObjectFifoSubview
+        # element must match".
+        chunkTileElems = self._buildChunkTileElems(nodes)
+
+        # Memtile-engine nodes (Split / Concat) MUST run their device passes
+        # before core-engine nodes — they populate the deployer-shared
+        # ``fifoRegistry`` with memtile↔core ObjectFifo names that the
+        # core nodes' MLIRObjectFifoPass consults to skip emitting its
+        # own shim↔core FIFOs.
+        nodes_ordered = sorted(nodes, key = lambda n: 0 if n["engineKind"] == "memtile" else 1)
+
         with mlir_mod_ctx() as ctx:
 
             @aie_d.device(aie_d.AIEDevice.npu2)
             def _device():
-                tileMap = self._buildTileMap()
-                shimTiles = self._buildShimTileMap()
+                coreTileMap = self._buildTileMap()       # AIE_c{c}r{r} → tile
+                memTileMap = self._buildMemTileMap()     # MEM_c{c}    → tile
+                shimTiles = self._buildShimTileMap()     # col         → tile
+
+                # Single registry shared across every MLIRExecutionBlock in
+                # this device. Distribute / Join passes write into it;
+                # MLIRObjectFifoPass on compute nodes reads from it.
+                fifoRegistry: Dict[Tuple[str, int, int], str] = {}
 
                 # Track external_func declarations so multiple compute cores
                 # don't redefine the same kernel symbol in this device block.
                 declaredKernels = set()
 
                 computeBlocks = []
-                for node in nodes:
+                for node in nodes_ordered:
                     engineName = node["engineName"]
-                    assert engineName in tileMap, (
-                        f"Node '{node['nodeName']}' is colored '{engineName}' but no XDNA2AIECoreEngine "
-                        f"with that name is registered on the platform.")
-                    computeTile = tileMap[engineName]
-                    # Pick the shim of the column the compute lives in. The
-                    # data mover annotation has already established that this
-                    # is the right shim for each port; we still need ONE
-                    # representative shim tile for the FIFO declaration.
+                    engineKind = node["engineKind"]
+                    if engineKind == "core":
+                        assert engineName in coreTileMap, (
+                            f"Node '{node['nodeName']}' is colored '{engineName}' but no "
+                            f"XDNA2AIECoreEngine with that name is registered.")
+                        executionTile = coreTileMap[engineName]
+                    else:  # memtile
+                        assert engineName in memTileMap, (
+                            f"Node '{node['nodeName']}' is colored '{engineName}' but no "
+                            f"XDNA2MemTileExecutionEngine with that name is registered.")
+                        executionTile = memTileMap[engineName]
+                    # Representative shim for this column — used by both the
+                    # compute path (shim↔core FIFOs in the legacy direct mode)
+                    # and the memtile path (the big shim↔memtile FIFO).
                     shimTile = shimTiles[node["shimColPerKey"]["__representative__"]]
-                    eb = MLIRExecutionBlock(computeTile = computeTile, shimTile = shimTile)
+                    eb = MLIRExecutionBlock(computeTile = executionTile, shimTile = shimTile)
                     eb.operatorRepresentation = node["opRepr"]
                     eb.patternMemoryConstraint = node["tilingConstraint"]
                     eb.template = node["template"]
                     eb.declaredKernels = declaredKernels
+                    # Plumb the per-block context the memtile-aware passes
+                    # need: tile coords, the shared FIFO registry, and the
+                    # per-engine tile lookup so Distribute/Join can resolve
+                    # destination cores from chunk ``_targetCoreEngine``.
+                    eb.tileCol = node["engine"].col
+                    eb.tileRow = node["engine"].row
+                    eb.fifoRegistry = fifoRegistry
+                    eb.coreTileMap = coreTileMap
+                    eb.chunkTileElems = chunkTileElems
                     if self.enableTrace:
                         eb.traceBufferSize = self.traceBufferSize
 
-                    log.info(f"[XDNA2] Device phase for '{node['nodeName']}' on {engineName}")
+                    log.info(f"[XDNA2] Device phase ({engineKind}) for '{node['nodeName']}' "
+                             f"on {engineName}")
 
                     self.ctxt, eb = node["codeTransformer"].applyDevicePasses(self.ctxt, eb, node["nodeName"])
                     computeBlocks.append((node, eb))
@@ -239,11 +294,20 @@ class XDNA2Deployer(SignPropDeployer):
 
             engineName = layer.node.attrs.get("engine")
             engine = engineByName.get(engineName) if engineName else None
-            assert isinstance(engine, XDNA2AIECoreEngine), (
-                f"Node '{nodeName}' is colored '{engineName}' which is not an XDNA2AIECoreEngine.")
+            if isinstance(engine, XDNA2AIECoreEngine):
+                engineKind = "core"
+            elif isinstance(engine, XDNA2MemTileExecutionEngine):
+                engineKind = "memtile"
+            else:
+                raise AssertionError(
+                    f"Node '{nodeName}' is colored '{engineName}' which is neither an "
+                    f"XDNA2AIECoreEngine nor an XDNA2MemTileExecutionEngine.")
 
-            traceThis = self.enableTrace and (
-                not self.tracedEngines or engineName in self.tracedEngines)
+            # Trace is only meaningful for compute cores. Skip the trace
+            # pass injection for memtile-engine nodes — they have no
+            # @aie_d.core block to trace.
+            traceThis = (engineKind == "core" and self.enableTrace
+                         and (not self.tracedEngines or engineName in self.tracedEngines))
             if traceThis:
                 codeTransformer = copy.copy(codeTransformer)
                 codeTransformer.devicePasses = list(codeTransformer.devicePasses) + [
@@ -263,6 +327,7 @@ class XDNA2Deployer(SignPropDeployer):
                 "tilingConstraint": tilingConstraint,
                 "engineName": engineName,
                 "engine": engine,
+                "engineKind": engineKind,
             })
         return nodes
 
@@ -279,6 +344,47 @@ class XDNA2Deployer(SignPropDeployer):
                           if isinstance(dm, XDNA2ShimTileDataMover)]
         assert shimDataMovers, "XDNA2 platform exposes no XDNA2ShimTileDataMover."
         return {dm.col: aie_d.tile(dm.col, _SHIM_TILE_ROW) for dm in shimDataMovers}
+
+    def _buildChunkTileElems(self, nodes: List[Dict[str, Any]]) -> Dict[str, int]:
+        """For every chunk tensor referenced by a core node, look up the
+        per-tile element count from that node's tiling solution.
+
+        The Distribute / Join passes use this to size the small
+        memtile↔core ObjectFifo objects (one tile per acquire). For
+        elementwise sub-ops the tile shape is the same for every port
+        because input and output L1 footprints match, so we record the
+        first hit per tensor name and assume that's authoritative.
+        """
+        from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRObjectFifoPass import \
+            _deriveTileShape   # noqa: E402
+
+        out: Dict[str, int] = {}
+        for node in nodes:
+            if node["engineKind"] != "core":
+                continue
+            constraint = node["tilingConstraint"]
+            if constraint is None:
+                continue
+            try:
+                tileShape = _deriveTileShape(numElements = 0, patternMemoryConstraint = constraint)
+            except Exception:
+                continue
+            tileElems = int(np.prod(tileShape))
+            for key in list(node["template"].INPUT_KEYS) + list(node["template"].OUTPUT_KEYS):
+                tensorName = node["opRepr"].get(key)
+                if tensorName is None:
+                    continue
+                out.setdefault(tensorName, tileElems)
+        return out
+
+    def _buildMemTileMap(self) -> Dict[str, Any]:
+        """One ``aie_d.tile`` per ``XDNA2MemTileExecutionEngine`` on the platform.
+
+        Empty when the platform exposes none — that's the legacy
+        shim-direct configuration and not an error.
+        """
+        engines = [e for e in self.Platform.engines if isinstance(e, XDNA2MemTileExecutionEngine)]
+        return {engine.name: aie_d.tile(engine.col, NPU2_MEM_TILE_ROW) for engine in engines}
 
     @staticmethod
     def _mlirElemType(buf) -> Any:
@@ -338,26 +444,35 @@ class XDNA2Deployer(SignPropDeployer):
         """Populate per-key DMA params from buffers' ``_dataMoverEngine`` and
         the chunk → (logical arg, offset, length) map.
 
-        Each template port (INPUT_KEYS / OUTPUT_KEYS) maps via opRepr to a
-        tensor that is, after spatial split, a chunk graph input/output. We
-        look its row up in ``chunkToArg`` to learn which runtime_sequence
-        arg it lives in and at what offset.
+        Two cases per port:
+
+        * Tensor IS in ``chunkToArg`` (it's a graph-IO chunk that maps
+          to a runtime_sequence arg) — populate argIndexMap / argOffsets /
+          transferLengths / shimColPerKey for that port. The runtime-
+          sequence pass emits a shim DMA descriptor against the arg.
+
+        * Tensor is NOT in ``chunkToArg`` (it's a chunk intermediate
+          owned by a Split or Concat node) — set ``argIndexMap[key] = None``
+          so the runtime-sequence pass skips this port. Data movement
+          for it is fully described by the
+          ``aie.objectfifo.link`` op the memtile-engine node emits.
         """
         gsNode: gs.Node = node["node"]
         template = node["template"]
         opRepr = node["opRepr"]
 
-        argIndexMap: Dict[str, int] = {}
+        argIndexMap: Dict[str, Optional[int]] = {}
         argOffsets: Dict[str, int] = {}
         transferLengths: Dict[str, int] = {}
         shimColPerKey: Dict[str, int] = {}
 
         for key in list(template.INPUT_KEYS) + list(template.OUTPUT_KEYS):
             tensorName = opRepr[key]
-            assert tensorName in chunkToArg, (
-                f"Node '{gsNode.name}' references tensor '{tensorName}' (port '{key}') which is "
-                f"not in the logical-arg map — the spatial split pass should have promoted all "
-                f"compute IO to graph IO.")
+            if tensorName not in chunkToArg:
+                # Chunk intermediate (between Split/Concat and a sub-op).
+                # No shim DMA for this port; the link op moves the bytes.
+                argIndexMap[key] = None
+                continue
             argIdx, offset, length = chunkToArg[tensorName]
             argIndexMap[key] = argIdx
             argOffsets[key] = offset
@@ -367,15 +482,15 @@ class XDNA2Deployer(SignPropDeployer):
             engineName = getattr(buf, "_dataMoverEngine", None)
             assert engineName is not None, (
                 f"Tensor '{tensorName}' (port '{key}' of '{gsNode.name}') has no _dataMoverEngine "
-                f"annotation. XDNA2ElementwiseSpatialSplitPass + XDNA2AnnotateDataMoverPass should have set it.")
+                f"annotation. The default-IO pass + spatial-split pass should have set it.")
             mover = self.Platform.getDataMoverEngine(engineName)
-            assert isinstance(mover, XDNA2ShimTileDataMover), (
-                f"Tensor '{tensorName}' is annotated with data mover '{engineName}', which is not a "
-                f"XDNA2ShimTileDataMover.")
+            assert isinstance(mover, (XDNA2ShimTileDataMover, XDNA2MemTileDataMover)), (
+                f"Tensor '{tensorName}' is annotated with data mover '{engineName}', which is "
+                f"neither a XDNA2ShimTileDataMover nor a XDNA2MemTileDataMover.")
             shimColPerKey[key] = mover.col
 
-        # Pick a representative shim column for the compute node's FIFO
-        # declaration — same column as the compute core.
+        # Pick a representative shim column for the node's FIFO declaration
+        # — same column as the compute core / mem tile that owns it.
         shimColPerKey["__representative__"] = node["engine"].col
 
         node["argIndexMap"] = argIndexMap

@@ -30,13 +30,13 @@ from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLev
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryDeployerWrapper
 from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, NPU2_AIE_ROW_OFFSET, NPU2_NUM_AIE_ROWS, \
     NPU2_NUM_COLS, XDNA2AIECoreDataMover, XDNA2AIECoreEngine, XDNA2MemTileDataMover, \
-    XDNA2ShimTileDataMover
+    XDNA2MemTileExecutionEngine, XDNA2ShimTileDataMover
 from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultConstantDataMoveAnnotationPass import \
     XDNA2DefaultConstantDataMoveAnnotationPass
 from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultInputDataMoveAnnotationPass import \
     XDNA2DefaultIODataMoveAnnotationPass
-from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.ElementwiseSpatialSplitPass import \
-    XDNA2ElementwiseSpatialSplitPass
+from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.HybridElementwiseSpatialSplitPass import \
+    XDNA2HybridElementwiseSpatialSplitPass
 from Deeploy.TilingExtension.TilerExtension import TilerDeployerWrapper
 
 
@@ -233,11 +233,15 @@ def generateNetworkXDNA2(args):
         # JUNGVI: TODO: Align minimalFloatType to properly handle bf16 and don't force types.
         inputTypes[f"input_{index}"] = PointerClass(bfloat16_t)
         inputOffsets[f"input_{index}"] = 0
-        # Register chunk variants for parse()
-        if total_chunks >= 2:
-            for chunk in range(total_chunks):
-                inputTypes[f"input_{index}_c{chunk}"] = PointerClass(bfloat16_t)
-                inputOffsets[f"input_{index}_c{chunk}"] = 0
+        # Chunk variants: the hybrid spatial-split pass renames graph
+        # inputs to ``input_{index}_c{col}_g{group}`` where group is 0
+        # or 1 depending on per-column geometry. Pre-register every name
+        # the pass might emit; unused entries are harmless.
+        for col in range(num_col):
+            for group in range(2):
+                key = f"input_{index}_c{col}_g{group}"
+                inputTypes[key] = PointerClass(bfloat16_t)
+                inputOffsets[key] = 0
 
     _DEEPLOYSTATEDIR = os.path.join(args.dumpdir, "deeployStates")
 
@@ -266,13 +270,14 @@ def generateNetworkXDNA2(args):
     memory_hierarchy.setDefaultMemoryLevel("L3")
     l3_level = memory_hierarchy.memoryLevels["L3"]
 
-    # ---- Compute engines ----
+    # ---- Execution Engines ----
     used_aie_rows = list(range(NPU2_AIE_ROW_OFFSET, NPU2_AIE_ROW_OFFSET + num_aie_row))
     coreEngines = [
         XDNA2AIECoreEngine(col = c, row = r) for c in range(num_col) for r in used_aie_rows
     ]
+    memTileEngines = [XDNA2MemTileExecutionEngine(col = c) for c in range(num_col)]
 
-    # ---- Data mover engines ----
+    # ---- Data Mover Engines ----
     dataMoverEngines: list = []
     for c in range(num_col):
         dataMoverEngines.append(XDNA2ShimTileDataMover(col = c))
@@ -284,14 +289,18 @@ def generateNetworkXDNA2(args):
     mem_platform = MemoryXDNA2Platform(
         memoryHierarchy = memory_hierarchy,
         defaultTargetMemoryLevel = l3_level,
-        engines = coreEngines,
+        engines = coreEngines + memTileEngines,
         dataMoverEngines = dataMoverEngines,
     )
 
+    # Single arity-aware pass: decides per-column geometry from the op
+    # arity and per-column row count R, using the shim's 2-channel-pair
+    # budget. Subsumes both the prior shim-direct and mem-tile-only
+    # passes.
     loweringOptimizer = TopologyOptimizer([
         XDNA2DefaultIODataMoveAnnotationPass(),
         XDNA2DefaultConstantDataMoveAnnotationPass(),
-        XDNA2ElementwiseSpatialSplitPass(axis = 0),
+        XDNA2HybridElementwiseSpatialSplitPass(axis = 0),
     ])
 
     deployer = mapDeployer(mem_platform,
@@ -302,18 +311,8 @@ def generateNetworkXDNA2(args):
                            deeployStateDir = _DEEPLOYSTATEDIR,
                            inputOffsets = inputOffsets)
 
-    # Always wrap so the engine-aware setter fires and binding goes through
-    # the engine-coloring _selectEngine path. With a single AIE engine
-    # everything trivially colors to that one engine, matching the
-    # pre-refactor single-core behavior.
     deployer = EngineColoringDeployerWrapper(deployer)
-
-    # Wrap with MemoryDeployerWrapper (default memory-level annotation).
-    # The data-mover hint pivot lives in XDNA2Deployer.frontEnd() — see
-    # _extractDataMoverToContext.
     deployer = MemoryDeployerWrapper(deployer)
-
-    # Wrap with TilerDeployerWrapper (adds tiling)
     deployer = TilerDeployerWrapper(deployer, workDir = _DEEPLOYSTATEDIR)
 
     # --trace alone traces every active engine

@@ -7,12 +7,16 @@ from Deeploy.CommonExtensions.DataTypes import bfloat16_t
 from Deeploy.DeeployTypes import NodeBinding
 from Deeploy.MLIRDataTypes import MLIRCodeTransformation
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRComputeCorePass import MLIRComputeCorePass
+from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRDistributeLinkPass import MLIRDistributeLinkPass
+from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRJoinLinkPass import MLIRJoinLinkPass
+from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRMemTileRuntimeSequencePass import \
+    MLIRMemTileRuntimeSequencePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRObjectFifoPass import MLIRObjectFifoPass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRRuntimeSequencePass import MLIRRuntimeSequencePass
-from Deeploy.Targets.XDNA2.Templates import AddTemplate, GeluTemplate, LayerNormTemplate, MulTemplate, ReluTemplate, \
-    SiLUTemplate, TanhTemplate
-from Deeploy.Targets.XDNA2.TypeCheckers import XDNA2AddChecker, XDNA2GeluChecker, XDNA2LayerNormChecker, \
-    XDNA2MulChecker, XDNA2ReluChecker, XDNA2SiLUChecker, XDNA2TanhChecker
+from Deeploy.Targets.XDNA2.Templates import AddTemplate, ConcatTemplate, GeluTemplate, LayerNormTemplate, MulTemplate, \
+    ReluTemplate, SiLUTemplate, SplitTemplate, TanhTemplate
+from Deeploy.Targets.XDNA2.TypeCheckers import XDNA2AddChecker, XDNA2ConcatChecker, XDNA2GeluChecker, \
+    XDNA2LayerNormChecker, XDNA2MulChecker, XDNA2ReluChecker, XDNA2SiLUChecker, XDNA2SplitChecker, XDNA2TanhChecker
 
 XDNA2Transformer = MLIRCodeTransformation(
     devicePasses = [
@@ -22,6 +26,16 @@ XDNA2Transformer = MLIRCodeTransformation(
     runtimeSequencePasses = [
         MLIRRuntimeSequencePass(),
     ],
+)
+
+XDNA2SplitMemTileTransformer = MLIRCodeTransformation(
+    devicePasses = [MLIRDistributeLinkPass()],
+    runtimeSequencePasses = [MLIRMemTileRuntimeSequencePass()],
+)
+
+XDNA2ConcatMemTileTransformer = MLIRCodeTransformation(
+    devicePasses = [MLIRJoinLinkPass()],
+    runtimeSequencePasses = [MLIRMemTileRuntimeSequencePass()],
 )
 
 XDNA2AddBindings = [
@@ -69,6 +83,22 @@ XDNA2TanhBindings = [
         XDNA2TanhChecker([PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
         TanhTemplate.referenceTemplate,
         XDNA2Transformer,
+    )
+]
+
+XDNA2SplitMemTileBindings = [
+    NodeBinding(
+        XDNA2SplitChecker([PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
+        SplitTemplate.referenceTemplate,
+        XDNA2SplitMemTileTransformer,
+    )
+]
+
+XDNA2ConcatMemTileBindings = [
+    NodeBinding(
+        XDNA2ConcatChecker([PointerClass(bfloat16_t)], [PointerClass(bfloat16_t)]),
+        ConcatTemplate.referenceTemplate,
+        XDNA2ConcatMemTileTransformer,
     )
 ]
 

@@ -21,7 +21,7 @@ tile-size derivation function.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import aie.ir as ir
 import numpy as np
@@ -70,6 +70,32 @@ class MLIRObjectFifoPass(MLIRCodeTransformationPass):
     def __init__(self, fifoDepth: int = 2) -> None:
         self.fifoDepth = fifoDepth
 
+    @staticmethod
+    def _registryHit(mlirBlock: MLIRExecutionBlock, ctxt: NetworkContext,
+                     tensorName: str) -> Optional[Tuple[str, str]]:
+        """Look up a memtile-core FIFO created upstream by a Split/Concat node.
+
+        Returns ``(fifoName, registryKey)`` or ``None`` when no hit. The
+        registry is keyed by ``(logical_parent, col, row)`` — that's the
+        chunk's provenance plus the consumer / producer core's tile.
+        """
+        registry = getattr(mlirBlock, "fifoRegistry", None)
+        if not registry:
+            return None
+        try:
+            buf = ctxt.lookup(tensorName)
+        except KeyError:
+            return None
+        parent = getattr(buf, "_logicalParent", None)
+        col = getattr(mlirBlock, "tileCol", None)
+        row = getattr(mlirBlock, "tileRow", None)
+        if parent is None or col is None or row is None:
+            return None
+        regKey = (parent, col, row)
+        if regKey in registry:
+            return registry[regKey], regKey
+        return None
+
     def apply(self, ctxt: NetworkContext, mlirBlock: MLIRExecutionBlock,
               name: str) -> Tuple[NetworkContext, MLIRExecutionBlock]:
         template = mlirBlock.template
@@ -109,15 +135,29 @@ class MLIRObjectFifoPass(MLIRCodeTransformationPass):
         # is the deployer-supplied node name.
         prefix = name.replace(".", "_").replace("/", "_")
 
-        # Create input ObjectFifos (shim → compute)
+        # Create input ObjectFifos (shim → compute), unless a Split node
+        # upstream already created a memtile→core FIFO for this chunk.
         for idx, key in enumerate(inputTensorKeys):
+            tensorName = opRepr.get(key)
+            hit = self._registryHit(mlirBlock, ctxt, tensorName) if tensorName else None
+            if hit is not None:
+                mlirBlock.fifoMap[key] = hit[0]
+                mlirBlock.fifoTypes[key] = tileTy
+                continue
             fifoName = f"{prefix}_in{idx + 1}"
             aie_d.object_fifo(fifoName, shimTile, [computeTile], self.fifoDepth, tileTy)
             mlirBlock.fifoMap[key] = fifoName
             mlirBlock.fifoTypes[key] = tileTy
 
-        # Create output ObjectFifos (compute → shim)
+        # Create output ObjectFifos (compute → shim), unless a Concat
+        # node downstream already created a core→memtile FIFO.
         for idx, key in enumerate(outputTensorKeys):
+            tensorName = opRepr.get(key)
+            hit = self._registryHit(mlirBlock, ctxt, tensorName) if tensorName else None
+            if hit is not None:
+                mlirBlock.fifoMap[key] = hit[0]
+                mlirBlock.fifoTypes[key] = tileTy
+                continue
             fifoName = f"{prefix}_out{idx}"
             aie_d.object_fifo(fifoName, computeTile, [shimTile], self.fifoDepth, tileTy)
             mlirBlock.fifoMap[key] = fifoName

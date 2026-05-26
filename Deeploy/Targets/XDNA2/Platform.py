@@ -8,13 +8,15 @@ from Deeploy.DeeployTypes import ConstantBuffer, DataMoverEngine, DeploymentEngi
     StructBuffer, TopologyOptimizer, TransientBuffer, VariableBuffer
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLevel
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryPlatform
-from Deeploy.Targets.Generic.Layers import AddLayer, GELULayer, LayerNormLayer, MulLayer, ReluLayer, SiLULayer, \
-    TanhLayer
-from Deeploy.Targets.Generic.Parsers import AddParser, GELUParser, LayerNormParser, ReluParser, SiLUParser, TanhParser
+from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, GELULayer, LayerNormLayer, MulLayer, ReluLayer, \
+    SiLULayer, SplitLayer, TanhLayer
+from Deeploy.Targets.Generic.Parsers import AddParser, ConcatParser, GELUParser, LayerNormParser, ReluParser, \
+    SiLUParser, SplitParser, TanhParser
 from Deeploy.Targets.Generic.Templates import AllocateTemplate, FreeTemplate
-from Deeploy.Targets.XDNA2.Tiler import XDNA2AddTilingReadyBindings, XDNA2GeluTilingReadyBindings, \
-    XDNA2LayerNormTilingReadyBindings, XDNA2MulTilingReadyBindings, XDNA2ReluTilingReadyBindings, \
-    XDNA2SiLUTilingReadyBindings, XDNA2TanhTilingReadyBindings
+from Deeploy.Targets.XDNA2.Tiler import XDNA2AddTilingReadyBindings, XDNA2ConcatMemTileTilingReadyBindings, \
+    XDNA2GeluTilingReadyBindings, XDNA2LayerNormTilingReadyBindings, XDNA2MulTilingReadyBindings, \
+    XDNA2ReluTilingReadyBindings, XDNA2SiLUTilingReadyBindings, XDNA2SplitMemTileTilingReadyBindings, \
+    XDNA2TanhTilingReadyBindings
 
 XDNA2AddMapper = NodeMapper(AddParser(), XDNA2AddTilingReadyBindings)
 XDNA2MulMapper = NodeMapper(AddParser(), XDNA2MulTilingReadyBindings)
@@ -23,6 +25,8 @@ XDNA2ReluMapper = NodeMapper(ReluParser(), XDNA2ReluTilingReadyBindings)
 XDNA2SiLUMapper = NodeMapper(SiLUParser(), XDNA2SiLUTilingReadyBindings)
 XDNA2TanhMapper = NodeMapper(TanhParser(), XDNA2TanhTilingReadyBindings)
 XDNA2LayerNormMapper = NodeMapper(LayerNormParser(), XDNA2LayerNormTilingReadyBindings)
+XDNA2SplitMemTileMapper = NodeMapper(SplitParser(), XDNA2SplitMemTileTilingReadyBindings)
+XDNA2ConcatMemTileMapper = NodeMapper(ConcatParser(), XDNA2ConcatMemTileTilingReadyBindings)
 
 XDNA2Mapping = {
     'Add': AddLayer([XDNA2AddMapper]),
@@ -32,6 +36,11 @@ XDNA2Mapping = {
     'Silu': SiLULayer([XDNA2SiLUMapper]),
     'Tanh': TanhLayer([XDNA2TanhMapper]),
     'LayerNormalization': LayerNormLayer([XDNA2LayerNormMapper]),
+}
+
+XDNA2MemTileMapping = {
+    'Split': SplitLayer([XDNA2SplitMemTileMapper]),
+    'Concat': ConcatLayer([XDNA2ConcatMemTileMapper]),
 }
 
 # Buffer classes reuse Generic templates since XDNA2Deployer manages its own
@@ -46,7 +55,7 @@ class XDNA2VariableBuffer(VariableBuffer):
     # None means "no transfer" (e.g. transient buffers that never cross a memory level).
     _dataMoverEngine: Optional[str] = None
 
-    # Chunk-of-logical-parent metadata, set by XDNA2ElementwiseSpatialSplitPass on the
+    # Chunk-of-logical-parent metadata, set by XDNA2HybridElementwiseSpatialSplitPass on the
     # per-core chunk buffers. The logical parent is the L3-resident tensor
     # that the host actually allocates an XRT bo for; each chunk's DMA
     # descriptor accesses that bo at ``_chunkOffset`` element offset for
@@ -118,6 +127,29 @@ class XDNA2AIECoreEngine(DeploymentEngine):
         # Default to this tile's own L1 — every AIE compute tile has its
         # own local memory in the full hardware hierarchy.
         self.preferredMemoryLevel = preferredMemoryLevel or f"L1_c{col}r{row}"
+
+
+class XDNA2MemTileExecutionEngine(DeploymentEngine):
+    """Mem tile as an execution engine for layout transformations."""
+
+    def __init__(self,
+                 col: int,
+                 name: Optional[str] = None,
+                 Mapping = None,
+                 initCode: str = "",
+                 includeList = None,
+                 preferredMemoryLevel: Optional[str] = None) -> None:
+        if name is None:
+            name = f"MEM_c{col}"
+        if Mapping is None:
+            Mapping = XDNA2MemTileMapping
+        if includeList is None:
+            includeList = []
+        super().__init__(name, Mapping, initCode, includeList)
+        self.col = col
+        self.row = NPU2_MEM_TILE_ROW
+        # The big buffer this engine owns lives in this column's L2.
+        self.preferredMemoryLevel = preferredMemoryLevel or f"L2_c{col}"
 
 
 class XDNA2ShimTileDataMover(DataMoverEngine):
