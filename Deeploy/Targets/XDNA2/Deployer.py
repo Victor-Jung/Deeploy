@@ -33,7 +33,7 @@ from Deeploy.AbstractDataTypes import Pointer
 from Deeploy.CommonExtensions.NetworkDeployers.SignPropDeployer import SignPropDeployer
 from Deeploy.DeeployTypes import DeploymentPlatform, TopologyOptimizer
 from Deeploy.Logging import DEFAULT_LOGGER as log
-from Deeploy.MLIRDataTypes import MLIRCodeTransformation, MLIRExecutionBlock, MLIRNodeTemplate
+from Deeploy.MLIRDataTypes import MLIRCodeTransformation, MLIRExecutionBlock, GraphAwareNetworkContext, MLIRNodeTemplate
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRCoreTracePass import MLIRCoreTracePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRMemTracePass import MLIRMemTracePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRTraceRuntimePass import MLIRTraceRuntimePass
@@ -83,7 +83,6 @@ class XDNA2Deployer(SignPropDeployer):
         super().frontEnd()
         self._extractDataMoverToContext()
         self._extractChunkMetadataToContext()
-        self._extractTargetCoreEngineToContext()
         self._checkDataMoverInvariants()
 
     def _extractDataMoverToContext(self) -> None:
@@ -104,19 +103,6 @@ class XDNA2Deployer(SignPropDeployer):
             buf._logicalParent = parent
             buf._chunkOffset = int(getattr(tensor, "_chunkOffset", 0))
 
-    def _extractTargetCoreEngineToContext(self) -> None:
-        """Copy ``gs.Variable._targetCoreEngine`` into buffers.
-
-        Set by :class:`XDNA2HybridElementwiseSpatialSplitPass` on chunk
-        intermediates so the Distribute / Join codegen passes know which
-        AIE compute tile each small mem-tile↔core FIFO connects to.
-        """
-        for tensor in self.graph.tensors().values():
-            tgt = getattr(tensor, "_targetCoreEngine", None)
-            if tgt is None:
-                continue
-            self.ctxt.lookup(tensor.name)._targetCoreEngine = tgt
-
     def _checkDataMoverInvariants(self) -> None:
         """Every tensor in the graph must declare a data mover after frontEnd.
 
@@ -135,6 +121,10 @@ class XDNA2Deployer(SignPropDeployer):
 
     def generateMLIR(self) -> str:
         assert self.prepared, "XDNA2Deployer.generateMLIR() called before prepare()"
+
+        # Make the NetworkContext graph-aware which is necessary for the MLIR code generation that needs to navigate the graph. Re-tagging the context instance adds new methods without modifying the class layout. 
+        self.ctxt.__class__ = GraphAwareNetworkContext
+        self.ctxt.populateNameToProducer(self.layerBinding)
 
         nodes = self._collectNodes()
         if not nodes:
@@ -211,7 +201,9 @@ class XDNA2Deployer(SignPropDeployer):
                     # Plumb the per-block context the memtile-aware passes
                     # need: tile coords, the shared FIFO registry, and the
                     # per-engine tile lookup so Distribute/Join can resolve
-                    # destination cores from chunk ``_targetCoreEngine``.
+                    # destination cores by walking from chunk buffers to
+                    # their unique consumer/producer's parsed engine name
+                    # via ctxt.lookupConsumerOpRepr / lookupProducerOpRepr.
                     eb.tileCol = node["engine"].col
                     eb.tileRow = node["engine"].row
                     eb.fifoRegistry = fifoRegistry

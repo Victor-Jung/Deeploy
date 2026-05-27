@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from Deeploy.DeeployTypes import ConstantBuffer, DataMoverEngine, DeploymentEngine, NodeMapper, NodeTemplate, \
     StructBuffer, TopologyOptimizer, TransientBuffer, VariableBuffer
+from Deeploy.EngineExtension.EngineAwareLayer import makeMappingEngineAware
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLevel
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryPlatform
 from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, GELULayer, LayerNormLayer, MulLayer, ReluLayer, \
@@ -28,7 +29,7 @@ XDNA2LayerNormMapper = NodeMapper(LayerNormParser(), XDNA2LayerNormTilingReadyBi
 XDNA2SplitMemTileMapper = NodeMapper(SplitParser(), XDNA2SplitMemTileTilingReadyBindings)
 XDNA2ConcatMemTileMapper = NodeMapper(ConcatParser(), XDNA2ConcatMemTileTilingReadyBindings)
 
-XDNA2Mapping = {
+XDNA2Mapping = makeMappingEngineAware({
     'Add': AddLayer([XDNA2AddMapper]),
     'Mul': MulLayer([XDNA2MulMapper]),
     'Gelu': GELULayer([XDNA2GeluMapper]),
@@ -36,12 +37,12 @@ XDNA2Mapping = {
     'Silu': SiLULayer([XDNA2SiLUMapper]),
     'Tanh': TanhLayer([XDNA2TanhMapper]),
     'LayerNormalization': LayerNormLayer([XDNA2LayerNormMapper]),
-}
+})
 
-XDNA2MemTileMapping = {
+XDNA2MemTileMapping = makeMappingEngineAware({
     'Split': SplitLayer([XDNA2SplitMemTileMapper]),
     'Concat': ConcatLayer([XDNA2ConcatMemTileMapper]),
-}
+})
 
 # Buffer classes reuse Generic templates since XDNA2Deployer manages its own
 # output format (MLIR + test headers) and these templates are never rendered.

@@ -296,7 +296,6 @@ class XDNA2HybridElementwiseSpatialSplitPass(TopologyOptimizationPass):
                             rc._logicalParent = gc.name
                             rc._chunkOffset = j * row_in_elems[inp_idx]
                             rc._dataMoverEngine = memMovers[c].name
-                            rc._targetCoreEngine = coresByCol[c][lr].name
                             row_chunks.append(rc)
                             in_row_chunk_map[inp_idx][(c_idx, lr)] = rc
                         split = gs.Node(
@@ -333,7 +332,6 @@ class XDNA2HybridElementwiseSpatialSplitPass(TopologyOptimizationPass):
                         orc._logicalParent = ogc.name
                         orc._chunkOffset = j * row_out_elems
                         orc._dataMoverEngine = memMovers[c].name
-                        orc._targetCoreEngine = coresByCol[c][lr].name
                         row_chunks_out.append(orc)
                         out_row_chunk_map[(c_idx, lr)] = orc
                     concat = gs.Node(

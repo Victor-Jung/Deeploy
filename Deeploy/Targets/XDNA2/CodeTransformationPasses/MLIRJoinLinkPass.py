@@ -96,9 +96,12 @@ class MLIRJoinLinkPass(MLIRCodeTransformationPass):
         smallNames: List[str] = []
         offsets: List[int] = []
         for i, buf in enumerate(chunkBufs):
-            srcEngine = getattr(buf, "_targetCoreEngine", None)
+            producerOpRepr = ctxt.lookupProducerOpRepr(buf.name)
+            srcEngine = producerOpRepr.get("engine")
             assert srcEngine is not None, (
-                f"Join pass: chunk '{buf.name}' has no _targetCoreEngine.")
+                f"Join pass: chunk '{buf.name}' producer "
+                f"'{producerOpRepr.get('nodeName')}' has no 'engine' in its "
+                f"operatorRepresentation. EngineColoringPass should have set it.")
             srcCol, srcRow = _resolveCoreCoords(srcEngine)
             assert srcCol == col, (
                 f"Join pass: chunk '{buf.name}' came from engine '{srcEngine}' "

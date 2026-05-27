@@ -26,14 +26,10 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from Deeploy.DeeployTypes import NodeTemplate
+from Deeploy.DeeployTypes import NetworkContext, NodeTemplate
 
 if TYPE_CHECKING:
     from Deeploy.DeeployTypes import NetworkContext, OperatorRepresentation
-
-# ======================================================================
-# MLIRExecutionBlock
-# ======================================================================
 
 
 class MLIRExecutionBlock:
@@ -106,11 +102,6 @@ class MLIRExecutionBlock:
         self.fifoRegistry: Dict[Tuple[str, int, int], str] = {}
 
 
-# ======================================================================
-# MLIRCodeTransformationPass / MLIRCodeTransformation
-# ======================================================================
-
-
 class MLIRCodeTransformationPass:
     """Base class for passes that transform an :class:`MLIRExecutionBlock`.
 
@@ -155,9 +146,52 @@ class MLIRCodeTransformation:
         return ctxt, mlirBlock
 
 
-# ======================================================================
-# MLIRNodeTemplate
-# ======================================================================
+class GraphAwareNetworkContext(NetworkContext):
+    """NetworkContext subclass that exposes node-level navigation helpers such that ExecutionBlocks can have some vision on their predecessors."""
+
+    def populateNameToProducer(self, layerBinding) -> None:
+        """One-time setup: stash the layer binding and build the
+        name → producer_node_name reverse index. Must be called before
+        :meth:`lookupOpRepr` / :meth:`lookupConsumerOpRepr` /
+        :meth:`lookupProducerOpRepr`.
+        """
+        self._layerBinding = layerBinding
+        # Skips constants / graph inputs (no producer node).
+        self._nameToProducer: Dict[str, str] = {}
+        for nodeName, layer in layerBinding.items():
+            for out_var in layer.node.outputs:
+                self._nameToProducer[out_var.name] = nodeName
+
+    def lookupOpRepr(self, node_name: str):
+        """Return the parsed ``operatorRepresentation`` for ``node_name``."""
+        binding = getattr(self, "_layerBinding", None)
+        assert binding is not None, (
+            "GraphAwareNetworkContext.lookupOpRepr called before "
+            "populateNameToProducer. Call it once after layer binding is built.")
+        if node_name not in binding:
+            raise KeyError(f"lookupOpRepr: no layer binding for node '{node_name}'.")
+        return binding[node_name].mapper.parser.operatorRepresentation
+
+    def lookupConsumerOpRepr(self, buf_name: str):
+        """Return the ``operatorRepresentation`` of the unique consumer of ``buf_name``.
+
+        Asserts ``len(buf._users) == 1``; multi-consumer buffers need
+        explicit per-consumer handling at the call site.
+        """
+        users = self.lookup(buf_name)._users
+        assert len(users) == 1, (
+            f"lookupConsumerOpRepr: buffer '{buf_name}' has {len(users)} consumers; "
+            f"expected exactly 1. Multi-consumer chunks need explicit per-consumer handling.")
+        return self.lookupOpRepr(users[0])
+
+    def lookupProducerOpRepr(self, buf_name: str):
+        """Return the ``operatorRepresentation`` of the producer of ``buf_name``."""
+        producer = getattr(self, "_nameToProducer", {}).get(buf_name)
+        if producer is None:
+            raise KeyError(
+                f"lookupProducerOpRepr: '{buf_name}' has no producer in layerBinding "
+                f"(graph input or constant?).")
+        return self.lookupOpRepr(producer)
 
 
 class MLIRNodeTemplate(NodeTemplate):
@@ -214,9 +248,6 @@ class MLIRNodeTemplate(NodeTemplate):
         """
         ...
 
-    # ------------------------------------------------------------------
-    # NodeTemplate overrides
-    # ------------------------------------------------------------------
 
     def generate(self, operatorRepresentation = {}, **kwargs) -> str:
         """Generate an MLIR string for this node.

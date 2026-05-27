@@ -140,9 +140,12 @@ class MLIRDistributeLinkPass(MLIRCodeTransformationPass):
         offsets: List[int] = []
         col = mlirBlock.tileCol
         for i, buf in enumerate(chunkBufs):
-            targetEngine = getattr(buf, "_targetCoreEngine", None)
+            consumerOpRepr = ctxt.lookupConsumerOpRepr(buf.name)
+            targetEngine = consumerOpRepr.get("engine")
             assert targetEngine is not None, (
-                f"Distribute pass: chunk '{buf.name}' has no _targetCoreEngine.")
+                f"Distribute pass: chunk '{buf.name}' consumer "
+                f"'{consumerOpRepr.get('nodeName')}' has no 'engine' in its "
+                f"operatorRepresentation. EngineColoringPass should have set it.")
             tgtCol, tgtRow = _resolveCoreCoords(targetEngine)
             assert tgtCol == col, (
                 f"Distribute pass: chunk '{buf.name}' targets engine '{targetEngine}' "
