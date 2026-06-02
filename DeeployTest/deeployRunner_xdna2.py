@@ -29,6 +29,10 @@ def _add_xdna2_args(parser):
                         type = int,
                         default = 8192,
                         help = 'Trace buffer size in bytes (default: 8192)')
+    parser.add_argument('--trace-shim-col',
+                        type = int,
+                        default = 7,
+                        help = 'Shim column to egress trace packets through (default: 7). ')
     parser.add_argument('--trace-tiles',
                         type = str,
                         default = None,
@@ -62,6 +66,9 @@ def _add_xdna2_gen_args(args, gen_args_list):
         trace_buffer_size = getattr(args, 'trace_buffer_size', 8192)
         if trace_buffer_size != 8192:
             gen_args_list.append(f'--trace-buffer-size={trace_buffer_size}')
+        trace_shim_col = getattr(args, 'trace_shim_col', 7)
+        if trace_shim_col != 7:
+            gen_args_list.append(f'--trace-shim-col={trace_shim_col}')
         trace_tiles = getattr(args, 'trace_tiles', None)
         if trace_tiles:
             gen_args_list.append(f'--trace-tiles={trace_tiles}')

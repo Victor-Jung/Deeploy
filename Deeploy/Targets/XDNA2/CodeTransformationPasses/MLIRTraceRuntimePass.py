@@ -39,7 +39,9 @@ class MLIRTraceRuntimePass(MLIRCodeTransformationPass):
             return ctxt, mlirBlock
 
         trace_arg_idx = len(mlirBlock.runtimeSequenceArgs) + 1 # JUNGVI: Always the last argument
-        trace_host_config(buffer_size = mlirBlock.traceBufferSize, arg_idx = trace_arg_idx)
+        trace_host_config(buffer_size = mlirBlock.traceBufferSize,
+                          arg_idx = trace_arg_idx,
+                          egress_shim_col = mlirBlock.traceShimCol)
 
         for configName in mlirBlock.traceConfigs:
             trace_start_config(configName)

@@ -320,8 +320,10 @@ def generateNetworkXDNA2(args):
     enableTrace = getattr(args, 'trace', False)
     if enableTrace:
         traceBufferSize = int(getattr(args, 'trace_buffer_size', None) or 8192)
+        traceShimCol = int(getattr(args, 'trace_shim_col', 7))
         deployer.enableTrace = True
         deployer.traceBufferSize = traceBufferSize
+        deployer.traceShimCol = traceShimCol
         traceTiles = getattr(args, 'trace_tiles', None)
         if traceTiles:
             knownEngines = {e.name for e in coreEngines}
@@ -334,9 +336,10 @@ def generateNetworkXDNA2(args):
                     f"{sorted(knownEngines)}.")
             deployer.tracedEngines = requested
             log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize}, "
-                     f"tiles={sorted(requested)})")
+                     f"egress_shim_col={traceShimCol}, tiles={sorted(requested)})")
         else:
-            log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize}, tiles=all)")
+            log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize}, "
+                     f"egress_shim_col={traceShimCol}, tiles=all)")
 
     deployer.frontEnd()
     deployer.midEnd()
@@ -390,6 +393,11 @@ if __name__ == '__main__':
                         type = int,
                         default = 8192,
                         help = 'Trace buffer size in bytes (default: 8192)')
+    parser.add_argument('--trace-shim-col',
+                        type = int,
+                        default = 7,
+                        help = 'Shim column to egress trace packets through (default: 7, '
+                        'the rightmost shim on npu2).')
     parser.add_argument('--trace-tiles',
                         type = str,
                         default = None,

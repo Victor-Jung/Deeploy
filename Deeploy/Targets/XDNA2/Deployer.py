@@ -58,6 +58,7 @@ class XDNA2Deployer(SignPropDeployer):
                  inputOffsets: Optional[Dict[str, int]] = None,
                  enableTrace: bool = False,
                  traceBufferSize: int = 8192,
+                 traceShimCol: int = 7,
                  tracedEngines: Optional[Set[str]] = None):
         super().__init__(
             graph,
@@ -72,6 +73,7 @@ class XDNA2Deployer(SignPropDeployer):
         )
         self.enableTrace = enableTrace
         self.traceBufferSize = traceBufferSize
+        self.traceShimCol = traceShimCol
         self.tracedEngines = tracedEngines
 
     # ------------------------------------------------------------------
@@ -211,6 +213,7 @@ class XDNA2Deployer(SignPropDeployer):
                     eb.chunkTileElems = chunkTileElems
                     if self.enableTrace:
                         eb.traceBufferSize = self.traceBufferSize
+                        eb.traceShimCol = self.traceShimCol
 
                     log.info(f"[XDNA2] Device phase ({engineKind}) for '{node['nodeName']}' "
                              f"on {engineName}")

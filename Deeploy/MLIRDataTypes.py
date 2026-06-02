@@ -88,6 +88,7 @@ class MLIRExecutionBlock:
         # runtime-sequence trace pass)
         self.traceConfigs: List[str] = []
         self.traceBufferSize: int = 0
+        self.traceShimCol: int = 0
 
         # Shared FIFO registry across all MLIRExecutionBlocks of one
         # @aie_d.device(...) block, used by mem-tile-engine spatial
