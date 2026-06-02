@@ -405,6 +405,7 @@ if __name__ == '__main__':
                         help = f'Number of AIE compute rows per column to use (1..{NPU2_NUM_AIE_ROWS}, '
                         f'default: 1). Total active AIE compute tiles = num-col * num-aie-row.')
     parser.add_argument('--data-mode',
+                        type = str,
                         choices = ['auto', 'embed', 'file'],
                         default = 'auto',
                         help = 'Where test inputs/outputs live. "embed" inlines them in the test '

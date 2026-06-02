@@ -48,6 +48,7 @@ def _add_xdna2_args(parser):
                         help = 'Number of AIE compute rows per column to use (1 to 4, default: 1). '
                         'Total active AIE compute tiles = num-col * num-aie-row.')
     parser.add_argument('--data-mode',
+                        type = str,
                         choices = ['auto', 'embed', 'file'],
                         default = 'auto',
                         help = 'Where test inputs/outputs live: embed in header, .bin sidecars, '
