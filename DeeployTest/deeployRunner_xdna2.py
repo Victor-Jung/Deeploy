@@ -38,6 +38,12 @@ def _add_xdna2_args(parser):
                         default = None,
                         help = 'Comma-separated tile selector for tracing, e.g. "c0r2,c1r2". '
                         'Only meaningful with --trace. If omitted, every active core is traced.')
+    parser.add_argument('--analyzeTrace',
+                        action = 'store_true',
+                        default = False,
+                        help = 'After simulation, run scripts/trace_boundness.py on the '
+                        'parsed trace.json to report per-core memory-boundness. '
+                        'Requires --trace.')
     parser.add_argument('--visualize-routing',
                         action = 'store_true',
                         default = False,
@@ -156,6 +162,29 @@ def _xdna2_visualize_routing(config, args):
     print(f"Routing visualization: {n_routes} route diagrams under {routes_dir}/")
 
 
+def _run_trace_boundness_analyzer(trace_json_path):
+    """Invoke scripts/trace_boundness.py on a parsed trace.json.
+
+    Runs as a subprocess so the analyzer's stdlib-only invariant stays
+    intact (no import dance against Deeploy/mlir-aie internals). Prints
+    the report inline so it's visible in the standard test runner log.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    analyzer = os.path.join(here, "..", "scripts", "trace_boundness.py")
+    analyzer = os.path.normpath(analyzer)
+    if not os.path.isfile(analyzer):
+        print(f"Warning: --analyzeTrace set but analyzer not found at {analyzer}; skipping.")
+        return
+    try:
+        result = subprocess.run([sys.executable, analyzer, "-i", trace_json_path],
+                                check = True, capture_output = True, text = True)
+        print("\n=== Trace boundness analysis ===")
+        print(result.stdout, end = "")
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: trace boundness analyzer failed: "
+              f"{e.stderr if e.stderr else e}")
+
+
 def _xdna2_post_sim(config, result, args):
     """Parse trace.txt into a Perfetto-compatible trace.json after simulation.
 
@@ -171,6 +200,8 @@ def _xdna2_post_sim(config, result, args):
     _xdna2_visualize_routing(config, args)
 
     if not getattr(args, 'trace', False):
+        if getattr(args, 'analyzeTrace', False):
+            print("Warning: --analyzeTrace requires --trace; ignoring.")
         return
 
     build_dir = config.build_dir
@@ -254,6 +285,9 @@ def _xdna2_post_sim(config, result, args):
             print(f"Trace artifacts copied to {config.gen_dir}/{{trace.txt, trace.json}}")
         except Exception as e:
             print(f"Warning: could not copy trace.json to {config.gen_dir}: {e}")
+
+        if getattr(args, 'analyzeTrace', False):
+            _run_trace_boundness_analyzer(trace_json)
 
     except SystemExit:
         print(f"Warning: trace parsing failed (mlir-aie parser error). "
