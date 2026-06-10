@@ -247,7 +247,7 @@ printf("N_TRAIN_STEPS=%u  N_ACCUM_STEPS=%u  DATA_INPUTS=%u\r\n",
   if (pi_cluster_open(&cluster_dev))
     return -1;
 
-  mem_init();
+  // mem_init();
 #ifndef NOFLASH
   open_fs();
 #endif
