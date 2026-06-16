@@ -36,4 +36,10 @@ KERNEL_TESTS = [
     ("Kernels/BF16/Mul/Regular", ["--num-col=8", "--num-aie-row=1"]),
     ("Kernels/BF16/Mul/Regular", ["--num-col=1", "--num-aie-row=2"]),
     ("Kernels/BF16/Mul/Regular", ["--num-col=8", "--num-aie-row=2"]),
+    # Zero padding test
+    ("Kernels/BF16/Add/Unaligned", ["--num-col=8", "--num-aie-row=1"]),
+    ("Kernels/BF16/Add/Unaligned", ["--num-col=8", "--num-aie-row=2"]),
+    ("Kernels/BF16/Relu/Unaligned", ["--num-col=8", "--num-aie-row=1"]),
+    ("Kernels/BF16/Relu/Unaligned", ["--num-col=3", "--num-aie-row=1"]),
+    ("Kernels/BF16/Gelu/Unaligned", ["--num-col=8", "--num-aie-row=1"]),
 ]

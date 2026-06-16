@@ -98,6 +98,14 @@ NPU2_AIE_ROW_OFFSET = 2           # first AIE row index
 NPU2_MEM_TILE_ROW = 1             # mem tile row
 NPU2_SHIM_TILE_ROW = 0            # shim tile row
 
+VECTOR_WIDTH_BF16 = 16
+
+
+def next_multiple(n: int, divisor: int) -> int:
+    """Smallest multiple of ``divisor`` that is >= ``n``. ``divisor`` must be > 0."""
+    assert divisor > 0, "next_multiple: divisor must be positive"
+    return ((n + divisor - 1) // divisor) * divisor
+
 
 class XDNA2AIECoreEngine(DeploymentEngine):
     """One AIE compute core, identified by its physical (col, row) placement.

@@ -16,7 +16,7 @@ import os
 
 import numpy as np
 import onnx
-from typing import Literal
+from typing import Literal, Optional
 import onnx_graphsurgeon as gs
 from testUtils.platformMapping import mapDeployer
 from testUtils.testRunner import TestGeneratorArgumentParser
@@ -84,7 +84,10 @@ def _emit_embedded_array(name: str, bf16: np.ndarray) -> str:
     return f"static const uint16_t {name}[{len(bf16)}] = {{{hex_vals}}};"
 
 
-def _generate_xdna2_inputs_header(input_arrays: list, dump_dir: str, mode: Literal["auto", "embed", "file"] = "auto") -> str:
+def _generate_xdna2_inputs_header(input_arrays: list,
+                                  dump_dir: str,
+                                  mode: Literal["auto", "embed", "file"] = "auto",
+                                  padded_elem_counts: Optional[list] = None) -> str:
     """Generate testinputs.h with one entry per logical input.
 
     Logical inputs (the original ONNX graph inputs, before any spatial
@@ -92,7 +95,7 @@ def _generate_xdna2_inputs_header(input_arrays: list, dump_dir: str, mode: Liter
     spatial-split chunks back to logical args at the runtime_sequence
     boundary, so the host only sees the originals.
     """
-    
+
     use_file = _should_use_file_mode(input_arrays, mode)
     n_inputs = len(input_arrays)
 
@@ -109,10 +112,21 @@ def _generate_xdna2_inputs_header(input_arrays: list, dump_dir: str, mode: Liter
         lines.append("#define USE_FILE_INPUTS 1")
     lines.append("")
 
-    # Element counts — emitted as a single constexpr table
+    # Element counts emitted as a single constexpr table, kInputElems is the LOGICAL size
     elem_counts = [len(_float32_to_bf16_uint16(arr.flatten())) for arr in input_arrays]
+    if padded_elem_counts is None:
+        padded_elem_counts = list(elem_counts)
+    assert len(padded_elem_counts) == n_inputs, (
+        f"padded_elem_counts length {len(padded_elem_counts)} != n_inputs {n_inputs}")
+    for i, (logical, padded) in enumerate(zip(elem_counts, padded_elem_counts)):
+        assert padded >= logical, (
+            f"input {i}: padded size {padded} < logical size {logical}; topology "
+            f"pass returned a shrinking pad which is never valid")
     lines.append(f"static constexpr size_t kInputElems[{n_inputs}] = {{")
     lines.append("    " + ", ".join(f"{n}u" for n in elem_counts) + "")
+    lines.append("};")
+    lines.append(f"static constexpr size_t kInputPaddedElems[{n_inputs}] = {{")
+    lines.append("    " + ", ".join(f"{n}u" for n in padded_elem_counts) + "")
     lines.append("};")
     lines.append("")
 
@@ -149,7 +163,8 @@ def _generate_xdna2_inputs_header(input_arrays: list, dump_dir: str, mode: Liter
 def _generate_xdna2_outputs_header(output_arrays: list,
                                    dump_dir: str,
                                    tolerance_ulps: int = 1,
-                                   mode:  Literal["auto", "embed", "file"] = "auto") -> str:
+                                   mode:  Literal["auto", "embed", "file"] = "auto",
+                                   padded_elem_counts: Optional[list] = None) -> str:
     """Generate testoutputs.h with one entry per logical output."""
     use_file = _should_use_file_mode(output_arrays, mode)
     n_outputs = len(output_arrays)
@@ -169,6 +184,15 @@ def _generate_xdna2_outputs_header(output_arrays: list,
     lines.append("")
 
     elem_counts = [len(_float32_to_bf16_uint16(arr.flatten())) for arr in output_arrays]
+    if padded_elem_counts is None:
+        padded_elem_counts = list(elem_counts)
+    assert len(padded_elem_counts) == n_outputs
+    for i, (logical, padded) in enumerate(zip(elem_counts, padded_elem_counts)):
+        assert padded >= logical, (
+            f"output {i}: padded size {padded} < logical size {logical}")
+    lines.append(f"static constexpr size_t kOutputPaddedElems[{n_outputs}] = {{")
+    lines.append("    " + ", ".join(f"{n}u" for n in padded_elem_counts) + "")
+    lines.append("};")
     lines.append(f"static constexpr size_t kOutputElems[{n_outputs}] = {{")
     lines.append("    " + ", ".join(f"{n}u" for n in elem_counts) + "")
     lines.append("};")
@@ -351,7 +375,11 @@ def generateNetworkXDNA2(args):
 
     # Write testinputs.h (raw BF16 bit patterns as uint16_t).
     data_mode = getattr(args, 'data_mode', 'auto')
-    testInputStr = _generate_xdna2_inputs_header(test_inputs, args.dumpdir, mode = data_mode)
+    # Topology passes may have padded graph IO, recover the padded shapes.
+    input_padded_sizes, output_padded_sizes = deployer.getLogicalIOPaddedSizes()
+    testInputStr = _generate_xdna2_inputs_header(test_inputs, args.dumpdir,
+                                                 mode = data_mode,
+                                                 padded_elem_counts = input_padded_sizes)
     # Append trace buffer size define so the host binary knows whether to
     # allocate a trace buffer and how large it should be.
     if enableTrace:
@@ -370,7 +398,8 @@ def generateNetworkXDNA2(args):
     testOutputStr = _generate_xdna2_outputs_header(test_outputs,
                                                    args.dumpdir,
                                                    tolerance_ulps = tolerance_ulps,
-                                                   mode = data_mode)
+                                                   mode = data_mode,
+                                                   padded_elem_counts = output_padded_sizes)
     with open(f'{args.dumpdir}/testoutputs.h', 'w') as f:
         f.write(testOutputStr)
 

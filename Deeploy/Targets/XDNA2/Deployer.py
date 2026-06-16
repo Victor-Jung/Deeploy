@@ -105,6 +105,52 @@ class XDNA2Deployer(SignPropDeployer):
             buf._logicalParent = parent
             buf._chunkOffset = int(getattr(tensor, "_chunkOffset", 0))
 
+    # ------------------------------------------------------------------
+    # Padding aggregator
+    # ------------------------------------------------------------------
+
+    def getLogicalIOPaddedSizes(self) -> Tuple[List[int], List[int]]:
+        """Return per-logical-IO padded element counts: ``(inputs, outputs)``.
+
+        Passes (e.g. ``XDNA2HybridElementwiseSpatialSplitPass``) mutate
+        graph IO variables in place to grow ``shape[axis]`` and stamp the
+        per-tensor tail-element count on ``_paddingElems``. Splits then
+        replace the originals in ``graph.inputs`` / ``graph.outputs`` with
+        chunk variables, but each chunk's size already reflects the
+        post-pad total. Summing chunk sizes per ``_logicalParent`` group
+        therefore recovers the padded logical size, which is what the
+        host header generator needs to allocate the BO and what test
+        verification needs to know how much trailing junk to skip.
+        """
+        input_groups = self._logicalGroups([t.name for t in self.graph.inputs])
+        output_groups = self._logicalGroups([t.name for t in self.graph.outputs])
+
+        def _sum_padded(group):
+            total = 0
+            for _offset, chunkName in group:
+                buf = self.ctxt.lookup(chunkName)
+                length = int(np.prod(getattr(buf, "shape", ()) or ()))
+                total += length
+            return total
+
+        # Preserve graph IO order via first-seen on graph.inputs/outputs.
+        in_order: List[str] = []
+        for t in self.graph.inputs:
+            buf = self.ctxt.lookup(t.name)
+            parent = getattr(buf, "_logicalParent", None) or t.name
+            if parent not in in_order:
+                in_order.append(parent)
+        out_order: List[str] = []
+        for t in self.graph.outputs:
+            buf = self.ctxt.lookup(t.name)
+            parent = getattr(buf, "_logicalParent", None) or t.name
+            if parent not in out_order:
+                out_order.append(parent)
+
+        in_sizes = [_sum_padded(input_groups[n]) for n in in_order]
+        out_sizes = [_sum_padded(output_groups[n]) for n in out_order]
+        return in_sizes, out_sizes
+
     def _checkDataMoverInvariants(self) -> None:
         """Every tensor in the graph must declare a data mover after frontEnd.
 

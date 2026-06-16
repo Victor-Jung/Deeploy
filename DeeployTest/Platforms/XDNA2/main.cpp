@@ -199,17 +199,18 @@ int main(int argc, char **argv) {
   auto bo_instr = xrt::bo(device, n_instr * sizeof(uint32_t),
                           XCL_BO_FLAGS_CACHEABLE, kernel.group_id(1));
 
+  // BOs are sized to the PADDED element count as requested by the deployer.
   std::vector<xrt::bo> bo_inputs;
   bo_inputs.reserve(N_INPUTS);
   for (unsigned int i = 0; i < N_INPUTS; ++i) {
-    bo_inputs.emplace_back(device, kInputElems[i] * elem_size,
+    bo_inputs.emplace_back(device, kInputPaddedElems[i] * elem_size,
                            XRT_BO_FLAGS_HOST_ONLY, kernel.group_id(3u + i));
   }
 
   std::vector<xrt::bo> bo_outputs;
   bo_outputs.reserve(N_OUTPUTS);
   for (unsigned int i = 0; i < N_OUTPUTS; ++i) {
-    bo_outputs.emplace_back(device, kOutputElems[i] * elem_size,
+    bo_outputs.emplace_back(device, kOutputPaddedElems[i] * elem_size,
                             XRT_BO_FLAGS_HOST_ONLY,
                             kernel.group_id(3u + N_INPUTS + i));
   }
@@ -233,8 +234,12 @@ int main(int argc, char **argv) {
   bo_instr.sync(XCL_BO_SYNC_BO_TO_DEVICE);
 
   for (unsigned int i = 0; i < N_INPUTS; ++i) {
-    std::memcpy(bo_inputs[i].map<void *>(), get_input_data(i),
-                kInputElems[i] * elem_size);
+    // Copy logical bytes then zero the trailing padding.
+    auto *dst = bo_inputs[i].map<uint8_t *>();
+    const size_t logical_bytes = kInputElems[i] * elem_size;
+    const size_t padded_bytes = kInputPaddedElems[i] * elem_size;
+    std::memcpy(dst, get_input_data(i), logical_bytes);
+    std::memset(dst + logical_bytes, 0, padded_bytes - logical_bytes);
     bo_inputs[i].sync(XCL_BO_SYNC_BO_TO_DEVICE);
   }
 

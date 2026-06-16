@@ -46,8 +46,8 @@ import onnx_graphsurgeon as gs
 
 from Deeploy.DeeployTypes import TopologyOptimizationPass
 from Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass import engineaware
-from Deeploy.Targets.XDNA2.Platform import XDNA2AIECoreEngine, XDNA2MemTileDataMover, \
-    XDNA2MemTileExecutionEngine, XDNA2ShimTileDataMover
+from Deeploy.Targets.XDNA2.Platform import VECTOR_WIDTH_BF16, XDNA2AIECoreEngine, XDNA2MemTileDataMover, \
+    XDNA2MemTileExecutionEngine, XDNA2ShimTileDataMover, next_multiple
 
 _ELEMENTWISE_OPS = frozenset({"Add", "Gelu", "Mul", "Relu", "Silu", "Tanh"})
 
@@ -122,6 +122,9 @@ class XDNA2HybridElementwiseSpatialSplitPass(TopologyOptimizationPass):
         N = len(active_cols)
         total = N * R
 
+        # Pad graph IO so per-row chunks are a multiple of the vector unit width
+        self._padGraphIOForVectorAlignment(graph, total * VECTOR_WIDTH_BF16)
+
         for node in list(graph.nodes):
             if node.op not in _ELEMENTWISE_OPS:
                 continue
@@ -171,6 +174,79 @@ class XDNA2HybridElementwiseSpatialSplitPass(TopologyOptimizationPass):
         memMovers = {dm.col: dm for dm in platformDataMovers if isinstance(dm, XDNA2MemTileDataMover)}
 
         return coreEngines, memEngines, shims, memMovers
+
+    def _padGraphIOForVectorAlignment(self, graph: gs.Graph, divisor: int) -> None:
+        """Pad graph IO axis sizes to satisfy this pass's divisibility.
+
+        Skipped (and the node will simply not split) when:
+          * any input is a constant (would need data extension at compile
+            time, deferred to a later iteration),
+          * any IO of the node is not a graph input/output (intermediates
+            cross other ops and padding them would mismatch sibling
+            consumers),
+          * axis != 0 (only flat-tail layouts are safe for memset-zero in
+            the host today; column-padding for axis>0 is interleaved and
+            needs a different host strategy).
+        """
+        if self.axis != 0:
+            # No-op for axis>0; _splittable will reject misaligned nodes as
+            # before. Worth lifting in a follow-up if the need arises.
+            return
+
+        for node in graph.nodes:
+            if node.op not in _ELEMENTWISE_OPS:
+                continue
+            if len(node.outputs) != 1:
+                continue
+            out = node.outputs[0]
+            if out.shape is None or len(out.shape) <= self.axis:
+                continue
+            ax = out.shape[self.axis]
+            if not isinstance(ax, int):
+                continue
+            # All IO must share the same axis size for elementwise — this
+            # mirrors _splittable's invariant.
+            if any(inp.shape is None or len(inp.shape) <= self.axis
+                   or inp.shape[self.axis] != ax for inp in node.inputs):
+                continue
+            # Constants and intermediates: skip; see docstring.
+            if any(isinstance(inp, gs.Constant) for inp in node.inputs):
+                continue
+            if any(inp not in graph.inputs for inp in node.inputs):
+                continue
+            if out not in graph.outputs:
+                continue
+
+            padded_ax = next_multiple(ax, divisor)
+            if padded_ax == ax:
+                continue
+
+            for var in (*node.inputs, out):
+                self._padVariable(var, padded_ax)
+
+    @staticmethod
+    def _padVariable(var: gs.Variable, padded_ax: int, axis: int = 0) -> None:
+        """Grow ``var.shape[axis]`` to ``padded_ax`` and record the delta.
+
+        ``_paddingElems`` is the count of TAIL elements added (flat
+        memory), suitable for ``memset(buf + logical, 0, ...)`` on the
+        host. With axis=0 and row-major layout the tail interpretation is
+        exact; this helper asserts that invariant.
+        """
+        assert axis == 0, "padding tail layout only valid for axis=0 today"
+        new_shape = list(var.shape)
+        old_ax = new_shape[axis]
+        if padded_ax <= old_ax:
+            return
+        new_shape[axis] = padded_ax
+        # Use the max of any pre-existing padding contribution (another
+        # pass may have already requested more). Padding combines via max
+        # of the *axis size*, not of the per-tensor tail-element count.
+        existing = getattr(var, "_paddingElems", 0) or 0
+        other_dims = int(np.prod(new_shape[1:])) if len(new_shape) > 1 else 1
+        added = (padded_ax - old_ax) * other_dims
+        var.shape = tuple(new_shape)
+        var._paddingElems = max(int(existing), added)
 
     def _splittable(self, node: gs.Node, total_chunks: int) -> bool:
         if len(node.outputs) != 1:
