@@ -122,9 +122,11 @@ int main(int argc, char **argv) {
     if (arg == "-v" || arg == "--verbose" || arg == "-vv") {
       verbose = true;
     } else if ((arg == "--warmup" || arg == "-w") && i + 1 < argc) {
-      warmup_iters = static_cast<unsigned int>(std::strtoul(argv[++i], nullptr, 10));
+      warmup_iters =
+          static_cast<unsigned int>(std::strtoul(argv[++i], nullptr, 10));
     } else if ((arg == "--iterations" || arg == "-n") && i + 1 < argc) {
-      meas_iters = static_cast<unsigned int>(std::strtoul(argv[++i], nullptr, 10));
+      meas_iters =
+          static_cast<unsigned int>(std::strtoul(argv[++i], nullptr, 10));
     } else if (!arg.empty() && arg[0] != '-') {
       positional.push_back(arg);
     }
@@ -280,13 +282,15 @@ int main(int argc, char **argv) {
   for (auto &bo : bo_outputs)
     bo.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
 
-  // 6a. Latency statistics. Throughput is computed from the median latency over the total bytes moved across ShimDMAs (one round trip).
+  // 6a. Latency statistics. Throughput is computed from the median latency over
+  // the total bytes moved across ShimDMAs (one round trip).
   std::sort(latencies_us.begin(), latencies_us.end());
   const double lat_min = latencies_us.front();
   const double lat_max = latencies_us.back();
   const double lat_med = (meas_iters % 2 == 1)
-      ? latencies_us[meas_iters / 2]
-      : 0.5 * (latencies_us[meas_iters / 2 - 1] + latencies_us[meas_iters / 2]);
+                             ? latencies_us[meas_iters / 2]
+                             : 0.5 * (latencies_us[meas_iters / 2 - 1] +
+                                      latencies_us[meas_iters / 2]);
   double lat_sum = 0.0;
   for (double v : latencies_us)
     lat_sum += v;
@@ -316,8 +320,8 @@ int main(int argc, char **argv) {
             << "min=" << lat_min << "  median=" << lat_med
             << "  mean=" << lat_mean << "  max=" << lat_max
             << "  stdev=" << lat_stdev << "\n";
-  std::cout << "  element-wise throughput estimate  : " << throughput_gbps << " GB/s ("
-            << total_bytes << " bytes / median latency)\n";
+  std::cout << "  element-wise throughput estimate  : " << throughput_gbps
+            << " GB/s (" << total_bytes << " bytes / median latency)\n";
 
   int errors = 0;
   size_t total_elems = 0;

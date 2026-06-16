@@ -92,11 +92,11 @@ XDNA2Optimizer = TopologyOptimizer([], name = "XDNA2Optimizer")
 # ---------------------------------------------------------------------------
 # XDNA2 hardware shape
 # ---------------------------------------------------------------------------
-NPU2_NUM_COLS = 8                 # total columns in the AIE array
-NPU2_NUM_AIE_ROWS = 4             # AIE compute cores per column (rows 2..5)
-NPU2_AIE_ROW_OFFSET = 2           # first AIE row index
-NPU2_MEM_TILE_ROW = 1             # mem tile row
-NPU2_SHIM_TILE_ROW = 0            # shim tile row
+NPU2_NUM_COLS = 8  # total columns in the AIE array
+NPU2_NUM_AIE_ROWS = 4  # AIE compute cores per column (rows 2..5)
+NPU2_AIE_ROW_OFFSET = 2  # first AIE row index
+NPU2_MEM_TILE_ROW = 1  # mem tile row
+NPU2_SHIM_TILE_ROW = 0  # shim tile row
 
 VECTOR_WIDTH_BF16 = 16
 

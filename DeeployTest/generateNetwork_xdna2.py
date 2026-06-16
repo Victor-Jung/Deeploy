@@ -13,10 +13,10 @@ Instead of emitting C code it:
 """
 
 import os
+from typing import Literal, Optional
 
 import numpy as np
 import onnx
-from typing import Literal, Optional
 import onnx_graphsurgeon as gs
 from testUtils.platformMapping import mapDeployer
 from testUtils.testRunner import TestGeneratorArgumentParser
@@ -28,9 +28,9 @@ from Deeploy.EngineExtension.NetworkDeployers.EngineColoringDeployer import Engi
 from Deeploy.Logging import DEFAULT_LOGGER as log
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLevel
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryDeployerWrapper
-from Deeploy.Targets.XDNA2.Platform import MemoryXDNA2Platform, NPU2_AIE_ROW_OFFSET, NPU2_NUM_AIE_ROWS, \
-    NPU2_NUM_COLS, XDNA2AIECoreDataMover, XDNA2AIECoreEngine, XDNA2MemTileDataMover, \
-    XDNA2MemTileExecutionEngine, XDNA2ShimTileDataMover
+from Deeploy.Targets.XDNA2.Platform import NPU2_AIE_ROW_OFFSET, NPU2_NUM_AIE_ROWS, NPU2_NUM_COLS, MemoryXDNA2Platform, \
+    XDNA2AIECoreDataMover, XDNA2AIECoreEngine, XDNA2MemTileDataMover, XDNA2MemTileExecutionEngine, \
+    XDNA2ShimTileDataMover
 from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultConstantDataMoveAnnotationPass import \
     XDNA2DefaultConstantDataMoveAnnotationPass
 from Deeploy.Targets.XDNA2.TopologyOptimizationPasses.DefaultInputDataMoveAnnotationPass import \
@@ -119,9 +119,8 @@ def _generate_xdna2_inputs_header(input_arrays: list,
     assert len(padded_elem_counts) == n_inputs, (
         f"padded_elem_counts length {len(padded_elem_counts)} != n_inputs {n_inputs}")
     for i, (logical, padded) in enumerate(zip(elem_counts, padded_elem_counts)):
-        assert padded >= logical, (
-            f"input {i}: padded size {padded} < logical size {logical}; topology "
-            f"pass returned a shrinking pad which is never valid")
+        assert padded >= logical, (f"input {i}: padded size {padded} < logical size {logical}; topology "
+                                   f"pass returned a shrinking pad which is never valid")
     lines.append(f"static constexpr size_t kInputElems[{n_inputs}] = {{")
     lines.append("    " + ", ".join(f"{n}u" for n in elem_counts) + "")
     lines.append("};")
@@ -163,7 +162,7 @@ def _generate_xdna2_inputs_header(input_arrays: list,
 def _generate_xdna2_outputs_header(output_arrays: list,
                                    dump_dir: str,
                                    tolerance_ulps: int = 1,
-                                   mode:  Literal["auto", "embed", "file"] = "auto",
+                                   mode: Literal["auto", "embed", "file"] = "auto",
                                    padded_elem_counts: Optional[list] = None) -> str:
     """Generate testoutputs.h with one entry per logical output."""
     use_file = _should_use_file_mode(output_arrays, mode)
@@ -188,8 +187,7 @@ def _generate_xdna2_outputs_header(output_arrays: list,
         padded_elem_counts = list(elem_counts)
     assert len(padded_elem_counts) == n_outputs
     for i, (logical, padded) in enumerate(zip(elem_counts, padded_elem_counts)):
-        assert padded >= logical, (
-            f"output {i}: padded size {padded} < logical size {logical}")
+        assert padded >= logical, (f"output {i}: padded size {padded} < logical size {logical}")
     lines.append(f"static constexpr size_t kOutputPaddedElems[{n_outputs}] = {{")
     lines.append("    " + ", ".join(f"{n}u" for n in padded_elem_counts) + "")
     lines.append("};")
@@ -270,8 +268,8 @@ def generateNetworkXDNA2(args):
     _DEEPLOYSTATEDIR = os.path.join(args.dumpdir, "deeployStates")
 
     # Memory sizes (per tile / per shared region).
-    l1_size = int(getattr(args, 'l1', None) or 64000)               # 64 KB per AIE tile
-    l2_size = int(getattr(args, 'l2', None) or 512 * 1024)          # 512 KB per mem tile
+    l1_size = int(getattr(args, 'l1', None) or 64000)  # 64 KB per AIE tile
+    l2_size = int(getattr(args, 'l2', None) or 512 * 1024)  # 512 KB per mem tile
     l3_size = int(getattr(args, 'l3', None) or 42000 * 1024 * 1024)  # 42 GB DRAM
 
     log.info(f"[XDNA2] Array config: num_col={num_col}, num_aie_row={num_aie_row} "
@@ -296,9 +294,7 @@ def generateNetworkXDNA2(args):
 
     # ---- Execution Engines ----
     used_aie_rows = list(range(NPU2_AIE_ROW_OFFSET, NPU2_AIE_ROW_OFFSET + num_aie_row))
-    coreEngines = [
-        XDNA2AIECoreEngine(col = c, row = r) for c in range(num_col) for r in used_aie_rows
-    ]
+    coreEngines = [XDNA2AIECoreEngine(col = c, row = r) for c in range(num_col) for r in used_aie_rows]
     memTileEngines = [XDNA2MemTileExecutionEngine(col = c) for c in range(num_col)]
 
     # ---- Data Mover Engines ----
@@ -308,7 +304,7 @@ def generateNetworkXDNA2(args):
         dataMoverEngines.append(XDNA2MemTileDataMover(col = c))
     for c in range(num_col):
         for r in used_aie_rows:
-            dataMoverEngines.append(XDNA2AIECoreDataMover(col = c, row= r))
+            dataMoverEngines.append(XDNA2AIECoreDataMover(col = c, row = r))
 
     mem_platform = MemoryXDNA2Platform(
         memoryHierarchy = memory_hierarchy,
@@ -340,7 +336,7 @@ def generateNetworkXDNA2(args):
     deployer = TilerDeployerWrapper(deployer, workDir = _DEEPLOYSTATEDIR)
 
     # --trace alone traces every active engine
-    # --trace-tiles c0r2,c1r2 narrows to a subset 
+    # --trace-tiles c0r2,c1r2 narrows to a subset
     enableTrace = getattr(args, 'trace', False)
     if enableTrace:
         traceBufferSize = int(getattr(args, 'trace_buffer_size', None) or 8192)
@@ -354,10 +350,9 @@ def generateNetworkXDNA2(args):
             requested = {f"AIE_{tok.strip()}" for tok in traceTiles.split(',') if tok.strip()}
             unknown = requested - knownEngines
             if unknown:
-                raise SystemExit(
-                    f"--trace-tiles names tiles not active in this run: {sorted(unknown)}. "
-                    f"Active engines for num-col={num_col} num-aie-row={num_aie_row}: "
-                    f"{sorted(knownEngines)}.")
+                raise SystemExit(f"--trace-tiles names tiles not active in this run: {sorted(unknown)}. "
+                                 f"Active engines for num-col={num_col} num-aie-row={num_aie_row}: "
+                                 f"{sorted(knownEngines)}.")
             deployer.tracedEngines = requested
             log.info(f"[XDNA2] Tracing enabled (buffer_size={traceBufferSize}, "
                      f"egress_shim_col={traceShimCol}, tiles={sorted(requested)})")
@@ -377,7 +372,8 @@ def generateNetworkXDNA2(args):
     data_mode = getattr(args, 'data_mode', 'auto')
     # Topology passes may have padded graph IO, recover the padded shapes.
     input_padded_sizes, output_padded_sizes = deployer.getLogicalIOPaddedSizes()
-    testInputStr = _generate_xdna2_inputs_header(test_inputs, args.dumpdir,
+    testInputStr = _generate_xdna2_inputs_header(test_inputs,
+                                                 args.dumpdir,
                                                  mode = data_mode,
                                                  padded_elem_counts = input_padded_sizes)
     # Append trace buffer size define so the host binary knows whether to

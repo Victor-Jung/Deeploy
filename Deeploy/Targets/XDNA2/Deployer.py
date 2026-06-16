@@ -33,9 +33,8 @@ from Deeploy.AbstractDataTypes import Pointer
 from Deeploy.CommonExtensions.NetworkDeployers.SignPropDeployer import SignPropDeployer
 from Deeploy.DeeployTypes import DeploymentPlatform, TopologyOptimizer
 from Deeploy.Logging import DEFAULT_LOGGER as log
-from Deeploy.MLIRDataTypes import MLIRCodeTransformation, MLIRExecutionBlock, GraphAwareNetworkContext, MLIRNodeTemplate
+from Deeploy.MLIRDataTypes import GraphAwareNetworkContext, MLIRCodeTransformation, MLIRExecutionBlock, MLIRNodeTemplate
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRCoreTracePass import MLIRCoreTracePass
-from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRMemTracePass import MLIRMemTracePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRTraceRuntimePass import MLIRTraceRuntimePass
 from Deeploy.Targets.XDNA2.Platform import NPU2_MEM_TILE_ROW, XDNA2AIECoreEngine, XDNA2MemTileDataMover, \
     XDNA2MemTileExecutionEngine, XDNA2ShimTileDataMover
@@ -158,10 +157,11 @@ class XDNA2Deployer(SignPropDeployer):
         """
         for tensor in self.graph.tensors().values():
             buf = self.ctxt.lookup(tensor.name)  # raises KeyError if missing
-            assert getattr(buf, "_dataMoverEngine", None) is not None, (
-                f"Graph tensor '{tensor.name}' has no _dataMoverEngine. Every tensor must "
-                f"declare a data mover; either XDNA2DefaultDataMoverPass missed it or a "
-                f"downstream pass needs to set one.")
+            assert getattr(
+                buf, "_dataMoverEngine",
+                None) is not None, (f"Graph tensor '{tensor.name}' has no _dataMoverEngine. Every tensor must "
+                                    f"declare a data mover; either XDNA2DefaultDataMoverPass missed it or a "
+                                    f"downstream pass needs to set one.")
 
     # ------------------------------------------------------------------
     # MLIR generation
@@ -170,7 +170,7 @@ class XDNA2Deployer(SignPropDeployer):
     def generateMLIR(self) -> str:
         assert self.prepared, "XDNA2Deployer.generateMLIR() called before prepare()"
 
-        # Make the NetworkContext graph-aware which is necessary for the MLIR code generation that needs to navigate the graph. Re-tagging the context instance adds new methods without modifying the class layout. 
+        # Make the NetworkContext graph-aware which is necessary for the MLIR code generation that needs to navigate the graph. Re-tagging the context instance adds new methods without modifying the class layout.
         self.ctxt.__class__ = GraphAwareNetworkContext
         self.ctxt.populateNameToProducer(self.layerBinding)
 
@@ -210,9 +210,9 @@ class XDNA2Deployer(SignPropDeployer):
 
             @aie_d.device(aie_d.AIEDevice.npu2)
             def _device():
-                coreTileMap = self._buildTileMap()       # AIE_c{c}r{r} → tile
-                memTileMap = self._buildMemTileMap()     # MEM_c{c}    → tile
-                shimTiles = self._buildShimTileMap()     # col         → tile
+                coreTileMap = self._buildTileMap()  # AIE_c{c}r{r} → tile
+                memTileMap = self._buildMemTileMap()  # MEM_c{c}    → tile
+                shimTiles = self._buildShimTileMap()  # col         → tile
 
                 # Single registry shared across every MLIRExecutionBlock in
                 # this device. Distribute / Join passes write into it;
@@ -233,9 +233,8 @@ class XDNA2Deployer(SignPropDeployer):
                             f"XDNA2AIECoreEngine with that name is registered.")
                         executionTile = coreTileMap[engineName]
                     else:  # memtile
-                        assert engineName in memTileMap, (
-                            f"Node '{node['nodeName']}' is colored '{engineName}' but no "
-                            f"XDNA2MemTileExecutionEngine with that name is registered.")
+                        assert engineName in memTileMap, (f"Node '{node['nodeName']}' is colored '{engineName}' but no "
+                                                          f"XDNA2MemTileExecutionEngine with that name is registered.")
                         executionTile = memTileMap[engineName]
                     # Representative shim for this column — used by both the
                     # compute path (shim↔core FIFOs in the legacy direct mode)
@@ -340,9 +339,8 @@ class XDNA2Deployer(SignPropDeployer):
             elif isinstance(engine, XDNA2MemTileExecutionEngine):
                 engineKind = "memtile"
             else:
-                raise AssertionError(
-                    f"Node '{nodeName}' is colored '{engineName}' which is neither an "
-                    f"XDNA2AIECoreEngine nor an XDNA2MemTileExecutionEngine.")
+                raise AssertionError(f"Node '{nodeName}' is colored '{engineName}' which is neither an "
+                                     f"XDNA2AIECoreEngine nor an XDNA2MemTileExecutionEngine.")
 
             # Trace is only meaningful for compute cores. Skip the trace
             # pass injection for memtile-engine nodes — they have no
@@ -381,8 +379,9 @@ class XDNA2Deployer(SignPropDeployer):
 
     def _buildShimTileMap(self) -> Dict[int, Any]:
         """One ``aie_d.tile`` per shim column referenced on the platform."""
-        shimDataMovers = [dm for dm in getattr(self.Platform, "dataMoverEngines", [])
-                          if isinstance(dm, XDNA2ShimTileDataMover)]
+        shimDataMovers = [
+            dm for dm in getattr(self.Platform, "dataMoverEngines", []) if isinstance(dm, XDNA2ShimTileDataMover)
+        ]
         assert shimDataMovers, "XDNA2 platform exposes no XDNA2ShimTileDataMover."
         return {dm.col: aie_d.tile(dm.col, _SHIM_TILE_ROW) for dm in shimDataMovers}
 
@@ -396,8 +395,7 @@ class XDNA2Deployer(SignPropDeployer):
         because input and output L1 footprints match, so we record the
         first hit per tensor name and assume that's authoritative.
         """
-        from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRObjectFifoPass import \
-            _deriveTileShape   # noqa: E402
+        from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRObjectFifoPass import _deriveTileShape  # noqa: E402
 
         out: Dict[str, int] = {}
         for node in nodes:
@@ -480,8 +478,7 @@ class XDNA2Deployer(SignPropDeployer):
     # buffer-anchored DMA placement
     # ------------------------------------------------------------------
 
-    def _resolveDmaPlacement(self, node: Dict[str, Any],
-                             chunkToArg: Dict[str, Tuple[int, int, int]]) -> None:
+    def _resolveDmaPlacement(self, node: Dict[str, Any], chunkToArg: Dict[str, Tuple[int, int, int]]) -> None:
         """Populate per-key DMA params from buffers' ``_dataMoverEngine`` and
         the chunk → (logical arg, offset, length) map.
 
