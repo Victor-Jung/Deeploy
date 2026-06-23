@@ -471,7 +471,8 @@ class TanhLayer(ONNXLayer):
         super().__init__(maps)
 
     def computeOps(self):
-        return self.mapper.parser.operatorRepresentation['size']
+        # 1 mul + 1 add + 1 sub + 1 div + 1 exp
+        return self.mapper.parser.operatorRepresentation['size'] * 5 
 
 
 class LayerNormLayer(ONNXLayer):
