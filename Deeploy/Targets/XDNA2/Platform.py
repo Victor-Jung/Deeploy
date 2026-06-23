@@ -19,6 +19,13 @@ from Deeploy.Targets.XDNA2.Tiler import XDNA2AddTilingReadyBindings, XDNA2Concat
     XDNA2ReluTilingReadyBindings, XDNA2SiLUTilingReadyBindings, XDNA2SplitMemTileTilingReadyBindings, \
     XDNA2TanhTilingReadyBindings
 
+
+class XDNA2GELULayer(GELULayer):
+    """GELU with tanh-approximation op count matching the AIE kernel."""
+
+    def computeOps(self):
+        return self.mapper.parser.operatorRepresentation['size'] * 9
+
 XDNA2AddMapper = NodeMapper(AddParser(), XDNA2AddTilingReadyBindings)
 XDNA2MulMapper = NodeMapper(AddParser(), XDNA2MulTilingReadyBindings)
 XDNA2GeluMapper = NodeMapper(GELUParser(), XDNA2GeluTilingReadyBindings)
@@ -32,7 +39,7 @@ XDNA2ConcatMemTileMapper = NodeMapper(ConcatParser(), XDNA2ConcatMemTileTilingRe
 XDNA2Mapping = makeMappingEngineAware({
     'Add': AddLayer([XDNA2AddMapper]),
     'Mul': MulLayer([XDNA2MulMapper]),
-    'Gelu': GELULayer([XDNA2GeluMapper]),
+    'Gelu': XDNA2GELULayer([XDNA2GeluMapper]),
     'Relu': ReluLayer([XDNA2ReluMapper]),
     'Silu': SiLULayer([XDNA2SiLUMapper]),
     'Tanh': TanhLayer([XDNA2TanhMapper]),
