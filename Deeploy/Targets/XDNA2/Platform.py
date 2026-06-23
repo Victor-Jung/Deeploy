@@ -26,6 +26,7 @@ class XDNA2GELULayer(GELULayer):
     def computeOps(self):
         return self.mapper.parser.operatorRepresentation['size'] * 9
 
+
 XDNA2AddMapper = NodeMapper(AddParser(), XDNA2AddTilingReadyBindings)
 XDNA2MulMapper = NodeMapper(AddParser(), XDNA2MulTilingReadyBindings)
 XDNA2GeluMapper = NodeMapper(GELUParser(), XDNA2GeluTilingReadyBindings)

@@ -169,7 +169,7 @@ def run_simulation(config: DeeployTestConfig, skip: bool = False) -> TestResult:
         binary_path = Path(config.build_dir) / "bin" / config.test_name
         cmd = [str(binary_path)]
         # Propagate verbosity to the host binary
-        
+
         if config.verbose >= 2:
             cmd.append("-v")
     else:

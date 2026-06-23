@@ -26,15 +26,19 @@ class DSERunner:
         """Execute a design point and return parsed results."""
         cmd = self._build_cmd(config)
         result = DSEResult(
-            op=config.op,
-            num_col=config.num_col,
-            num_aie_row=config.num_aie_row,
-            label=config.label,
+            op = config.op,
+            num_col = config.num_col,
+            num_aie_row = config.num_aie_row,
+            label = config.label,
         )
 
         try:
             proc = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=600, cwd=self.test_root,
+                cmd,
+                capture_output = True,
+                text = True,
+                timeout = 600,
+                cwd = self.test_root,
             )
             output = proc.stdout + proc.stderr
             result.build_success = proc.returncode == 0 or "Errors:" in output
@@ -55,8 +59,10 @@ class DSERunner:
             test_path = "./" + test_path
 
         cmd = [
-            self.python, "deeployRunner_xdna2.py",
-            "-t", test_path,
+            self.python,
+            "deeployRunner_xdna2.py",
+            "-t",
+            test_path,
             "-v",
             f"--num-col={config.num_col}",
             f"--num-aie-row={config.num_aie_row}",
@@ -81,11 +87,11 @@ class DSERunner:
             r"\s+max=([\d.]+)\s+stdev=([\d.]+)", output)
         if m:
             result.latency = LatencyStats(
-                min_us=float(m.group(1)),
-                median_us=float(m.group(2)),
-                mean_us=float(m.group(3)),
-                max_us=float(m.group(4)),
-                stdev_us=float(m.group(5)),
+                min_us = float(m.group(1)),
+                median_us = float(m.group(2)),
+                mean_us = float(m.group(3)),
+                max_us = float(m.group(4)),
+                stdev_us = float(m.group(5)),
             )
 
         # Parse throughput: "throughput estimate  : X.XXX GB/s (NNNN bytes / median latency)"

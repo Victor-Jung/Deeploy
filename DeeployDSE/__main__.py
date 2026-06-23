@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2026 ETH Zurich and University of Bologna
 #
 # SPDX-License-Identifier: Apache-2.0
-
 """DeeployDSE CLI: sweep design space for XDNA2 operators.
 
 Usage:
@@ -29,32 +28,30 @@ def _do_plot(output_dir: str, peak_bw: float):
         print(f"No results.csv found in {output_dir}")
         sys.exit(1)
     all_results = load_csv(csv_path)
-    plot_roofline(all_results, peak_bw_gbps=peak_bw,
-                  output_path=os.path.join(output_dir, "roofline.html"))
+    plot_roofline(all_results, peak_bw_gbps = peak_bw, output_path = os.path.join(output_dir, "roofline.html"))
     ops = sorted(set(r.op for r in all_results if r.passed))
     for op in ops:
-        plot_pareto(all_results, op=op,
-                    output_path=os.path.join(output_dir, f"pareto_{op}.html"))
+        plot_pareto(all_results, op = op, output_path = os.path.join(output_dir, f"pareto_{op}.html"))
     print(f"Plots written to {output_dir}/ (roofline + {len(ops)} pareto)")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="DeeployDSE: Design Space Exploration for XDNA2")
-    subparsers = parser.add_subparsers(dest="command")
+    parser = argparse.ArgumentParser(description = "DeeployDSE: Design Space Exploration for XDNA2")
+    subparsers = parser.add_subparsers(dest = "command")
 
     # -- sweep subcommand --
-    sweep_p = subparsers.add_parser("sweep", help="Run a DSE sweep on hardware")
-    sweep_p.add_argument("--test-dir", "-t", required=True, help="Path to test directory")
-    sweep_p.add_argument("--cols", default=None, help="Comma-separated column counts (default: 1-8)")
-    sweep_p.add_argument("--rows", default=None, help="Comma-separated row counts (default: 1-4)")
-    sweep_p.add_argument("--output", "-o", default="dse_results", help="Output directory")
-    sweep_p.add_argument("--peak-bw", type=float, default=57.6, help="Peak bandwidth GB/s for roofline")
-    sweep_p.add_argument("--no-plot", action="store_true", help="Skip plotting")
+    sweep_p = subparsers.add_parser("sweep", help = "Run a DSE sweep on hardware")
+    sweep_p.add_argument("--test-dir", "-t", required = True, help = "Path to test directory")
+    sweep_p.add_argument("--cols", default = None, help = "Comma-separated column counts (default: 1-8)")
+    sweep_p.add_argument("--rows", default = None, help = "Comma-separated row counts (default: 1-4)")
+    sweep_p.add_argument("--output", "-o", default = "dse_results", help = "Output directory")
+    sweep_p.add_argument("--peak-bw", type = float, default = 57.6, help = "Peak bandwidth GB/s for roofline")
+    sweep_p.add_argument("--no-plot", action = "store_true", help = "Skip plotting")
 
     # -- plot subcommand --
-    plot_p = subparsers.add_parser("plot", help="Regenerate plots from results.csv")
-    plot_p.add_argument("--output", "-o", default="dse_results", help="Directory containing results.csv")
-    plot_p.add_argument("--peak-bw", type=float, default=57.6, help="Peak bandwidth GB/s for roofline")
+    plot_p = subparsers.add_parser("plot", help = "Regenerate plots from results.csv")
+    plot_p.add_argument("--output", "-o", default = "dse_results", help = "Directory containing results.csv")
+    plot_p.add_argument("--peak-bw", type = float, default = 57.6, help = "Peak bandwidth GB/s for roofline")
 
     args = parser.parse_args()
 
@@ -69,7 +66,7 @@ def main():
     col_range = [int(x) for x in args.cols.split(",")] if args.cols else None
     row_range = [int(x) for x in args.rows.split(",")] if args.rows else None
 
-    generator = XDNA2ElementwiseGenerator(col_range=col_range, row_range=row_range)
+    generator = XDNA2ElementwiseGenerator(col_range = col_range, row_range = row_range)
     configs = generator.generate(args.test_dir)
 
     if not configs:
@@ -81,7 +78,7 @@ def main():
     results = []
 
     for i, cfg in enumerate(configs):
-        print(f"  [{i+1}/{len(configs)}] {cfg.label} ...", end=" ", flush=True)
+        print(f"  [{i+1}/{len(configs)}] {cfg.label} ...", end = " ", flush = True)
         result = runner.run(cfg)
         status = "PASS" if result.passed else "FAIL"
         lat = f"{result.latency.median_us:.1f}μs" if result.latency.median_us > 0 else "N/A"
@@ -89,9 +86,9 @@ def main():
         results.append(result)
 
     # Append to shared CSV
-    os.makedirs(args.output, exist_ok=True)
+    os.makedirs(args.output, exist_ok = True)
     csv_path = os.path.join(args.output, "results.csv")
-    save_csv(results, csv_path, append=True)
+    save_csv(results, csv_path, append = True)
     print(f"\nResults appended to {csv_path}")
 
     # Plot from full aggregated CSV

@@ -405,7 +405,7 @@ def generateNetworkXDNA2(args):
         f.write(mlir_str)
 
     # Report total ops
-    total_ops = deployer.numberOfOps(verbose=False)
+    total_ops = deployer.numberOfOps(verbose = False)
     log.info(f"[XDNA2] Total Operations: {total_ops}")
 
     log.info(f"[XDNA2] Generated: testinputs.h, testoutputs.h, network.mlir -> {args.dumpdir}")

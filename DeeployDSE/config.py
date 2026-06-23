@@ -24,7 +24,7 @@ class DSEConfig:
     l3: Optional[int] = None
 
     # Extra CLI args forwarded to the runner
-    extra_args: Dict[str, Any] = field(default_factory=dict)
+    extra_args: Dict[str, Any] = field(default_factory = dict)
 
     @property
     def total_cores(self) -> int:

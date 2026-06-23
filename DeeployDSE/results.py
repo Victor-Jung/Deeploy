@@ -36,7 +36,7 @@ class DSEResult:
     passed: bool = False
 
     # Performance
-    latency: LatencyStats = field(default_factory=LatencyStats)
+    latency: LatencyStats = field(default_factory = LatencyStats)
     throughput_gbps: float = 0.0
     total_ops: int = 0
 

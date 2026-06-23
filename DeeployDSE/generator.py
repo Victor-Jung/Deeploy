@@ -31,7 +31,7 @@ class ConfigGenerator(ABC):
         """Return all legal configurations for the given test."""
         ...
 
-    def _load_graph(self, test_dir: str) -> gs.Graph: 
+    def _load_graph(self, test_dir: str) -> gs.Graph:
         model = onnx.load(f"{test_dir}/network.onnx")
         return gs.import_onnx(model)
 
@@ -47,10 +47,7 @@ class XDNA2ElementwiseGenerator(ConfigGenerator):
     given the tensor shape and vector alignment.
     """
 
-    def __init__(self,
-                 col_range: Optional[List[int]] = None,
-                 row_range: Optional[List[int]] = None,
-                 axis: int = 0):
+    def __init__(self, col_range: Optional[List[int]] = None, row_range: Optional[List[int]] = None, axis: int = 0):
         self.col_range = col_range or list(range(1, MAX_COLS + 1))
         self.row_range = row_range or list(range(1, MAX_AIE_ROWS + 1))
         self.axis = axis
@@ -66,10 +63,10 @@ class XDNA2ElementwiseGenerator(ConfigGenerator):
             for nr in self.row_range:
                 if self._is_legal(axis_size, nc, nr, op):
                     configs.append(DSEConfig(
-                        test_dir=test_dir,
-                        op=op,
-                        num_col=nc,
-                        num_aie_row=nr,
+                        test_dir = test_dir,
+                        op = op,
+                        num_col = nc,
+                        num_aie_row = nr,
                     ))
         return configs
 
@@ -78,7 +75,7 @@ class XDNA2ElementwiseGenerator(ConfigGenerator):
 
         if nr > MAX_AIE_ROWS:
             return False
-        
+
         if nc > MAX_COLS:
             return False
 

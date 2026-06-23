@@ -13,7 +13,6 @@ from DeeployDSE.results import DSEResult, LatencyStats
 
 try:
     import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
 except ImportError:
     go = None
 
@@ -49,11 +48,11 @@ def save_csv(results: List[DSEResult], path: str, append: bool = False) -> None:
     records = results_to_records(results)
     if not records:
         return
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    os.makedirs(os.path.dirname(path) or ".", exist_ok = True)
     file_exists = os.path.isfile(path) and append
     mode = "a" if append else "w"
-    with open(path, mode, newline="") as f:
-        w = csv.DictWriter(f, fieldnames=records[0].keys())
+    with open(path, mode, newline = "") as f:
+        w = csv.DictWriter(f, fieldnames = records[0].keys())
         if not file_exists:
             w.writeheader()
         w.writerows(records)
@@ -65,27 +64,28 @@ def load_csv(path: str) -> List[DSEResult]:
     results = []
     with open(path) as f:
         for row in csv.DictReader(f):
-            results.append(DSEResult(
-                op=row['op'],
-                num_col=int(row['num_col']),
-                num_aie_row=int(row['num_aie_row']),
-                label=row['label'],
-                passed=row['passed'] == 'True',
-                errors=int(row['errors']),
-                total_elems=int(row['total_elems']),
-                latency=LatencyStats(
-                    min_us=float(row['latency_min_us']),
-                    median_us=float(row['latency_median_us']),
-                    mean_us=float(row['latency_mean_us']),
-                    max_us=float(row['latency_max_us']),
-                    stdev_us=float(row['latency_stdev_us']),
-                ),
-                throughput_gbps=float(row['throughput_gbps']),
-                total_ops=int(row.get('total_ops', 0)),
-                input_bytes=int(row['total_bytes']) // 2,
-                output_bytes=int(row['total_bytes']) - int(row['total_bytes']) // 2,
-                build_success=True,
-            ))
+            results.append(
+                DSEResult(
+                    op = row['op'],
+                    num_col = int(row['num_col']),
+                    num_aie_row = int(row['num_aie_row']),
+                    label = row['label'],
+                    passed = row['passed'] == 'True',
+                    errors = int(row['errors']),
+                    total_elems = int(row['total_elems']),
+                    latency = LatencyStats(
+                        min_us = float(row['latency_min_us']),
+                        median_us = float(row['latency_median_us']),
+                        mean_us = float(row['latency_mean_us']),
+                        max_us = float(row['latency_max_us']),
+                        stdev_us = float(row['latency_stdev_us']),
+                    ),
+                    throughput_gbps = float(row['throughput_gbps']),
+                    total_ops = int(row.get('total_ops', 0)),
+                    input_bytes = int(row['total_bytes']) // 2,
+                    output_bytes = int(row['total_bytes']) - int(row['total_bytes']) // 2,
+                    build_success = True,
+                ))
     return results
 
 
@@ -127,41 +127,47 @@ def plot_roofline(results: List[DSEResult],
             xs.append(oi)
             ys.append(attained)
             labels.append(r.label)
-        fig.add_trace(go.Scatter(
-            x=xs, y=ys, mode="markers+text", text=labels,
-            textposition="top center", marker=dict(size=10),
-            name=op,
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x = xs,
+                y = ys,
+                mode = "markers+text",
+                text = labels,
+                textposition = "top center",
+                marker = dict(size = 10),
+                name = op,
+            ))
 
     # Roofline ceilings
     oi_range = np.logspace(-2, 2, 200)
     ridge_point = peak_gflops / peak_bw_gbps  # FLOP/Byte where BW meets compute
     roofline = np.minimum(peak_gflops, peak_bw_gbps * oi_range)
 
-    fig.add_trace(go.Scatter(
-        x=oi_range.tolist(), y=roofline.tolist(), mode="lines",
-        line=dict(color="red", dash="dash"), name="Roofline",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x = oi_range.tolist(),
+            y = roofline.tolist(),
+            mode = "lines",
+            line = dict(color = "red", dash = "dash"),
+            name = "Roofline",
+        ))
 
     fig.update_layout(
-        title=f"Roofline (peak: {peak_gflops:.0f} GFLOP/s, BW: {peak_bw_gbps} GB/s)",
-        xaxis_title="Operational Intensity (FLOP/Byte)",
-        yaxis_title="Attained Performance (GFLOP/s)",
-        xaxis=dict(type="log", dtick=1, exponentformat="power",
-                   minor=dict(dtick="D1", showgrid=True)),
-        yaxis=dict(type="log", dtick=1, exponentformat="power",
-                   minor=dict(dtick="D1", showgrid=True)),
+        title = f"Roofline (peak: {peak_gflops:.0f} GFLOP/s, BW: {peak_bw_gbps} GB/s)",
+        xaxis_title = "Operational Intensity (FLOP/Byte)",
+        yaxis_title = "Attained Performance (GFLOP/s)",
+        xaxis = dict(type = "log", dtick = 1, exponentformat = "power", minor = dict(dtick = "D1", showgrid = True)),
+        yaxis = dict(type = "log", dtick = 1, exponentformat = "power", minor = dict(dtick = "D1", showgrid = True)),
     )
 
     if output_path:
-        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok = True)
         fig.write_html(output_path)
     else:
         fig.show()
 
 
-def plot_pareto(results: List[DSEResult], op: Optional[str] = None,
-                output_path: Optional[str] = None) -> None:
+def plot_pareto(results: List[DSEResult], op: Optional[str] = None, output_path: Optional[str] = None) -> None:
     """Pareto front: latency vs resource usage (cores). Filters by op if given."""
     if go is None:
         raise ImportError("plotly required for plotting: pip install plotly")
@@ -181,31 +187,38 @@ def plot_pareto(results: List[DSEResult], op: Optional[str] = None,
     pareto_mask = _pareto_front(np.column_stack([latency, cores]))
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=cores, y=latency, mode="markers+text", text=labels,
-        textposition="top center", marker=dict(size=8, color="gray"),
-        name="All points",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x = cores,
+            y = latency,
+            mode = "markers+text",
+            text = labels,
+            textposition = "top center",
+            marker = dict(size = 8, color = "gray"),
+            name = "All points",
+        ))
 
     pareto_idx = np.where(pareto_mask)[0]
     # Sort Pareto points by cores for line
     order = np.argsort(cores[pareto_idx])
-    fig.add_trace(go.Scatter(
-        x=cores[pareto_idx][order], y=latency[pareto_idx][order],
-        mode="markers+lines",
-        marker=dict(size=12, color="red", symbol="star"),
-        name="Pareto front",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x = cores[pareto_idx][order],
+            y = latency[pareto_idx][order],
+            mode = "markers+lines",
+            marker = dict(size = 12, color = "red", symbol = "star"),
+            name = "Pareto front",
+        ))
 
     fig.update_layout(
-        title=f"Pareto Front: Latency vs Resource Usage{f' ({op})' if op else ''}",
-        xaxis_title="Total AIE cores",
-        yaxis_title="Median latency (μs)",
-        xaxis=dict(dtick=1),
+        title = f"Pareto Front: Latency vs Resource Usage{f' ({op})' if op else ''}",
+        xaxis_title = "Total AIE cores",
+        yaxis_title = "Median latency (μs)",
+        xaxis = dict(dtick = 1),
     )
 
     if output_path:
-        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok = True)
         fig.write_html(output_path)
     else:
         fig.show()
@@ -214,7 +227,7 @@ def plot_pareto(results: List[DSEResult], op: Optional[str] = None,
 def _pareto_front(costs: np.ndarray) -> np.ndarray:
     """Boolean mask of Pareto-optimal rows (minimize all objectives)."""
     n = len(costs)
-    is_pareto = np.ones(n, dtype=bool)
+    is_pareto = np.ones(n, dtype = bool)
     for i in range(n):
         if not is_pareto[i]:
             continue
