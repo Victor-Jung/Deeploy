@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
   std::vector<std::string> positional;
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
-    if (arg == "-v" || arg == "--verbose" || arg == "-vv") {
+    if (arg == "-v" || arg == "--verbose") {
       verbose = true;
     } else if ((arg == "--warmup" || arg == "-w") && i + 1 < argc) {
       warmup_iters =
@@ -302,10 +302,10 @@ int main(int argc, char **argv) {
 
   size_t total_in_bytes = 0;
   for (unsigned int i = 0; i < N_INPUTS; ++i)
-    total_in_bytes += kInputElems[i] * elem_size;
+    total_in_bytes += kInputPaddedElems[i] * elem_size;
   size_t total_out_bytes = 0;
   for (unsigned int i = 0; i < N_OUTPUTS; ++i)
-    total_out_bytes += kOutputElems[i] * elem_size;
+    total_out_bytes += kOutputPaddedElems[i] * elem_size;
   const size_t total_bytes = total_in_bytes + total_out_bytes;
   const double throughput_gbps =
       (lat_med > 0.0)
