@@ -59,6 +59,8 @@ CHANGELOG_GEN.md
 .pyusbip/
 .cache/
 
-# Claude context file
+# Claude stuff
+.claude/*
 CLAUDE.md
+
 Container/xrt-debs/
