@@ -21,7 +21,8 @@
 // build; override with -DDIM_K / -DVEC_SIZE to match a different K):
 //   DIM_K    – reduction dimension K (length of the input vector / matrix row)
 //   VEC_SIZE – SIMD chunk size r; must divide DIM_K and satisfy
-//              DIM_K >= 2*VEC_SIZE (the pipelined loop assumes >= 2 iterations).
+//              DIM_K >= 2*VEC_SIZE (the pipelined loop assumes >= 2
+//              iterations).
 //
 // The runtime `m` (output rows) and `row_offset` (into c) are passed as i32
 // arguments, matching IRON's matvec_vectorized_bf16_bf16 ABI.
@@ -87,7 +88,8 @@ void matvec_vectorized(uint32_t m, const bfloat16 *__restrict a,
       aie::vector<bfloat16, r> b_vec = aie::load_v<r>(b_cur);
       acc = aie::mac(acc, a_vec, b_vec);
     }
-    *c = static_cast<bfloat16>(aie::reduce_add(acc.template to_vector<float>()));
+    *c =
+        static_cast<bfloat16>(aie::reduce_add(acc.template to_vector<float>()));
   }
 }
 

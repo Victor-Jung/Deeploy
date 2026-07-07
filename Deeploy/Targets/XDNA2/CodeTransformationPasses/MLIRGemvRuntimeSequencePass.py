@@ -75,7 +75,7 @@ class MLIRGemvRuntimeSequencePass(MLIRCodeTransformationPass):
             (mlirBlock.issuedOutputTasks if isOutput else mlirBlock.issuedInputTasks).append(task)
 
         _emit(aKey, M * N, False)  # A: full [M,N] matrix, linear
-        _emit(bKey, N, False)      # x: full [N] vector, linear
-        _emit(cKey, M, True)       # y: full [M] output, linear
+        _emit(bKey, N, False)  # x: full [N] vector, linear
+        _emit(cKey, M, True)  # y: full [M] output, linear
 
         return ctxt, mlirBlock

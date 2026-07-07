@@ -62,15 +62,15 @@ class MLIRGemvObjectFifoPass(MLIRCodeTransformationPass):
         bf16 = ir.BF16Type.get()
         i32 = ir.IntegerType.get_signless(32)
         aTy = ir.MemRefType.get((DIM_M, N), bf16)  # one A row band (2-D, row-major)
-        bTy = ir.MemRefType.get((N,), bf16)         # full x vector
-        cTy = ir.MemRefType.get((DIM_M,), bf16)     # one y tile
+        bTy = ir.MemRefType.get((N,), bf16)  # full x vector
+        cTy = ir.MemRefType.get((DIM_M,), bf16)  # one y tile
 
         computeTile = mlirBlock.computeTile
         shimTile = mlirBlock.shimTile
         prefix = name.replace(".", "_").replace("/", "_")
 
         aKey, bKey = template.INPUT_KEYS  # ['A', 'B']
-        (cKey,) = template.OUTPUT_KEYS    # ['data_out']
+        (cKey,) = template.OUTPUT_KEYS  # ['data_out']
 
         aFifo = f"{prefix}_inA"
         bFifo = f"{prefix}_inB"

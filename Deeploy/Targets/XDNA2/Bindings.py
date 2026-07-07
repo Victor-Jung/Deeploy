@@ -8,16 +8,15 @@ from Deeploy.DeeployTypes import NodeBinding
 from Deeploy.MLIRDataTypes import MLIRCodeTransformation
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRComputeCorePass import MLIRComputeCorePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRDistributeLinkPass import MLIRDistributeLinkPass
-from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRJoinLinkPass import MLIRJoinLinkPass
-from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRMemTileRuntimeSequencePass import \
-    MLIRMemTileRuntimeSequencePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRGemvComputeCorePass import MLIRGemvComputeCorePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRGemvObjectFifoPass import MLIRGemvObjectFifoPass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRGemvRuntimeSequencePass import MLIRGemvRuntimeSequencePass
+from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRJoinLinkPass import MLIRJoinLinkPass
+from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRMemTileRuntimeSequencePass import MLIRMemTileRuntimeSequencePass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRObjectFifoPass import MLIRObjectFifoPass
 from Deeploy.Targets.XDNA2.CodeTransformationPasses.MLIRRuntimeSequencePass import MLIRRuntimeSequencePass
-from Deeploy.Targets.XDNA2.Templates import AddTemplate, ConcatTemplate, GeluTemplate, GemvTemplate, LayerNormTemplate, \
-    MulTemplate, ReluTemplate, SiLUTemplate, SplitTemplate, TanhTemplate
+from Deeploy.Targets.XDNA2.Templates import AddTemplate, ConcatTemplate, GeluTemplate, GemvTemplate, \
+    LayerNormTemplate, MulTemplate, ReluTemplate, SiLUTemplate, SplitTemplate, TanhTemplate
 from Deeploy.Targets.XDNA2.TypeCheckers import XDNA2AddChecker, XDNA2ConcatChecker, XDNA2GeluChecker, \
     XDNA2GemvChecker, XDNA2LayerNormChecker, XDNA2MulChecker, XDNA2ReluChecker, XDNA2SiLUChecker, XDNA2SplitChecker, \
     XDNA2TanhChecker
