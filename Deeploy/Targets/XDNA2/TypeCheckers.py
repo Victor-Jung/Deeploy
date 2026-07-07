@@ -155,6 +155,26 @@ class XDNA2ConcatChecker(SignPropTypeChecker):
         return [True]
 
 
+class XDNA2GemvChecker(SignPropTypeChecker):
+    """Type checker for BF16 GEMV (matrix-vector) on XDNA2.
+
+    Two inputs (matrix A, vector B) and one output, all bfloat16_t pointers.
+    Accumulation happens in fp32 inside the kernel and is cast back to bf16
+    on store, so all graph-level tensors are bf16.
+    """
+
+    def __init__(self, input_types: Sequence[Type[Pointer]], output_types: Sequence[Type[Pointer]]):
+        super().__init__(input_types, output_types)
+
+    def _inferNumLevels(self, inputs: List[VariableBuffer],
+                        operatorRepresentation: OperatorRepresentation) -> Optional[List[int]]:
+        return [1]
+
+    def _inferSignedness(self, inputs: List[VariableBuffer],
+                         operatorRepresentation: OperatorRepresentation) -> Optional[List[bool]]:
+        return [True]
+
+
 class XDNA2LayerNormChecker(SignPropTypeChecker):
     """Type checker for BF16 LayerNorm on XDNA2.
 

@@ -386,7 +386,10 @@ def generateNetworkXDNA2(args):
         f.write(testInputStr)
 
     # Determine BF16 comparison tolerance (in ULPs) based on operator types.
-    _APPROX_OPS = {'Silu', 'Gelu', 'Sigmoid', 'Tanh', 'Softmax', 'LayerNormalization'}
+    # MatMul/Gemm accumulate in fp32 with a hardware-specific MAC order, so the
+    # bf16 result differs from the fp32-accumulated golden by a few ULP — the
+    # same approximate-op situation as the nonlinear kernels below.
+    _APPROX_OPS = {'Silu', 'Gelu', 'Sigmoid', 'Tanh', 'Softmax', 'LayerNormalization', 'MatMul', 'Gemm'}
     op_types = {node.op for node in graph.nodes}
     tolerance_ulps = 40 if op_types & _APPROX_OPS else 1
 

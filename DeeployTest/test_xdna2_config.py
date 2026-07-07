@@ -42,4 +42,6 @@ KERNEL_TESTS = [
     ("Kernels/BF16/Relu/Unaligned", ["--num-col=8", "--num-aie-row=1"]),
     ("Kernels/BF16/Relu/Unaligned", ["--num-col=3", "--num-aie-row=1"]),
     ("Kernels/BF16/Gelu/Unaligned", ["--num-col=8", "--num-aie-row=1"]),
+    # Matrix-Vector (GEMV) — single core
+    ("Kernels/BF16/Gemv/Single", ["--num-col=1", "--num-aie-row=1"]),
 ]

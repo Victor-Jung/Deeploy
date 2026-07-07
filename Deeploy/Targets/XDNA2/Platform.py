@@ -9,15 +9,16 @@ from Deeploy.DeeployTypes import ConstantBuffer, DataMoverEngine, DeploymentEngi
 from Deeploy.EngineExtension.EngineAwareLayer import makeMappingEngineAware
 from Deeploy.MemoryLevelExtension.MemoryLevels import MemoryHierarchy, MemoryLevel
 from Deeploy.MemoryLevelExtension.NetworkDeployers.MemoryLevelDeployer import MemoryPlatform
-from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, GELULayer, LayerNormLayer, MulLayer, ReluLayer, \
-    SiLULayer, SplitLayer, TanhLayer
+from Deeploy.Targets.Generic.Layers import AddLayer, ConcatLayer, GELULayer, LayerNormLayer, MatMulLayer, MulLayer, \
+    ReluLayer, SiLULayer, SplitLayer, TanhLayer
 from Deeploy.Targets.Generic.Parsers import AddParser, ConcatParser, GELUParser, LayerNormParser, ReluParser, \
     SiLUParser, SplitParser, TanhParser
 from Deeploy.Targets.Generic.Templates import AllocateTemplate, FreeTemplate
+from Deeploy.Targets.XDNA2.Parsers import XDNA2GemvParser
 from Deeploy.Targets.XDNA2.Tiler import XDNA2AddTilingReadyBindings, XDNA2ConcatMemTileTilingReadyBindings, \
-    XDNA2GeluTilingReadyBindings, XDNA2LayerNormTilingReadyBindings, XDNA2MulTilingReadyBindings, \
-    XDNA2ReluTilingReadyBindings, XDNA2SiLUTilingReadyBindings, XDNA2SplitMemTileTilingReadyBindings, \
-    XDNA2TanhTilingReadyBindings
+    XDNA2GeluTilingReadyBindings, XDNA2GemvTilingReadyBindings, XDNA2LayerNormTilingReadyBindings, \
+    XDNA2MulTilingReadyBindings, XDNA2ReluTilingReadyBindings, XDNA2SiLUTilingReadyBindings, \
+    XDNA2SplitMemTileTilingReadyBindings, XDNA2TanhTilingReadyBindings
 
 
 class XDNA2GELULayer(GELULayer):
@@ -36,6 +37,7 @@ XDNA2TanhMapper = NodeMapper(TanhParser(), XDNA2TanhTilingReadyBindings)
 XDNA2LayerNormMapper = NodeMapper(LayerNormParser(), XDNA2LayerNormTilingReadyBindings)
 XDNA2SplitMemTileMapper = NodeMapper(SplitParser(), XDNA2SplitMemTileTilingReadyBindings)
 XDNA2ConcatMemTileMapper = NodeMapper(ConcatParser(), XDNA2ConcatMemTileTilingReadyBindings)
+XDNA2GemvMapper = NodeMapper(XDNA2GemvParser(), XDNA2GemvTilingReadyBindings)
 
 XDNA2Mapping = makeMappingEngineAware({
     'Add': AddLayer([XDNA2AddMapper]),
@@ -45,6 +47,7 @@ XDNA2Mapping = makeMappingEngineAware({
     'Silu': SiLULayer([XDNA2SiLUMapper]),
     'Tanh': TanhLayer([XDNA2TanhMapper]),
     'LayerNormalization': LayerNormLayer([XDNA2LayerNormMapper]),
+    'MatMul': MatMulLayer([XDNA2GemvMapper]),
 })
 
 XDNA2MemTileMapping = makeMappingEngineAware({

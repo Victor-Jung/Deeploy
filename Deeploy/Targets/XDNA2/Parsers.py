@@ -11,6 +11,30 @@ import numpy as np
 import onnx_graphsurgeon as gs
 
 from Deeploy.DeeployTypes import NetworkContext, NodeParser
+from Deeploy.Targets.Generic.Parsers import MatMulParser
+
+
+class XDNA2GemvParser(MatMulParser):
+    """Matrix-vector (GEMV) parser for XDNA2.
+
+    Reuses the Generic MatMulParser but only matches the vector, bias-free
+    case: exactly two inputs (matrix A=[M,N], vector x=[N,1]) and O == 1.
+    Anything wider (a true matrix-matrix product) or with a bias is left to
+    other mappers.
+    """
+
+    def parseNode(self, node: gs.Node) -> bool:
+        return super().parseNode(node) and len(node.inputs) == 2
+
+    def parseNodeCtxt(self,
+                      ctxt: NetworkContext,
+                      node: gs.Node,
+                      channels_first: bool = True) -> Tuple[NetworkContext, bool]:
+        newCtxt, ret = super().parseNodeCtxt(ctxt, node, channels_first)
+        if ret:
+            # GEMV marker: the second operand is a column vector (O == 1).
+            ret = int(self.operatorRepresentation.get('O', 0)) == 1
+        return newCtxt, ret
 
 
 class XDNA2LayerNormParser(NodeParser):
