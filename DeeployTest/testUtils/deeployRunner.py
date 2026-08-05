@@ -188,7 +188,8 @@ def create_config_from_args(args: argparse.Namespace,
                             simulator: str,
                             tiling: bool,
                             platform_specific_cmake_args: Optional[list] = None,
-                            gen_args_callback = None) -> DeeployTestConfig:
+                            gen_args_callback = None,
+                            generation_script: Optional[str] = None) -> DeeployTestConfig:
 
     script_path = Path(__file__).resolve()
     base_dir = script_path.parent.parent
@@ -263,6 +264,7 @@ def create_config_from_args(args: argparse.Namespace,
         gen_args = gen_args_list,
         verbose = args.verbose,
         debug = args.debug,
+        generation_script = generation_script,
     )
 
     return config
@@ -328,7 +330,8 @@ def main(default_platform: Optional[str] = None,
          parsed_args: Optional[argparse.Namespace] = None,
          parser_setup_callback = None,
          gen_args_callback = None,
-         post_sim_callback = None):
+         post_sim_callback = None,
+         generation_script: Optional[str] = None):
     """
     Main entry point for Deeploy test runners.
 
@@ -426,7 +429,7 @@ def main(default_platform: Optional[str] = None,
         platform_specific_cmake_args.append(f"-DNUM_CLUSTERS={args.num_clusters}")
 
     config = create_config_from_args(args, platform, simulator, tiling_enabled, platform_specific_cmake_args,
-                                     gen_args_callback)
+                                     gen_args_callback, generation_script)
 
     print_configuration(config)
 
