@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.residency\_footprint
+========================================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: residency_footprint

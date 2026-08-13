@@ -1,0 +1,44 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.MLIRDataTypes.MLIRNodeTemplate
+======================================
+
+.. currentmodule:: Deeploy.MLIRDataTypes
+
+.. autoclass:: MLIRNodeTemplate
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~MLIRNodeTemplate.__init__
+      ~MLIRNodeTemplate.alignToContext
+      ~MLIRNodeTemplate.computeTransientBuffersSize
+      ~MLIRNodeTemplate.emit
+      ~MLIRNodeTemplate.generate
+      ~MLIRNodeTemplate.hoistTransientBuffers
+      ~MLIRNodeTemplate.internalSize
+      ~MLIRNodeTemplate.kernelArgTypes
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MLIRNodeTemplate.INPUT_KEYS
+      ~MLIRNodeTemplate.KERNEL_FN
+      ~MLIRNodeTemplate.KERNEL_OBJ
+      ~MLIRNodeTemplate.OUTPUT_KEYS
+   
+   

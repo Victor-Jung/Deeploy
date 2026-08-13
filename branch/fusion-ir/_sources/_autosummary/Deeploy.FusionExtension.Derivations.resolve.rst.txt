@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.resolve
+===========================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: resolve

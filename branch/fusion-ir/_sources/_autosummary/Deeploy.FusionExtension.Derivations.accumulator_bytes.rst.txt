@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.accumulator\_bytes
+======================================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: accumulator_bytes

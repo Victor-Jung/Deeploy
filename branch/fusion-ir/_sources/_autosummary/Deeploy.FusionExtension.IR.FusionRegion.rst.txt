@@ -1,0 +1,47 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR.FusionRegion
+=======================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autoclass:: FusionRegion
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~FusionRegion.__init__
+      ~FusionRegion.graph_inputs
+      ~FusionRegion.graph_outputs
+      ~FusionRegion.input_names
+      ~FusionRegion.interior_names
+      ~FusionRegion.kernel_by_node
+      ~FusionRegion.output_names
+      ~FusionRegion.reduce_axes
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FusionRegion.hw
+      ~FusionRegion.kernels
+      ~FusionRegion.loops
+      ~FusionRegion.placement
+      ~FusionRegion.edges
+      ~FusionRegion.maps
+      ~FusionRegion.params
+   
+   

@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.is\_accumulator
+===================================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: is_accumulator

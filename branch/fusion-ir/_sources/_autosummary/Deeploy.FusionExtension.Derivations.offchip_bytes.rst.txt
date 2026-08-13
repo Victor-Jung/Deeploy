@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.offchip\_bytes
+==================================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: offchip_bytes

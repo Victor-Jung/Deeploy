@@ -1,0 +1,230 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="../_static/DeeployIconGreen.svg" rel="icon" type="image/svg+xml">
+    <link href="../_static/DeeployIconGreen-32x32.png" sizes="32x32" rel="icon" type="image/png">
+    <link href="../_static/DeeployIconGreen-64x64.png" sizes="64x64" rel="icon" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XDNA2 Execution Tracing &mdash; Deeploy 2024 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=6fefd858"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Library Structure" href="../structure.html" />
+    <link rel="prev" title="Debugging" href="debugging.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/DeeployBannerGreen-640x-320.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="overview.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Neural Network Deeployment on the PULP Platform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging.html">Debugging</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">XDNA2 Execution Tracing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#quick-start">Quick Start</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-it-works">How It Works</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#traced-events">Traced Events</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../structure.html">Library Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidocs.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releasing.html">Deeploy Release Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Deeploy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="overview.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">XDNA2 Execution Tracing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/xdna2_tracing.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--
+SPDX-FileCopyrightText: 2026 ETH Zurich and University of Bologna
+
+SPDX-License-Identifier: Apache-2.0
+-->
+<section class="tex2jax_ignore mathjax_ignore" id="xdna2-execution-tracing">
+<h1>XDNA2 Execution Tracing<a class="headerlink" href="#xdna2-execution-tracing" title="Link to this heading"></a></h1>
+<p>The XDNA2 backend supports optional AIE execution tracing.
+When enabled, the generated MLIR includes trace configuration for both <strong>core
+events</strong> (instruction execution, stalls, port activity) and <strong>memory events</strong>
+(DMA start/finish/starvation).
+After execution on the NPU, the raw trace data is parsed into a JSON file
+that can be visualised in <a class="reference external" href="https://ui.perfetto.dev/">Perfetto</a>.</p>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<p>From the <code class="docutils literal notranslate"><span class="pre">DeeployTest/</span></code> directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate, build, run on the NPU, and parse the trace in one step:</span>
+python<span class="w"> </span>deeployRunner_xdna2.py<span class="w"> </span>-t<span class="w"> </span>Tests/Kernels/BF16/Add/Regular<span class="w"> </span>--trace
+
+<span class="c1"># With a custom trace buffer size (default: 8192 bytes):</span>
+python<span class="w"> </span>deeployRunner_xdna2.py<span class="w"> </span>-t<span class="w"> </span>Tests/Kernels/BF16/Add/Regular<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--trace<span class="w"> </span>--trace-buffer-size<span class="w"> </span><span class="m">16384</span>
+</pre></div>
+</div>
+<p>After execution two files are produced next to the test binary
+(inside <code class="docutils literal notranslate"><span class="pre">TEST_XDNA2/build_master/bin/</span></code>):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">trace.txt</span></code></p></td>
+<td><p>Raw hex trace words read back from the NPU</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">trace.json</span></code></p></td>
+<td><p>Parsed trace in <a class="reference external" href="https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU">Chrome Trace Event Format</a></p></td>
+</tr>
+</tbody>
+</table>
+<p>Open <code class="docutils literal notranslate"><span class="pre">trace.json</span></code> in <a class="reference external" href="https://ui.perfetto.dev/">Perfetto UI</a> to visualise
+core and memory trace timelines.</p>
+</section>
+<section id="how-it-works">
+<h2>How It Works<a class="headerlink" href="#how-it-works" title="Link to this heading"></a></h2>
+<p>Enabling <code class="docutils literal notranslate"><span class="pre">--trace</span></code> triggers three additional MLIR code-transformation passes
+during code generation:</p>
+<ol class="arabic simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">MLIRCoreTracePass</span></code></strong> — Emits an <code class="docutils literal notranslate"><span class="pre">aie.trace</span></code> block on the compute tile
+configured for 8 core events (vector instructions, stalls, port activity)
+with packet-based routing.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">MLIRMemTracePass</span></code></strong> — Emits a second <code class="docutils literal notranslate"><span class="pre">aie.trace</span></code> block for 8 memory/DMA
+events (S2MM/MM2S start, finish, starvation) with event-based
+start/stop synchronised to the core trace via broadcast signals.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">MLIRTraceRuntimePass</span></code></strong> — Adds <code class="docutils literal notranslate"><span class="pre">trace_host_config</span></code> and
+<code class="docutils literal notranslate"><span class="pre">trace_start_config</span></code> calls to the runtime sequence to activate the
+configured traces at execution time.</p></li>
+</ol>
+<p>On the host side, the XRT testbench (<code class="docutils literal notranslate"><span class="pre">main.cpp</span></code>) allocates a trace buffer
+object, passes it as kernel argument 7, and writes the data back to <code class="docutils literal notranslate"><span class="pre">trace.txt</span></code> after execution.</p>
+<p>The post-simulation callback in <code class="docutils literal notranslate"><span class="pre">deeployRunner_xdna2.py</span></code> then invokes the
+mlir-aie trace parser (<code class="docutils literal notranslate"><span class="pre">aie.utils.trace.parse</span></code>) against the lowered MLIR
+(<code class="docutils literal notranslate"><span class="pre">main_physical_with_elfs.mlir</span></code>) to produce the final <code class="docutils literal notranslate"><span class="pre">trace.json</span></code>.</p>
+</section>
+<section id="traced-events">
+<h2>Traced Events<a class="headerlink" href="#traced-events" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">INSTR_EVENT_0</span></code>: Emitted by the <code class="docutils literal notranslate"><span class="pre">event0();</span></code> call, usually called at the beginning of the kernels (see <code class="docutils literal notranslate"><span class="pre">TargetLibraries/XDNA2/kernels/add.cc</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">INSTR_EVENT_1</span></code>: Emitted by the <code class="docutils literal notranslate"><span class="pre">event1();</span></code> call, usually called at the end of the kernels.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">INSTR_VECTOR</span></code>: Emitted every time the vector unit is used, can be useful to see how well the kernel is using the vector unit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PORT_RUNNING_0</span></code>: Emitted when a DMA transfer is running on port 0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PORT_RUNNING_1</span></code>: Emitted when a DMA transfer is running on port 1.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="debugging.html" class="btn btn-neutral float-left" title="Debugging" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../structure.html" class="btn btn-neutral float-right" title="Library Structure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Moritz Scherer, Philip Wiese, Luka Macan, Victor Jung.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <!--
+SPDX-FileCopyrightText: 2025 ETH Zurich and University of Bologna
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    Version: pr/xdna-support-v2
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    
+    
+    <dl>
+      <dt>Versions</dt>
+      
+      <dd><a href="https://pulp-platform.github.io/Deeploy/index.html">main</a></dd>
+      
+      <dd><a href="https://pulp-platform.github.io/Deeploy/branch/devel/index.html">devel</a></dd>
+      
+      <dd><a href="https://pulp-platform.github.io/Deeploy/tag/v0.2.0/index.html">v0.2.0</a></dd>
+      
+      <dd><a href="https://pulp-platform.github.io/Deeploy/tag/v0.2.1/index.html">v0.2.1</a></dd>
+      
+    </dl>
+    
+    <br>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

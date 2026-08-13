@@ -1,0 +1,29 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR.LoopKind
+===================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autoclass:: LoopKind
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LoopKind.MARCH
+      ~LoopKind.REDUCE
+      ~LoopKind.PARALLEL
+   
+   

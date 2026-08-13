@@ -1,0 +1,36 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR.TensorRef
+====================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autoclass:: TensorRef
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~TensorRef.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TensorRef.name
+      ~TensorRef.shape
+      ~TensorRef.dtype
+   
+   

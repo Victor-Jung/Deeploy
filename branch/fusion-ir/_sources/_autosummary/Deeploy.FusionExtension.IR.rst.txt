@@ -1,0 +1,50 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR
+==========================
+
+.. automodule:: Deeploy.FusionExtension.IR
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      dtype_bytes
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      BoundKernel
+      EdgeSchedule
+      FusionRegion
+      HardwareModel
+      Loop
+      LoopKind
+      Residency
+      SpatialMap
+      TensorRef
+   
+   
+
+   
+   
+   
+
+
+

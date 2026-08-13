@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.IR.dtype\_bytes
+=======================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autofunction:: dtype_bytes

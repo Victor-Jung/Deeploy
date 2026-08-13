@@ -1,0 +1,51 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.MLIRDataTypes.GraphAwareNetworkContext
+==============================================
+
+.. currentmodule:: Deeploy.MLIRDataTypes
+
+.. autoclass:: GraphAwareNetworkContext
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~GraphAwareNetworkContext.__init__
+      ~GraphAwareNetworkContext.add
+      ~GraphAwareNetworkContext.addUser
+      ~GraphAwareNetworkContext.annotateType
+      ~GraphAwareNetworkContext.copy
+      ~GraphAwareNetworkContext.dealiasBuffer
+      ~GraphAwareNetworkContext.exportNetworkContext
+      ~GraphAwareNetworkContext.hoistConstant
+      ~GraphAwareNetworkContext.hoistConstantAndReference
+      ~GraphAwareNetworkContext.hoistGlobalDefinition
+      ~GraphAwareNetworkContext.hoistReference
+      ~GraphAwareNetworkContext.hoistStruct
+      ~GraphAwareNetworkContext.hoistTransientBuffer
+      ~GraphAwareNetworkContext.importNetworkContext
+      ~GraphAwareNetworkContext.is_buffer
+      ~GraphAwareNetworkContext.is_global
+      ~GraphAwareNetworkContext.is_local
+      ~GraphAwareNetworkContext.is_object
+      ~GraphAwareNetworkContext.lookup
+      ~GraphAwareNetworkContext.lookupConsumerOpRepr
+      ~GraphAwareNetworkContext.lookupOpRepr
+      ~GraphAwareNetworkContext.lookupProducerOpRepr
+      ~GraphAwareNetworkContext.populateNameToProducer
+      ~GraphAwareNetworkContext.unravelReference
+   
+   
+
+   
+   
+   

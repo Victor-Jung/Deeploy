@@ -1,0 +1,35 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.Reference
+=================================
+
+.. automodule:: Deeploy.FusionExtension.Reference
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      evaluate
+      random_inputs
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

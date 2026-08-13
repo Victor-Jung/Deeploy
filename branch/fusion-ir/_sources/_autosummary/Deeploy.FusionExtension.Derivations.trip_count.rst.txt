@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.trip\_count
+===============================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: trip_count

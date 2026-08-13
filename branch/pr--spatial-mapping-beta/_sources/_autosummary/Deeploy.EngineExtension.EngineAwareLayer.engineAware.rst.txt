@@ -1,0 +1,6 @@
+Deeploy.EngineExtension.EngineAwareLayer.engineAware
+====================================================
+
+.. currentmodule:: Deeploy.EngineExtension.EngineAwareLayer
+
+.. autofunction:: engineAware

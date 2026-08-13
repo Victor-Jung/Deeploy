@@ -1,0 +1,46 @@
+﻿.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy
+=======
+
+.. automodule:: Deeploy
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   AbstractDataTypes
+   CommonExtensions
+   DeeployTypes
+   EngineExtension
+   FusionExtension
+   FutureExtension
+   Logging
+   MLIRDataTypes
+   MemoryLevelExtension
+   Targets
+   TilingExtension
+

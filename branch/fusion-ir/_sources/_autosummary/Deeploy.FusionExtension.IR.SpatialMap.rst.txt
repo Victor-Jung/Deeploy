@@ -1,0 +1,38 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR.SpatialMap
+=====================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autoclass:: SpatialMap
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~SpatialMap.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SpatialMap.node
+      ~SpatialMap.row_axis
+      ~SpatialMap.col_axis
+      ~SpatialMap.stationary
+      ~SpatialMap.core_range
+   
+   

@@ -1,0 +1,6 @@
+Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass.engineaware
+======================================================================
+
+.. currentmodule:: Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass
+
+.. autofunction:: engineaware

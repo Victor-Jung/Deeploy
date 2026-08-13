@@ -1,0 +1,29 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR.Residency
+====================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autoclass:: Residency
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Residency.STREAM
+      ~Residency.TRANSIENT
+      ~Residency.RESIDENT
+   
+   

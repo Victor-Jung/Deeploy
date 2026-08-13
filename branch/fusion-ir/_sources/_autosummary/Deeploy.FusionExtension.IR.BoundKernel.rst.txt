@@ -1,0 +1,41 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR.BoundKernel
+======================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autoclass:: BoundKernel
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~BoundKernel.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BoundKernel.kernel_obj
+      ~BoundKernel.tile_constraint
+      ~BoundKernel.node
+      ~BoundKernel.op
+      ~BoundKernel.kernel_symbol
+      ~BoundKernel.operator_repr
+      ~BoundKernel.inputs
+      ~BoundKernel.outputs
+   
+   

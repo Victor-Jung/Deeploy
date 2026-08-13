@@ -1,0 +1,47 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.Targets.Generic.Layers.SplitLayer
+=========================================
+
+.. currentmodule:: Deeploy.Targets.Generic.Layers
+
+.. autoclass:: SplitLayer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~SplitLayer.__init__
+      ~SplitLayer.bind
+      ~SplitLayer.broadcast
+      ~SplitLayer.codeTransform
+      ~SplitLayer.computeOps
+      ~SplitLayer.computeShapes
+      ~SplitLayer.discardCurrentMapper
+      ~SplitLayer.generate
+      ~SplitLayer.parse
+      ~SplitLayer.resetDiscardedMappers
+      ~SplitLayer.typeCheck
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SplitLayer.maps
+      ~SplitLayer.mapper
+      ~SplitLayer.discardedMappers
+      ~SplitLayer.node
+   
+   

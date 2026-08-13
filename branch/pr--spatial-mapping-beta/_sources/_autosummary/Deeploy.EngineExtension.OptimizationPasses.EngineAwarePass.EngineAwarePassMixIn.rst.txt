@@ -1,0 +1,30 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass.EngineAwarePassMixIn
+===============================================================================
+
+.. currentmodule:: Deeploy.EngineExtension.OptimizationPasses.EngineAwarePass
+
+.. autoclass:: EngineAwarePassMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~EngineAwarePassMixIn.__init__
+      ~EngineAwarePassMixIn.setDataMoverEngines
+      ~EngineAwarePassMixIn.setEngines
+   
+   
+
+   
+   
+   

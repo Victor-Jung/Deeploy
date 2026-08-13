@@ -1,0 +1,47 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.EngineExtension.EngineAwareLayer.EngineAwareONNXLayer
+=============================================================
+
+.. currentmodule:: Deeploy.EngineExtension.EngineAwareLayer
+
+.. autoclass:: EngineAwareONNXLayer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~EngineAwareONNXLayer.__init__
+      ~EngineAwareONNXLayer.bind
+      ~EngineAwareONNXLayer.broadcast
+      ~EngineAwareONNXLayer.codeTransform
+      ~EngineAwareONNXLayer.computeOps
+      ~EngineAwareONNXLayer.computeShapes
+      ~EngineAwareONNXLayer.discardCurrentMapper
+      ~EngineAwareONNXLayer.generate
+      ~EngineAwareONNXLayer.parse
+      ~EngineAwareONNXLayer.resetDiscardedMappers
+      ~EngineAwareONNXLayer.typeCheck
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~EngineAwareONNXLayer.maps
+      ~EngineAwareONNXLayer.mapper
+      ~EngineAwareONNXLayer.discardedMappers
+      ~EngineAwareONNXLayer.node
+   
+   

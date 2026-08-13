@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Serialize.load\_region
+==============================================
+
+.. currentmodule:: Deeploy.FusionExtension.Serialize
+
+.. autofunction:: load_region

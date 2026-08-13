@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.legality
+============================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: legality

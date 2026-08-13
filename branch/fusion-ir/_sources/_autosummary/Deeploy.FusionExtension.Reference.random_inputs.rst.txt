@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Reference.random\_inputs
+================================================
+
+.. currentmodule:: Deeploy.FusionExtension.Reference
+
+.. autofunction:: random_inputs

@@ -1,0 +1,38 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.IR.HardwareModel
+========================================
+
+.. currentmodule:: Deeploy.FusionExtension.IR
+
+.. autoclass:: HardwareModel
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   
+   .. rubric:: Methods
+   .. automethod:: __init__
+
+   .. autosummary::
+   
+      ~HardwareModel.__init__
+      ~HardwareModel.from_platform
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~HardwareModel.pe_block
+      ~HardwareModel.pe_rows
+      ~HardwareModel.pe_cols
+      ~HardwareModel.mem_capacity
+   
+   

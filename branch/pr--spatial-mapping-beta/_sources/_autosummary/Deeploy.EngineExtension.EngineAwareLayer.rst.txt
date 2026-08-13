@@ -1,0 +1,43 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.EngineExtension.EngineAwareLayer
+========================================
+
+.. automodule:: Deeploy.EngineExtension.EngineAwareLayer
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      engineAware
+      makeMappingEngineAware
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      EngineAwareONNXLayer
+   
+   
+
+   
+   
+   
+
+
+

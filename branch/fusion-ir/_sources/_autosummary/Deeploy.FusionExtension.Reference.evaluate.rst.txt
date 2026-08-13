@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Reference.evaluate
+==========================================
+
+.. currentmodule:: Deeploy.FusionExtension.Reference
+
+.. autofunction:: evaluate

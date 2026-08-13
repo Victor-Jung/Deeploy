@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.offchip\_elements
+=====================================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: offchip_elements

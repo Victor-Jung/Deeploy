@@ -1,0 +1,6 @@
+Deeploy.EngineExtension.EngineAwareLayer.makeMappingEngineAware
+===============================================================
+
+.. currentmodule:: Deeploy.EngineExtension.EngineAwareLayer
+
+.. autofunction:: makeMappingEngineAware

@@ -1,0 +1,6 @@
+Deeploy.FusionExtension.Derivations.footprint\_elements
+=======================================================
+
+.. currentmodule:: Deeploy.FusionExtension.Derivations
+
+.. autofunction:: footprint_elements

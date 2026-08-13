@@ -1,0 +1,42 @@
+.. SPDX-FileCopyrightText: 2024 ETH Zurich and University of Bologna
+..
+.. SPDX-License-Identifier: Apache-2.0
+
+Deeploy.FusionExtension.Derivations
+===================================
+
+.. automodule:: Deeploy.FusionExtension.Derivations
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      accumulator_bytes
+      footprint_elements
+      is_accumulator
+      legality
+      offchip_bytes
+      offchip_elements
+      residency_footprint
+      resolve
+      trip_count
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
